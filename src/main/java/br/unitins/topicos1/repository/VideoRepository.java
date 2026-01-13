@@ -1,0 +1,28 @@
+package br.unitins.topicos1.repository;
+
+import java.util.List;
+
+import br.unitins.topicos1.model.CategoriaVideo;
+import br.unitins.topicos1.model.Video;
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import jakarta.enterprise.context.ApplicationScoped;
+
+@ApplicationScoped
+public class VideoRepository implements PanacheRepository<Video> {
+
+    public List<Video> findByTurmaId(Long turmaId) {
+        return find("turma.id", turmaId).list();
+    }
+
+    public List<Video> findByCategoria(CategoriaVideo categoria) {
+        return find("categoria", categoria).list();
+    }
+
+    public List<Video> findByTurmaIdAndCategoria(Long turmaId, CategoriaVideo categoria) {
+        return find("turma.id = ?1 AND categoria = ?2", turmaId, categoria).list();
+    }
+
+    public List<Video> findByTitulo(String titulo) {
+        return find("LOWER(titulo) LIKE LOWER(?1)", "%" + titulo + "%").list();
+    }
+}
