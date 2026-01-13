@@ -1,0 +1,239 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { 
+  Professor, Aluno, Turma, Aula, 
+  Presenca, Desempenho, Pagamento, 
+  Video, MaterialExtraAula 
+} from '../models/user.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ApiService {
+  private apiUrl = environment.apiUrl;
+
+  constructor(private http: HttpClient) {}
+
+  // ==================== PROFESSORES ====================
+  getProfessores(): Observable<Professor[]> {
+    return this.http.get<Professor[]>(`${this.apiUrl}/professores`);
+  }
+
+  getProfessor(id: number): Observable<Professor> {
+    return this.http.get<Professor>(`${this.apiUrl}/professores/${id}`);
+  }
+
+  createProfessor(data: any): Observable<Professor> {
+    return this.http.post<Professor>(`${this.apiUrl}/professores`, data);
+  }
+
+  updateProfessor(id: number, data: any): Observable<Professor> {
+    return this.http.put<Professor>(`${this.apiUrl}/professores/${id}`, data);
+  }
+
+  deleteProfessor(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/professores/${id}`);
+  }
+
+  // ==================== ALUNOS ====================
+  getAlunos(): Observable<Aluno[]> {
+    return this.http.get<Aluno[]>(`${this.apiUrl}/alunos`);
+  }
+
+  getAluno(id: number): Observable<Aluno> {
+    return this.http.get<Aluno>(`${this.apiUrl}/alunos/${id}`);
+  }
+
+  getAlunosByTurma(turmaId: number): Observable<Aluno[]> {
+    return this.http.get<Aluno[]>(`${this.apiUrl}/alunos/turma/${turmaId}`);
+  }
+
+  getAlunosByProfessor(professorId: number): Observable<Aluno[]> {
+    return this.http.get<Aluno[]>(`${this.apiUrl}/alunos/professor/${professorId}`);
+  }
+
+  createAluno(data: any): Observable<Aluno> {
+    return this.http.post<Aluno>(`${this.apiUrl}/alunos`, data);
+  }
+
+  updateAluno(id: number, data: any): Observable<Aluno> {
+    return this.http.put<Aluno>(`${this.apiUrl}/alunos/${id}`, data);
+  }
+
+  deleteAluno(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/alunos/${id}`);
+  }
+
+  // ==================== TURMAS ====================
+  getTurmas(): Observable<Turma[]> {
+    return this.http.get<Turma[]>(`${this.apiUrl}/turmas`);
+  }
+
+  getTurma(id: number): Observable<Turma> {
+    return this.http.get<Turma>(`${this.apiUrl}/turmas/${id}`);
+  }
+
+  getTurmasByProfessor(professorId: number): Observable<Turma[]> {
+    return this.http.get<Turma[]>(`${this.apiUrl}/turmas/professor/${professorId}`);
+  }
+
+  createTurma(data: any): Observable<Turma> {
+    return this.http.post<Turma>(`${this.apiUrl}/turmas`, data);
+  }
+
+  updateTurma(id: number, data: any): Observable<Turma> {
+    return this.http.put<Turma>(`${this.apiUrl}/turmas/${id}`, data);
+  }
+
+  deleteTurma(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/turmas/${id}`);
+  }
+
+  // ==================== AULAS ====================
+  getAulas(): Observable<Aula[]> {
+    return this.http.get<Aula[]>(`${this.apiUrl}/aulas`);
+  }
+
+  getAula(id: number): Observable<Aula> {
+    return this.http.get<Aula>(`${this.apiUrl}/aulas/${id}`);
+  }
+
+  getAulasByTurma(turmaId: number): Observable<Aula[]> {
+    return this.http.get<Aula[]>(`${this.apiUrl}/aulas/turma/${turmaId}`);
+  }
+
+  getAulasByData(data: string): Observable<Aula[]> {
+    return this.http.get<Aula[]>(`${this.apiUrl}/aulas/data?data=${data}`);
+  }
+
+  getAulasByProfessor(professorId: number): Observable<Aula[]> {
+    return this.http.get<Aula[]>(`${this.apiUrl}/aulas/professor/${professorId}`);
+  }
+
+  getAulasByProfessorAndData(professorId: number, data: string): Observable<Aula[]> {
+    return this.http.get<Aula[]>(`${this.apiUrl}/aulas/professor/${professorId}/data?data=${data}`);
+  }
+
+  createAula(data: any): Observable<Aula> {
+    return this.http.post<Aula>(`${this.apiUrl}/aulas`, data);
+  }
+
+  updateAula(id: number, data: any): Observable<Aula> {
+    return this.http.put<Aula>(`${this.apiUrl}/aulas/${id}`, data);
+  }
+
+  deleteAula(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/aulas/${id}`);
+  }
+
+  // ==================== PRESENÇAS ====================
+  getPresencasByAula(aulaId: number): Observable<Presenca[]> {
+    return this.http.get<Presenca[]>(`${this.apiUrl}/presencas/aula/${aulaId}`);
+  }
+
+  getPresencasByAluno(alunoId: number): Observable<Presenca[]> {
+    return this.http.get<Presenca[]>(`${this.apiUrl}/presencas/aluno/${alunoId}`);
+  }
+
+  createPresenca(data: any): Observable<Presenca> {
+    return this.http.post<Presenca>(`${this.apiUrl}/presencas`, data);
+  }
+
+  registrarPresencasEmLote(aulaId: number, presencas: any[]): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/presencas/lote/${aulaId}`, presencas);
+  }
+
+  getContagemPresencas(alunoId: number): Observable<{ presencas: number; faltas: number }> {
+    return this.http.get<{ presencas: number; faltas: number }>(`${this.apiUrl}/presencas/aluno/${alunoId}/contagem`);
+  }
+
+  // ==================== DESEMPENHO ====================
+  getDesempenhosByAluno(alunoId: number): Observable<Desempenho[]> {
+    return this.http.get<Desempenho[]>(`${this.apiUrl}/desempenhos/aluno/${alunoId}`);
+  }
+
+  getDesempenhosByAula(aulaId: number): Observable<Desempenho[]> {
+    return this.http.get<Desempenho[]>(`${this.apiUrl}/desempenhos/aula/${aulaId}`);
+  }
+
+  createDesempenho(data: any): Observable<Desempenho> {
+    return this.http.post<Desempenho>(`${this.apiUrl}/desempenhos`, data);
+  }
+
+  updateDesempenho(id: number, data: any): Observable<Desempenho> {
+    return this.http.put<Desempenho>(`${this.apiUrl}/desempenhos/${id}`, data);
+  }
+
+  // ==================== PAGAMENTOS ====================
+  getPagamentos(): Observable<Pagamento[]> {
+    return this.http.get<Pagamento[]>(`${this.apiUrl}/pagamentos`);
+  }
+
+  getPagamentosByAluno(alunoId: number): Observable<Pagamento[]> {
+    return this.http.get<Pagamento[]>(`${this.apiUrl}/pagamentos/aluno/${alunoId}`);
+  }
+
+  getPagamentosPendentes(): Observable<Pagamento[]> {
+    return this.http.get<Pagamento[]>(`${this.apiUrl}/pagamentos/vencidos`);
+  }
+
+  getPagamentosByProfessor(professorId: number): Observable<Pagamento[]> {
+    return this.http.get<Pagamento[]>(`${this.apiUrl}/pagamentos/professor/${professorId}`);
+  }
+
+  createPagamento(data: any): Observable<Pagamento> {
+    return this.http.post<Pagamento>(`${this.apiUrl}/pagamentos`, data);
+  }
+
+  marcarComoPago(id: number): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/pagamentos/${id}/pagar`, {});
+  }
+
+  // ==================== VÍDEOS ====================
+  getVideos(): Observable<Video[]> {
+    return this.http.get<Video[]>(`${this.apiUrl}/videos`);
+  }
+
+  getVideosByTurma(turmaId: number): Observable<Video[]> {
+    return this.http.get<Video[]>(`${this.apiUrl}/videos/turma/${turmaId}`);
+  }
+
+  getVideosByCategoria(turmaId: number, categoriaId: number): Observable<Video[]> {
+    return this.http.get<Video[]>(`${this.apiUrl}/videos/turma/${turmaId}/categoria?idCategoria=${categoriaId}`);
+  }
+
+  createVideo(data: any): Observable<Video> {
+    return this.http.post<Video>(`${this.apiUrl}/videos`, data);
+  }
+
+  updateVideo(id: number, data: any): Observable<Video> {
+    return this.http.put<Video>(`${this.apiUrl}/videos/${id}`, data);
+  }
+
+  deleteVideo(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/videos/${id}`);
+  }
+
+  // ==================== MATERIAIS ====================
+  getMateriais(): Observable<MaterialExtraAula[]> {
+    return this.http.get<MaterialExtraAula[]>(`${this.apiUrl}/materiais`);
+  }
+
+  getMateriaisByTurma(turmaId: number): Observable<MaterialExtraAula[]> {
+    return this.http.get<MaterialExtraAula[]>(`${this.apiUrl}/materiais/turma/${turmaId}`);
+  }
+
+  createMaterial(data: any): Observable<MaterialExtraAula> {
+    return this.http.post<MaterialExtraAula>(`${this.apiUrl}/materiais`, data);
+  }
+
+  updateMaterial(id: number, data: any): Observable<MaterialExtraAula> {
+    return this.http.put<MaterialExtraAula>(`${this.apiUrl}/materiais/${id}`, data);
+  }
+
+  deleteMaterial(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/materiais/${id}`);
+  }
+}
