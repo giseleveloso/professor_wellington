@@ -32,6 +32,11 @@ export const routes: Routes = [
         canActivate: [professorGuard]
       },
       {
+        path: 'calendario',
+        loadComponent: () => import('./pages/calendario/calendario.component').then(m => m.CalendarioComponent),
+        canActivate: [professorGuard]
+      },
+      {
         path: 'pagamentos',
         loadComponent: () => import('./pages/pagamentos/pagamentos.component').then(m => m.PagamentosComponent)
       },
