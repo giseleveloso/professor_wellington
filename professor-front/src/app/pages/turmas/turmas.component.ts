@@ -1,8 +1,21 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { Turma } from '../../core/models/user.model';
+
+interface DiaSemana {
+  id: number;
+  nome: string;
+  abrev: string;
+  selecionado: boolean;
+}
+
+interface AulaPreview {
+  data: string;
+  dataFormatada: string;
+  diaSemana: string;
+}
 
 @Component({
   selector: 'app-turmas',
@@ -76,7 +89,7 @@ import { Turma } from '../../core/models/user.model';
     <!-- Modal -->
     @if (showModal()) {
       <div class="modal-overlay" (click)="closeModal()">
-        <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal modal-lg" (click)="$event.stopPropagation()">
           <div class="modal-header">
             <h3>{{ editingTurma() ? 'Editar Turma' : 'Nova Turma' }}</h3>
             <button class="btn btn-icon" (click)="closeModal()">✕</button>
@@ -122,28 +135,115 @@ import { Turma } from '../../core/models/user.model';
               </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">Horário</label>
-              <input 
-                type="text" 
-                class="form-control" 
-                [(ngModel)]="form.horario" 
-                name="horario"
-                placeholder="Ex: 08:00 - 10:00"
-                required
-              />
-            </div>
-
+            <!-- Dias da Semana - Selecionáveis -->
             <div class="form-group">
               <label class="form-label">Dias da Semana</label>
-              <input 
-                type="text" 
-                class="form-control" 
-                [(ngModel)]="form.diasSemana" 
-                name="diasSemana"
-                placeholder="Ex: Segunda, Quarta, Sexta"
-              />
+              <div class="dias-semana-grid">
+                @for (dia of diasSemana; track dia.id) {
+                  <button 
+                    type="button"
+                    class="dia-btn"
+                    [class.selected]="dia.selecionado"
+                    (click)="toggleDia(dia)"
+                  >
+                    <span class="dia-abrev">{{ dia.abrev }}</span>
+                    <span class="dia-nome">{{ dia.nome }}</span>
+                  </button>
+                }
+              </div>
             </div>
+
+            <!-- Horário -->
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Hora Início</label>
+                <input type="time" class="form-control" [(ngModel)]="form.horaInicio" name="horaInicio" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Hora Fim</label>
+                <input type="time" class="form-control" [(ngModel)]="form.horaFim" name="horaFim" required />
+              </div>
+            </div>
+
+            <!-- Cadastro Automático de Aulas -->
+            @if (!editingTurma()) {
+              <div class="auto-aulas-section">
+                <div class="form-group">
+                  <label class="checkbox-container">
+                    <input type="checkbox" [(ngModel)]="criarAulasAuto" name="criarAulasAuto" />
+                    <span class="checkmark"></span>
+                    📅 Cadastrar aulas automaticamente
+                  </label>
+                  <p class="text-muted text-sm mt-1">
+                    Cria automaticamente as aulas nos dias selecionados
+                  </p>
+                </div>
+
+                @if (criarAulasAuto) {
+                  <div class="auto-aulas-options">
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">Data Início</label>
+                        <input type="date" class="form-control" [(ngModel)]="dataInicio" name="dataInicio" 
+                          (change)="updatePreview()" />
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">Duração do Período</label>
+                        <div class="btn-group-select">
+                          @for (mes of [1, 3, 6, 12]; track mes) {
+                            <button 
+                              type="button"
+                              class="btn-select"
+                              [class.active]="mesesDuracao === mes"
+                              (click)="mesesDuracao = mes; updatePreview()"
+                            >
+                              {{ mes }} {{ mes === 1 ? 'mês' : 'meses' }}
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Tópico padrão das aulas (opcional)</label>
+                      <input type="text" class="form-control" [(ngModel)]="topicoDefault" name="topicoDefault"
+                        placeholder="Ex: Aula Regular" />
+                    </div>
+
+                    <!-- Preview das aulas -->
+                    @if (aulasPreview().length > 0) {
+                      <div class="preview-section">
+                        <div class="preview-header">
+                          <span>📋 {{ aulasPreview().length }} aulas serão criadas:</span>
+                        </div>
+                        <div class="preview-list">
+                          @for (aula of aulasPreview().slice(0, 10); track aula.data) {
+                            <div class="preview-item">
+                              <span class="preview-dia">{{ aula.diaSemana }}</span>
+                              <span class="preview-data">{{ aula.dataFormatada }}</span>
+                              <span class="preview-horario text-muted">{{ form.horaInicio }} - {{ form.horaFim }}</span>
+                            </div>
+                          }
+                          @if (aulasPreview().length > 10) {
+                            <div class="preview-more">
+                              ... e mais {{ aulasPreview().length - 10 }} aulas
+                            </div>
+                          }
+                        </div>
+                        <div class="preview-summary">
+                          <div class="summary-item">
+                            <strong>Total:</strong> {{ aulasPreview().length }} aulas
+                          </div>
+                          <div class="summary-item">
+                            <strong>Período:</strong> {{ formatDate(dataInicio) }} até {{ formatDate(dataFim) }}
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
 
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" (click)="closeModal()">
@@ -153,7 +253,11 @@ import { Turma } from '../../core/models/user.model';
                 @if (saving()) {
                   <span class="spinner"></span>
                 }
-                {{ editingTurma() ? 'Salvar' : 'Criar Turma' }}
+                @if (!editingTurma() && criarAulasAuto && aulasPreview().length > 0) {
+                  Criar Turma + {{ aulasPreview().length }} Aulas
+                } @else {
+                  {{ editingTurma() ? 'Salvar' : 'Criar Turma' }}
+                }
               </button>
             </div>
           </form>
@@ -168,9 +272,7 @@ import { Turma } from '../../core/models/user.model';
       align-items: flex-start;
       margin-bottom: 1.5rem;
 
-      h2 {
-        margin-bottom: 0.25rem;
-      }
+      h2 { margin-bottom: 0.25rem; }
     }
 
     .loading-state {
@@ -185,19 +287,9 @@ import { Turma } from '../../core/models/user.model';
       text-align: center;
       padding: 4rem 2rem;
 
-      .empty-icon {
-        font-size: 4rem;
-        display: block;
-        margin-bottom: 1rem;
-      }
-
-      h3 {
-        margin-bottom: 0.5rem;
-      }
-
-      p {
-        color: var(--gray-500);
-      }
+      .empty-icon { font-size: 4rem; display: block; margin-bottom: 1rem; }
+      h3 { margin-bottom: 0.5rem; }
+      p { color: var(--gray-500); }
     }
 
     .turmas-grid {
@@ -205,22 +297,13 @@ import { Turma } from '../../core/models/user.model';
       grid-template-columns: repeat(3, 1fr);
       gap: 1.5rem;
 
-      @media (max-width: 1200px) {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      @media (max-width: 768px) {
-        grid-template-columns: 1fr;
-      }
+      @media (max-width: 1200px) { grid-template-columns: repeat(2, 1fr); }
+      @media (max-width: 768px) { grid-template-columns: 1fr; }
     }
 
     .turma-card {
       transition: transform 0.2s, box-shadow 0.2s;
-
-      &:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-      }
+      &:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
     }
 
     .turma-header {
@@ -230,44 +313,13 @@ import { Turma } from '../../core/models/user.model';
       margin-bottom: 1rem;
     }
 
-    .turma-flag {
-      font-size: 2.5rem;
-    }
-
-    .turma-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .turma-nome {
-      font-size: 1.125rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .turma-badges {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .turma-info {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .info-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.875rem;
-      color: var(--gray-600);
-    }
-
-    .info-icon {
-      width: 20px;
-      text-align: center;
-    }
+    .turma-flag { font-size: 2.5rem; }
+    .turma-actions { display: flex; gap: 0.5rem; }
+    .turma-nome { font-size: 1.125rem; margin-bottom: 0.75rem; }
+    .turma-badges { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .turma-info { display: flex; flex-direction: column; gap: 0.5rem; }
+    .info-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--gray-600); }
+    .info-icon { width: 20px; text-align: center; }
 
     // Modal
     .modal-overlay {
@@ -278,7 +330,6 @@ import { Turma } from '../../core/models/user.model';
       align-items: center;
       justify-content: center;
       z-index: 1000;
-      animation: fadeIn 0.2s;
     }
 
     .modal {
@@ -288,8 +339,9 @@ import { Turma } from '../../core/models/user.model';
       max-width: 500px;
       max-height: 90vh;
       overflow-y: auto;
-      animation: slideUp 0.3s;
     }
+
+    .modal-lg { max-width: 650px; }
 
     .modal-header {
       display: flex;
@@ -297,15 +349,10 @@ import { Turma } from '../../core/models/user.model';
       align-items: center;
       padding: 1.25rem 1.5rem;
       border-bottom: 1px solid var(--gray-100);
-
-      h3 {
-        margin: 0;
-      }
+      h3 { margin: 0; }
     }
 
-    .modal-body {
-      padding: 1.5rem;
-    }
+    .modal-body { padding: 1.5rem; }
 
     .modal-footer {
       display: flex;
@@ -316,22 +363,143 @@ import { Turma } from '../../core/models/user.model';
       border-top: 1px solid var(--gray-100);
     }
 
-    .form-row {
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    // Dias da Semana
+    .dias-semana-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
     }
 
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
+    .dia-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.75rem 0.5rem;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--border-radius-sm);
+      background: var(--white);
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover { border-color: var(--primary-light); background: var(--gray-50); }
+
+      &.selected {
+        border-color: var(--primary);
+        background: var(--primary-bg);
+        .dia-abrev { color: var(--primary); font-weight: 700; }
       }
     }
+
+    .dia-abrev { font-size: 1rem; font-weight: 600; color: var(--gray-700); }
+    .dia-nome { font-size: 0.65rem; color: var(--gray-500); margin-top: 0.25rem; }
+
+    // Checkbox
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      font-weight: 500;
+      input { display: none; }
+    }
+
+    .checkmark {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--gray-300);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      &::after { content: '✓'; color: white; font-size: 12px; opacity: 0; }
+    }
+
+    .checkbox-container input:checked + .checkmark {
+      background: var(--primary);
+      border-color: var(--primary);
+      &::after { opacity: 1; }
+    }
+
+    // Auto Aulas Section
+    .auto-aulas-section {
+      background: var(--gray-50);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .auto-aulas-options { margin-top: 1rem; }
+
+    .btn-group-select { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    .btn-select {
+      flex: 1;
+      min-width: 70px;
+      padding: 0.5rem 0.75rem;
+      border: 2px solid var(--gray-200);
+      background: var(--white);
+      border-radius: var(--border-radius-sm);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover { border-color: var(--primary-light); }
+
+      &.active {
+        border-color: var(--primary);
+        background: var(--primary-bg);
+        color: var(--primary);
+        font-weight: 600;
+      }
+    }
+
+    // Preview Section
+    .preview-section {
+      margin-top: 1rem;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--border-radius-sm);
+      overflow: hidden;
+    }
+
+    .preview-header {
+      padding: 0.75rem 1rem;
+      background: var(--gray-100);
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+
+    .preview-list { max-height: 200px; overflow-y: auto; }
+
+    .preview-item {
+      display: grid;
+      grid-template-columns: 100px 1fr auto;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid var(--gray-100);
+      &:last-child { border-bottom: none; }
+    }
+
+    .preview-dia { font-weight: 600; color: var(--primary); }
+    .preview-data { color: var(--gray-700); }
+    .preview-horario { font-size: 0.75rem; }
+    .preview-more { padding: 0.5rem 1rem; text-align: center; color: var(--gray-500); font-size: 0.8125rem; }
+
+    .preview-summary {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: var(--primary-bg);
+      font-size: 0.8125rem;
+    }
+
+    .summary-item { color: var(--primary); }
+
+    .text-sm { font-size: 0.8125rem; }
   `]
 })
 export class TurmasComponent implements OnInit {
@@ -343,17 +511,42 @@ export class TurmasComponent implements OnInit {
   saving = signal(false);
   editingTurma = signal<Turma | null>(null);
 
+  diasSemana: DiaSemana[] = [
+    { id: 0, nome: 'Domingo', abrev: 'D', selecionado: false },
+    { id: 1, nome: 'Segunda', abrev: 'S', selecionado: true },
+    { id: 2, nome: 'Terça', abrev: 'T', selecionado: false },
+    { id: 3, nome: 'Quarta', abrev: 'Q', selecionado: true },
+    { id: 4, nome: 'Quinta', abrev: 'Q', selecionado: false },
+    { id: 5, nome: 'Sexta', abrev: 'S', selecionado: true },
+    { id: 6, nome: 'Sábado', abrev: 'S', selecionado: false },
+  ];
+
   form = {
     nome: '',
     idIdioma: 1,
     idNivel: 1,
-    horario: '',
-    diasSemana: '',
-    idProfessor: 1 // TODO: Obter do usuário logado
+    horaInicio: '08:00',
+    horaFim: '10:00',
+    idProfessor: 1
   };
+
+  criarAulasAuto = false;
+  dataInicio = '';
+  dataFim = '';
+  mesesDuracao = 3;
+  topicoDefault = 'Aula Regular';
+
+  aulasPreview = signal<AulaPreview[]>([]);
 
   ngOnInit(): void {
     this.loadTurmas();
+    this.initDates();
+  }
+
+  initDates(): void {
+    const hoje = new Date();
+    this.dataInicio = hoje.toISOString().split('T')[0];
+    this.updatePreview();
   }
 
   loadTurmas(): void {
@@ -363,9 +556,65 @@ export class TurmasComponent implements OnInit {
         this.turmas.set(turmas);
         this.loading.set(false);
       },
-      error: () => {
-        this.loading.set(false);
+      error: () => this.loading.set(false)
+    });
+  }
+
+  toggleDia(dia: DiaSemana): void {
+    dia.selecionado = !dia.selecionado;
+    this.updatePreview();
+  }
+
+  getDiasSelecionados(): number[] {
+    return this.diasSemana.filter(d => d.selecionado).map(d => d.id);
+  }
+
+  getDiasSelecionadosString(): string {
+    return this.diasSemana
+      .filter(d => d.selecionado)
+      .map(d => d.nome)
+      .join(', ');
+  }
+
+  updatePreview(): void {
+    if (!this.dataInicio || !this.criarAulasAuto) {
+      this.aulasPreview.set([]);
+      return;
+    }
+
+    const diasSelecionados = this.getDiasSelecionados();
+    if (diasSelecionados.length === 0) {
+      this.aulasPreview.set([]);
+      return;
+    }
+
+    const inicio = new Date(this.dataInicio + 'T00:00:00');
+    const fim = new Date(inicio);
+    fim.setMonth(fim.getMonth() + this.mesesDuracao);
+    this.dataFim = fim.toISOString().split('T')[0];
+
+    const aulas: AulaPreview[] = [];
+    const current = new Date(inicio);
+    const diasNomes = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+    while (current < fim) {
+      if (diasSelecionados.includes(current.getDay())) {
+        aulas.push({
+          data: current.toISOString().split('T')[0],
+          dataFormatada: current.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+          diaSemana: diasNomes[current.getDay()]
+        });
       }
+      current.setDate(current.getDate() + 1);
+    }
+
+    this.aulasPreview.set(aulas);
+  }
+
+  formatDate(dateStr: string): string {
+    if (!dateStr) return '';
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('pt-BR', {
+      day: '2-digit', month: 'short', year: 'numeric'
     });
   }
 
@@ -383,23 +632,41 @@ export class TurmasComponent implements OnInit {
       nome: '',
       idIdioma: 1,
       idNivel: 1,
-      horario: '',
-      diasSemana: '',
+      horaInicio: '08:00',
+      horaFim: '10:00',
       idProfessor: 1
     };
+    this.diasSemana.forEach(d => d.selecionado = [1, 3, 5].includes(d.id)); // Segunda, Quarta, Sexta
+    this.criarAulasAuto = false;
+    this.mesesDuracao = 3;
+    this.topicoDefault = 'Aula Regular';
+    this.initDates();
     this.showModal.set(true);
   }
 
   editTurma(turma: Turma): void {
     this.editingTurma.set(turma);
+    
+    // Extrair horário inicio e fim
+    const horarioMatch = turma.horario?.match(/(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})/);
+    const horaInicio = horarioMatch ? horarioMatch[1] : '08:00';
+    const horaFim = horarioMatch ? horarioMatch[2] : '10:00';
+
     this.form = {
       nome: turma.nome,
       idIdioma: turma.idioma.id,
       idNivel: turma.nivel.id,
-      horario: turma.horario,
-      diasSemana: turma.diasSemana,
+      horaInicio,
+      horaFim,
       idProfessor: turma.idProfessor
     };
+
+    // Marcar dias da semana
+    this.diasSemana.forEach(d => {
+      d.selecionado = turma.diasSemana?.toLowerCase().includes(d.nome.toLowerCase()) || false;
+    });
+
+    this.criarAulasAuto = false;
     this.showModal.set(true);
   }
 
@@ -407,10 +674,25 @@ export class TurmasComponent implements OnInit {
     this.showModal.set(false);
   }
 
+  calculateDuracaoMinutos(): number {
+    if (this.form.horaInicio && this.form.horaFim) {
+      const [h1, m1] = this.form.horaInicio.split(':').map(Number);
+      const [h2, m2] = this.form.horaFim.split(':').map(Number);
+      const start = h1 * 60 + m1;
+      const end = h2 * 60 + m2;
+      return end > start ? end - start : 0;
+    }
+    return 60;
+  }
+
   saveTurma(): void {
     this.saving.set(true);
 
-    const data = { ...this.form };
+    const data = {
+      ...this.form,
+      horario: `${this.form.horaInicio} - ${this.form.horaFim}`,
+      diasSemana: this.getDiasSelecionadosString()
+    };
 
     if (this.editingTurma()) {
       this.apiService.updateTurma(this.editingTurma()!.id, data).subscribe({
@@ -419,22 +701,61 @@ export class TurmasComponent implements OnInit {
           this.closeModal();
           this.loadTurmas();
         },
-        error: () => {
-          this.saving.set(false);
-        }
+        error: () => this.saving.set(false)
       });
     } else {
       this.apiService.createTurma(data).subscribe({
-        next: () => {
-          this.saving.set(false);
-          this.closeModal();
-          this.loadTurmas();
+        next: (turmaCriada: any) => {
+          // Se deve criar aulas automaticamente
+          if (this.criarAulasAuto && this.aulasPreview().length > 0) {
+            this.criarAulasAutomaticamente(turmaCriada.id);
+          } else {
+            this.saving.set(false);
+            this.closeModal();
+            this.loadTurmas();
+          }
         },
-        error: () => {
-          this.saving.set(false);
-        }
+        error: () => this.saving.set(false)
       });
     }
+  }
+
+  criarAulasAutomaticamente(turmaId: number): void {
+    const duracaoMinutos = this.calculateDuracaoMinutos();
+    const aulas = this.aulasPreview();
+    let completed = 0;
+
+    aulas.forEach((aulaPreview, index) => {
+      const aula = {
+        idTurma: turmaId,
+        topico: this.topicoDefault || `Aula ${index + 1}`,
+        descricao: '',
+        data: aulaPreview.data,
+        horaInicio: this.form.horaInicio,
+        horaFim: this.form.horaFim,
+        duracaoMinutos
+      };
+
+      this.apiService.createAula(aula).subscribe({
+        next: () => {
+          completed++;
+          if (completed === aulas.length) {
+            this.saving.set(false);
+            this.closeModal();
+            this.loadTurmas();
+            alert(`Turma criada com sucesso!\n${aulas.length} aulas foram cadastradas automaticamente.`);
+          }
+        },
+        error: () => {
+          completed++;
+          if (completed === aulas.length) {
+            this.saving.set(false);
+            this.closeModal();
+            this.loadTurmas();
+          }
+        }
+      });
+    });
   }
 
   deleteTurma(id: number): void {
