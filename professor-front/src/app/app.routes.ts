@@ -45,6 +45,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/videos/videos.component').then(m => m.VideosComponent)
       },
       {
+        path: 'categorias-video',
+        loadComponent: () => import('./pages/categorias-video/categorias-video.component').then(m => m.CategoriasVideoComponent),
+        canActivate: [professorGuard]
+      },
+      {
         path: 'materiais',
         loadComponent: () => import('./pages/materiais/materiais.component').then(m => m.MateriaisComponent)
       }

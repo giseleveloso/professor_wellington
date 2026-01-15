@@ -177,6 +177,7 @@ export class SidebarComponent {
     { icon: '📅', label: 'Calendário', route: '/calendario', professorOnly: true },
     { icon: '💰', label: 'Pagamentos', route: '/pagamentos' },
     { icon: '🎬', label: 'Vídeos', route: '/videos' },
+    { icon: '🏷️', label: 'Categorias', route: '/categorias-video', professorOnly: true },
     { icon: '📚', label: 'Materiais', route: '/materiais' },
     { icon: '📊', label: 'Meu Desempenho', route: '/meu-desempenho', alunoOnly: true },
   ];

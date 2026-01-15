@@ -27,6 +27,12 @@ export interface Aluno {
   telefone?: Telefone;
   idTurma: number;
   nomeTurma: string;
+  turmas?: TurmaSimples[];
+}
+
+export interface TurmaSimples {
+  id: number;
+  nome: string;
 }
 
 export interface Telefone {

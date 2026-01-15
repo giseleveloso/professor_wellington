@@ -44,10 +44,10 @@ interface WeekDay {
         <div class="flex items-center gap-3">
           <button class="btn btn-icon btn-secondary" (click)="previous()">◀</button>
           <h3 class="calendar-title">
-            @if (viewMode === 'month') {
-              {{ currentMonthName }}, {{ currentYear }}
+            @if (viewMode() === 'month') {
+              {{ currentMonthName() }}, {{ currentYear() }}
             } @else {
-              {{ weekRangeLabel }}
+              {{ weekRangeLabel() }}
             }
           </h3>
           <button class="btn btn-icon btn-secondary" (click)="next()">▶</button>
@@ -59,21 +59,21 @@ interface WeekDay {
           <div class="view-toggle">
             <button 
               class="view-btn" 
-              [class.active]="viewMode === 'week'"
-              (click)="viewMode = 'week'"
+              [class.active]="viewMode() === 'week'"
+              (click)="viewMode.set('week')"
             >
               📋 Semana
             </button>
             <button 
               class="view-btn" 
-              [class.active]="viewMode === 'month'"
-              (click)="viewMode = 'month'"
+              [class.active]="viewMode() === 'month'"
+              (click)="viewMode.set('month')"
             >
               📆 Mês
             </button>
           </div>
 
-          <select class="form-control" style="width: auto;" [(ngModel)]="filtroTurma">
+          <select class="form-control" style="width: auto;" [ngModel]="filtroTurma()" (ngModelChange)="filtroTurma.set($event)">
             <option [value]="0">Todas as turmas</option>
             @for (turma of turmas(); track turma.id) {
               <option [value]="turma.id">{{ turma.nome }}</option>
@@ -84,7 +84,7 @@ interface WeekDay {
     </div>
 
     <!-- Visualização Mensal -->
-    @if (viewMode === 'month') {
+    @if (viewMode() === 'month') {
       <div class="calendar card">
         <div class="calendar-weekdays">
           @for (day of weekDays; track day) {
@@ -93,7 +93,7 @@ interface WeekDay {
         </div>
 
         <div class="calendar-grid">
-          @for (day of calendarDays(); track day.date.toISOString()) {
+          @for (day of calendarDays(); track $index) {
             <div 
               class="calendar-day" 
               [class.other-month]="!day.isCurrentMonth"
@@ -121,10 +121,10 @@ interface WeekDay {
     }
 
     <!-- Visualização Semanal -->
-    @if (viewMode === 'week') {
+    @if (viewMode() === 'week') {
       <div class="week-view card">
         <div class="week-header">
-          @for (day of weekViewDays(); track day.date.toISOString()) {
+          @for (day of weekViewDays(); track $index) {
             <div class="week-header-day" [class.today]="day.isToday">
               <span class="day-name">{{ day.dayName }}</span>
               <span class="day-num">{{ day.dayNumber }}</span>
@@ -133,7 +133,7 @@ interface WeekDay {
         </div>
 
         <div class="week-grid">
-          @for (day of weekViewDays(); track day.date.toISOString()) {
+          @for (day of weekViewDays(); track $index) {
             <div class="week-column" [class.today]="day.isToday" (click)="selectDay(day.date)">
               @if (day.aulas.length === 0) {
                 <div class="no-events">
@@ -615,35 +615,33 @@ export class CalendarioComponent implements OnInit {
   loadingAlunos = signal(false);
   savingPresencas = signal(false);
 
-  viewMode: ViewMode = 'week';
-  currentDate = new Date();
-  currentYear = this.currentDate.getFullYear();
-  currentMonth = this.currentDate.getMonth();
-  currentWeekStart = this.getWeekStart(this.currentDate);
-  filtroTurma = 0;
+  // Transformar em signals para reatividade
+  viewMode = signal<ViewMode>('week');
+  currentYear = signal(new Date().getFullYear());
+  currentMonth = signal(new Date().getMonth());
+  currentWeekStart = signal(this.getWeekStart(new Date()));
+  filtroTurma = signal(0);
 
   weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
   weekDaysFull = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-  months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+  monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
             'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
   form = { idTurma: 0, topico: '', descricao: '', data: '', horaInicio: '08:00', horaFim: '10:00', duracaoMinutos: 120 };
 
-  get currentMonthName(): string {
-    return this.months[this.currentMonth];
-  }
+  currentMonthName = computed(() => this.monthNames[this.currentMonth()]);
 
-  get weekRangeLabel(): string {
-    const start = this.currentWeekStart;
+  weekRangeLabel = computed(() => {
+    const start = this.currentWeekStart();
     const end = new Date(start);
     end.setDate(end.getDate() + 6);
 
     if (start.getMonth() === end.getMonth()) {
-      return `${start.getDate()} - ${end.getDate()} de ${this.months[start.getMonth()]}, ${start.getFullYear()}`;
+      return `${start.getDate()} - ${end.getDate()} de ${this.monthNames[start.getMonth()]}, ${start.getFullYear()}`;
     } else {
-      return `${start.getDate()} ${this.months[start.getMonth()].substring(0, 3)} - ${end.getDate()} ${this.months[end.getMonth()].substring(0, 3)}, ${start.getFullYear()}`;
+      return `${start.getDate()} ${this.monthNames[start.getMonth()].substring(0, 3)} - ${end.getDate()} ${this.monthNames[end.getMonth()].substring(0, 3)}, ${start.getFullYear()}`;
     }
-  }
+  });
 
   getWeekStart(date: Date): Date {
     const d = new Date(date);
@@ -655,26 +653,30 @@ export class CalendarioComponent implements OnInit {
 
   calendarDays = computed(() => {
     const days: CalendarDay[] = [];
-    const firstDay = new Date(this.currentYear, this.currentMonth, 1);
-    const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
+    const year = this.currentYear();
+    const month = this.currentMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
     const startDay = firstDay.getDay();
     const today = new Date();
+    const filtro = this.filtroTurma();
+    const todasAulas = this.aulas();
 
-    const prevMonth = new Date(this.currentYear, this.currentMonth, 0);
+    const prevMonth = new Date(year, month, 0);
     for (let i = startDay - 1; i >= 0; i--) {
-      const date = new Date(this.currentYear, this.currentMonth - 1, prevMonth.getDate() - i);
-      days.push(this.createMonthDay(date, false, today));
+      const date = new Date(year, month - 1, prevMonth.getDate() - i);
+      days.push(this.createMonthDay(date, false, today, todasAulas, filtro));
     }
 
     for (let i = 1; i <= lastDay.getDate(); i++) {
-      const date = new Date(this.currentYear, this.currentMonth, i);
-      days.push(this.createMonthDay(date, true, today));
+      const date = new Date(year, month, i);
+      days.push(this.createMonthDay(date, true, today, todasAulas, filtro));
     }
 
     const remaining = 42 - days.length;
     for (let i = 1; i <= remaining; i++) {
-      const date = new Date(this.currentYear, this.currentMonth + 1, i);
-      days.push(this.createMonthDay(date, false, today));
+      const date = new Date(year, month + 1, i);
+      days.push(this.createMonthDay(date, false, today, todasAulas, filtro));
     }
 
     return days;
@@ -683,21 +685,24 @@ export class CalendarioComponent implements OnInit {
   weekViewDays = computed(() => {
     const days: WeekDay[] = [];
     const today = new Date();
+    const weekStart = this.currentWeekStart();
+    const filtro = this.filtroTurma();
+    const todasAulas = this.aulas();
 
     for (let i = 0; i < 7; i++) {
-      const date = new Date(this.currentWeekStart);
+      const date = new Date(weekStart);
       date.setDate(date.getDate() + i);
-      days.push(this.createWeekDay(date, today));
+      days.push(this.createWeekDay(date, today, todasAulas, filtro));
     }
 
     return days;
   });
 
-  createMonthDay(date: Date, isCurrentMonth: boolean, today: Date): CalendarDay {
-    const dateStr = date.toISOString().split('T')[0];
-    let aulas = this.aulas().filter(a => a.data === dateStr);
-    if (this.filtroTurma > 0) {
-      aulas = aulas.filter(a => a.idTurma === this.filtroTurma);
+  createMonthDay(date: Date, isCurrentMonth: boolean, today: Date, todasAulas: Aula[], filtro: number): CalendarDay {
+    const dateStr = this.formatDateStr(date);
+    let aulas = todasAulas.filter(a => a.data === dateStr);
+    if (filtro > 0) {
+      aulas = aulas.filter(a => a.idTurma === filtro);
     }
 
     return {
@@ -709,11 +714,11 @@ export class CalendarioComponent implements OnInit {
     };
   }
 
-  createWeekDay(date: Date, today: Date): WeekDay {
-    const dateStr = date.toISOString().split('T')[0];
-    let aulas = this.aulas().filter(a => a.data === dateStr);
-    if (this.filtroTurma > 0) {
-      aulas = aulas.filter(a => a.idTurma === this.filtroTurma);
+  createWeekDay(date: Date, today: Date, todasAulas: Aula[], filtro: number): WeekDay {
+    const dateStr = this.formatDateStr(date);
+    let aulas = todasAulas.filter(a => a.data === dateStr);
+    if (filtro > 0) {
+      aulas = aulas.filter(a => a.idTurma === filtro);
     }
 
     return {
@@ -723,6 +728,13 @@ export class CalendarioComponent implements OnInit {
       isToday: date.toDateString() === today.toDateString(),
       aulas: aulas.sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))
     };
+  }
+
+  formatDateStr(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   ngOnInit(): void {
@@ -740,42 +752,48 @@ export class CalendarioComponent implements OnInit {
   }
 
   previous(): void {
-    if (this.viewMode === 'month') {
-      if (this.currentMonth === 0) {
-        this.currentMonth = 11;
-        this.currentYear--;
+    if (this.viewMode() === 'month') {
+      const month = this.currentMonth();
+      if (month === 0) {
+        this.currentMonth.set(11);
+        this.currentYear.update(y => y - 1);
       } else {
-        this.currentMonth--;
+        this.currentMonth.update(m => m - 1);
       }
     } else {
-      this.currentWeekStart = new Date(this.currentWeekStart);
-      this.currentWeekStart.setDate(this.currentWeekStart.getDate() - 7);
+      const current = this.currentWeekStart();
+      const newStart = new Date(current);
+      newStart.setDate(newStart.getDate() - 7);
+      this.currentWeekStart.set(newStart);
     }
   }
 
   next(): void {
-    if (this.viewMode === 'month') {
-      if (this.currentMonth === 11) {
-        this.currentMonth = 0;
-        this.currentYear++;
+    if (this.viewMode() === 'month') {
+      const month = this.currentMonth();
+      if (month === 11) {
+        this.currentMonth.set(0);
+        this.currentYear.update(y => y + 1);
       } else {
-        this.currentMonth++;
+        this.currentMonth.update(m => m + 1);
       }
     } else {
-      this.currentWeekStart = new Date(this.currentWeekStart);
-      this.currentWeekStart.setDate(this.currentWeekStart.getDate() + 7);
+      const current = this.currentWeekStart();
+      const newStart = new Date(current);
+      newStart.setDate(newStart.getDate() + 7);
+      this.currentWeekStart.set(newStart);
     }
   }
 
   goToToday(): void {
     const today = new Date();
-    this.currentYear = today.getFullYear();
-    this.currentMonth = today.getMonth();
-    this.currentWeekStart = this.getWeekStart(today);
+    this.currentYear.set(today.getFullYear());
+    this.currentMonth.set(today.getMonth());
+    this.currentWeekStart.set(this.getWeekStart(today));
   }
 
   selectDay(date: Date): void {
-    this.form.data = date.toISOString().split('T')[0];
+    this.form.data = this.formatDateStr(date);
     this.openModal();
   }
 

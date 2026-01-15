@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
@@ -8,7 +9,7 @@ import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="dashboard fade-in">
       <!-- Saudação -->
@@ -78,7 +79,7 @@ import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
                 </div>
                 @if (authService.isProfessor()) {
                   <div class="agenda-actions">
-                    <button class="btn btn-primary btn-sm">
+                    <button class="btn btn-primary btn-sm" (click)="openPresencaModal(aula)">
                       ✅ Registrar Presença
                     </button>
                   </div>
@@ -179,15 +180,92 @@ import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
         </div>
       }
     </div>
+
+    <!-- Modal de Presença -->
+    @if (showPresencaModal()) {
+      <div class="modal-overlay" (click)="closePresencaModal()">
+        <div class="modal modal-lg" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <div>
+              <h3>📋 Registrar Presença</h3>
+              <p class="text-muted">{{ aulaPresenca()?.nomeTurma }} - {{ aulaPresenca()?.topico }}</p>
+            </div>
+            <button class="btn btn-icon" (click)="closePresencaModal()">✕</button>
+          </div>
+          
+          <div class="modal-body">
+            <div class="aula-info-bar mb-4">
+              <div class="info-item">
+                <span class="info-icon">🕐</span>
+                <span>{{ aulaPresenca()?.horaInicio }} - {{ aulaPresenca()?.horaFim || '--:--' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-icon">⏱️</span>
+                <span>{{ aulaPresenca()?.duracaoMinutos }} min</span>
+              </div>
+            </div>
+
+            @if (loadingAlunos()) {
+              <div class="loading-state"><span class="spinner"></span></div>
+            } @else if (alunosTurma().length === 0) {
+              <div class="empty-state-sm">
+                <p>Nenhum aluno matriculado nesta turma</p>
+              </div>
+            } @else {
+              <div class="presenca-actions-bar mb-3">
+                <button class="btn btn-sm btn-outline" (click)="marcarTodos(true)">✓ Todos presentes</button>
+                <button class="btn btn-sm btn-outline" (click)="marcarTodos(false)">✕ Todos ausentes</button>
+              </div>
+              
+              <div class="presenca-list">
+                @for (aluno of alunosTurma(); track aluno.id) {
+                  <div class="presenca-item">
+                    <div class="presenca-aluno">
+                      <div class="avatar">{{ getInitials(aluno.nome) }}</div>
+                      <div>
+                        <div class="font-medium">{{ aluno.nome }}</div>
+                        <div class="text-muted text-sm">{{ aluno.email }}</div>
+                      </div>
+                    </div>
+                    <div class="presenca-toggle">
+                      <button 
+                        class="toggle-btn" 
+                        [class.presente]="presencasMap()[aluno.id].presente === true"
+                        (click)="togglePresenca(aluno.id, true)"
+                      >
+                        ✓ Presente
+                      </button>
+                      <button 
+                        class="toggle-btn" 
+                        [class.ausente]="presencasMap()[aluno.id].presente === false"
+                        (click)="togglePresenca(aluno.id, false)"
+                      >
+                        ✕ Ausente
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="closePresencaModal()">Cancelar</button>
+            <button class="btn btn-success" (click)="savePresencas()" [disabled]="savingPresencas()">
+              @if (savingPresencas()) {
+                <span class="spinner"></span>
+              }
+              ✓ Salvar Presenças
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .greeting {
       margin-bottom: 1.5rem;
-
-      h2 {
-        font-size: 1.5rem;
-        margin-bottom: 0.25rem;
-      }
+      h2 { font-size: 1.5rem; margin-bottom: 0.25rem; }
     }
 
     .stats-grid {
@@ -195,20 +273,11 @@ import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
       grid-template-columns: repeat(4, 1fr);
       gap: 1.25rem;
 
-      @media (max-width: 1200px) {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      @media (max-width: 640px) {
-        grid-template-columns: 1fr;
-      }
+      @media (max-width: 1200px) { grid-template-columns: repeat(2, 1fr); }
+      @media (max-width: 640px) { grid-template-columns: 1fr; }
     }
 
-    .agenda-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
+    .agenda-list { display: flex; flex-direction: column; gap: 1rem; }
 
     .agenda-item {
       display: flex;
@@ -219,9 +288,7 @@ import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
       border-radius: var(--border-radius-sm);
       transition: background 0.2s;
 
-      &:hover {
-        background: var(--gray-100);
-      }
+      &:hover { background: var(--gray-100); }
     }
 
     .agenda-time {
@@ -234,57 +301,22 @@ import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
       border-radius: var(--border-radius-sm);
       border: 1px solid var(--gray-200);
 
-      .time-start {
-        font-weight: 600;
-        color: var(--primary);
-      }
-
-      .time-divider {
-        color: var(--gray-400);
-        font-size: 0.75rem;
-      }
-
-      .time-end {
-        color: var(--gray-500);
-        font-size: 0.875rem;
-      }
+      .time-start { font-weight: 600; color: var(--primary); }
+      .time-divider { color: var(--gray-400); font-size: 0.75rem; }
+      .time-end { color: var(--gray-500); font-size: 0.875rem; }
     }
 
-    .agenda-content {
-      flex: 1;
-    }
-
-    .agenda-title {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-
-    .agenda-meta {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .agenda-actions {
-      display: flex;
-      align-items: center;
-    }
+    .agenda-content { flex: 1; }
+    .agenda-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .agenda-meta { display: flex; align-items: center; gap: 0.75rem; }
+    .agenda-actions { display: flex; align-items: center; }
 
     .empty-state {
       text-align: center;
       padding: 3rem;
       color: var(--gray-500);
-
-      .empty-icon {
-        font-size: 3rem;
-        display: block;
-        margin-bottom: 1rem;
-      }
-
-      p {
-        font-size: 1rem;
-      }
+      .empty-icon { font-size: 3rem; display: block; margin-bottom: 1rem; }
+      p { font-size: 1rem; }
     }
 
     .turmas-grid {
@@ -292,13 +324,8 @@ import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
       grid-template-columns: repeat(3, 1fr);
       gap: 1.25rem;
 
-      @media (max-width: 1200px) {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      @media (max-width: 768px) {
-        grid-template-columns: 1fr;
-      }
+      @media (max-width: 1200px) { grid-template-columns: repeat(2, 1fr); }
+      @media (max-width: 768px) { grid-template-columns: 1fr; }
     }
 
     .turma-card {
@@ -308,54 +335,67 @@ import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
       border: 1px solid var(--gray-100);
       transition: all 0.2s;
 
-      &:hover {
-        border-color: var(--primary-light);
-        transform: translateY(-2px);
-      }
+      &:hover { border-color: var(--primary-light); transform: translateY(-2px); }
     }
 
-    .turma-header {
+    .turma-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+    .turma-idioma { font-size: 1.5rem; }
+    .turma-nome { font-size: 1rem; margin-bottom: 0.75rem; }
+    .turma-info { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.8125rem; color: var(--gray-500); margin-bottom: 1rem; }
+    .turma-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 0.75rem; border-top: 1px solid var(--gray-200); }
+    .alunos-count { font-size: 0.875rem; color: var(--gray-600); .count { font-weight: 700; color: var(--primary); } }
+
+    // Modal styles
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: var(--white); border-radius: var(--border-radius); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+    .modal-lg { max-width: 650px; }
+    .modal-header { display: flex; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--gray-100); }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; padding: 1rem 1.5rem; border-top: 1px solid var(--gray-100); }
+
+    .aula-info-bar {
+      display: flex;
+      gap: 2rem;
+      padding: 0.75rem 1rem;
+      background: var(--gray-50);
+      border-radius: var(--border-radius-sm);
+    }
+
+    .info-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; }
+    .info-icon { font-size: 1rem; }
+
+    .presenca-actions-bar { display: flex; gap: 0.5rem; }
+    .presenca-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .presenca-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--gray-50);
+      border-radius: var(--border-radius-sm);
+      border: 1px solid var(--gray-200);
     }
 
-    .turma-idioma {
-      font-size: 1.5rem;
-    }
+    .presenca-aluno { display: flex; align-items: center; gap: 0.75rem; }
+    .presenca-toggle { display: flex; gap: 0.5rem; }
+    .text-sm { font-size: 0.8125rem; }
 
-    .turma-nome {
-      font-size: 1rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .turma-info {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
+    .toggle-btn {
+      padding: 0.375rem 0.75rem;
+      border: 1px solid var(--gray-300);
+      background: var(--white);
+      border-radius: var(--border-radius-sm);
       font-size: 0.8125rem;
-      color: var(--gray-500);
-      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover { background: var(--gray-50); }
+      &.presente { background: var(--success); border-color: var(--success); color: white; }
+      &.ausente { background: var(--danger); border-color: var(--danger); color: white; }
     }
 
-    .turma-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 0.75rem;
-      border-top: 1px solid var(--gray-200);
-    }
-
-    .alunos-count {
-      font-size: 0.875rem;
-      color: var(--gray-600);
-
-      .count {
-        font-weight: 700;
-        color: var(--primary);
-      }
-    }
+    .loading-state, .empty-state-sm { text-align: center; padding: 2rem; color: var(--gray-500); }
   `]
 })
 export class DashboardComponent implements OnInit {
@@ -369,6 +409,14 @@ export class DashboardComponent implements OnInit {
   pagamentosPendentes = signal<Pagamento[]>([]);
   totalAlunos = signal(0);
   receitaMensal = signal(0);
+
+  // Modal de Presença
+  showPresencaModal = signal(false);
+  aulaPresenca = signal<Aula | null>(null);
+  alunosTurma = signal<Aluno[]>([]);
+  presencasMap = signal<{ [alunoId: number]: { presente: boolean } }>({});
+  loadingAlunos = signal(false);
+  savingPresencas = signal(false);
 
   ngOnInit(): void {
     this.loadData();
@@ -449,5 +497,91 @@ export class DashboardComponent implements OnInit {
       next: () => this.loadData(),
       error: () => {}
     });
+  }
+
+  // ======== Funções de Presença ========
+
+  openPresencaModal(aula: Aula): void {
+    this.aulaPresenca.set(aula);
+    this.showPresencaModal.set(true);
+    this.loadAlunosAndPresencas(aula);
+  }
+
+  closePresencaModal(): void {
+    this.showPresencaModal.set(false);
+    this.aulaPresenca.set(null);
+    this.alunosTurma.set([]);
+    this.presencasMap.set({});
+  }
+
+  loadAlunosAndPresencas(aula: Aula): void {
+    this.loadingAlunos.set(true);
+    this.apiService.getAlunosByTurma(aula.idTurma).subscribe({
+      next: alunos => {
+        this.alunosTurma.set(alunos);
+        
+        this.apiService.getPresencasByAula(aula.id).subscribe({
+          next: presencas => {
+            const map: { [key: number]: { presente: boolean } } = {};
+            presencas.forEach(p => {
+              map[p.idAluno] = { presente: p.presente };
+            });
+            alunos.forEach(a => {
+              if (!map[a.id]) {
+                map[a.id] = { presente: true }; // Default: presente
+              }
+            });
+            this.presencasMap.set(map);
+            this.loadingAlunos.set(false);
+          },
+          error: () => {
+            const map: { [key: number]: { presente: boolean } } = {};
+            alunos.forEach(a => map[a.id] = { presente: true });
+            this.presencasMap.set(map);
+            this.loadingAlunos.set(false);
+          }
+        });
+      },
+      error: () => this.loadingAlunos.set(false)
+    });
+  }
+
+  togglePresenca(alunoId: number, presente: boolean): void {
+    const current = { ...this.presencasMap() };
+    current[alunoId] = { presente };
+    this.presencasMap.set(current);
+  }
+
+  marcarTodos(presente: boolean): void {
+    const map: { [key: number]: { presente: boolean } } = {};
+    this.alunosTurma().forEach(a => map[a.id] = { presente });
+    this.presencasMap.set(map);
+  }
+
+  savePresencas(): void {
+    if (!this.aulaPresenca()) return;
+
+    this.savingPresencas.set(true);
+    const presencas = Object.entries(this.presencasMap()).map(([alunoId, data]) => ({
+      presente: data.presente,
+      idAula: this.aulaPresenca()!.id,
+      idAluno: parseInt(alunoId)
+    }));
+
+    this.apiService.registrarPresencasEmLote(this.aulaPresenca()!.id, presencas).subscribe({
+      next: () => {
+        this.savingPresencas.set(false);
+        this.closePresencaModal();
+        alert('Presenças registradas com sucesso!');
+      },
+      error: () => this.savingPresencas.set(false)
+    });
+  }
+
+  getInitials(nome: string): string {
+    const parts = nome.split(' ');
+    return parts.length >= 2 
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : nome.substring(0, 2).toUpperCase();
   }
 }

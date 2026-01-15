@@ -56,7 +56,7 @@ import { Aluno, Turma } from '../../core/models/user.model';
               <tr>
                 <th>Aluno</th>
                 <th>Email</th>
-                <th>Turma</th>
+                <th>Turmas</th>
                 <th>Telefone</th>
                 <th>Ações</th>
               </tr>
@@ -75,7 +75,17 @@ import { Aluno, Turma } from '../../core/models/user.model';
                   </td>
                   <td>{{ aluno.email }}</td>
                   <td>
-                    <span class="badge badge-primary">{{ aluno.nomeTurma }}</span>
+                    <div class="turmas-badges">
+                      @if (aluno.turmas && aluno.turmas.length > 0) {
+                        @for (turma of aluno.turmas; track turma.id) {
+                          <span class="badge badge-primary">{{ turma.nome }}</span>
+                        }
+                      } @else if (aluno.nomeTurma) {
+                        <span class="badge badge-primary">{{ aluno.nomeTurma }}</span>
+                      } @else {
+                        <span class="text-muted">-</span>
+                      }
+                    </div>
                   </td>
                   <td>{{ formatTelefone(aluno) }}</td>
                   <td>
@@ -99,7 +109,7 @@ import { Aluno, Turma } from '../../core/models/user.model';
     <!-- Modal -->
     @if (showModal()) {
       <div class="modal-overlay" (click)="closeModal()">
-        <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal modal-lg" (click)="$event.stopPropagation()">
           <div class="modal-header">
             <h3>{{ editingAluno() ? 'Editar Aluno' : 'Novo Aluno' }}</h3>
             <button class="btn btn-icon" (click)="closeModal()">✕</button>
@@ -153,13 +163,25 @@ import { Aluno, Turma } from '../../core/models/user.model';
               </div>
             </div>
 
+            <!-- Seleção de Múltiplas Turmas -->
             <div class="form-group">
-              <label class="form-label">Turma</label>
-              <select class="form-control" [(ngModel)]="form.idTurma" name="idTurma" required>
+              <label class="form-label">Turmas</label>
+              <p class="text-muted text-sm mb-2">O aluno pode participar de mais de uma turma</p>
+              <div class="turmas-selection">
                 @for (turma of turmas(); track turma.id) {
-                  <option [value]="turma.id">{{ turma.nome }}</option>
+                  <label class="turma-checkbox">
+                    <input 
+                      type="checkbox" 
+                      [checked]="isTurmaSelected(turma.id)"
+                      (change)="toggleTurma(turma.id)"
+                    />
+                    <div class="turma-checkbox-content">
+                      <span class="turma-name">{{ turma.nome }}</span>
+                      <span class="turma-info-small">{{ turma.idioma.label }} • {{ turma.nivel.label }}</span>
+                    </div>
+                  </label>
                 }
-              </select>
+              </div>
             </div>
 
             <div class="form-row">
@@ -189,7 +211,7 @@ import { Aluno, Turma } from '../../core/models/user.model';
               <button type="button" class="btn btn-secondary" (click)="closeModal()">
                 Cancelar
               </button>
-              <button type="submit" class="btn btn-primary" [disabled]="saving()">
+              <button type="submit" class="btn btn-primary" [disabled]="saving() || turmasSelecionadas.length === 0">
                 {{ editingAluno() ? 'Salvar' : 'Cadastrar' }}
               </button>
             </div>
@@ -206,20 +228,20 @@ import { Aluno, Turma } from '../../core/models/user.model';
       margin-bottom: 1.5rem;
     }
 
-    .filters {
-      padding: 1rem 1.5rem;
-    }
+    .filters { padding: 1rem 1.5rem; }
 
     .loading-state, .empty-state {
       text-align: center;
       padding: 4rem;
       color: var(--gray-500);
 
-      .empty-icon {
-        font-size: 4rem;
-        display: block;
-        margin-bottom: 1rem;
-      }
+      .empty-icon { font-size: 4rem; display: block; margin-bottom: 1rem; }
+    }
+
+    .turmas-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
     }
 
     .modal-overlay {
@@ -240,6 +262,8 @@ import { Aluno, Turma } from '../../core/models/user.model';
       max-height: 90vh;
       overflow-y: auto;
     }
+
+    .modal-lg { max-width: 600px; }
 
     .modal-header {
       display: flex;
@@ -265,6 +289,63 @@ import { Aluno, Turma } from '../../core/models/user.model';
       grid-template-columns: 1fr 2fr;
       gap: 1rem;
     }
+
+    .text-sm { font-size: 0.8125rem; }
+
+    // Turmas Selection
+    .turmas-selection {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--border-radius-sm);
+      padding: 0.5rem;
+    }
+
+    .turma-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--border-radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        background: var(--gray-50);
+        border-color: var(--primary-light);
+      }
+
+      &:has(input:checked) {
+        background: var(--primary-bg);
+        border-color: var(--primary);
+      }
+
+      input {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--primary);
+      }
+    }
+
+    .turma-checkbox-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    .turma-name {
+      font-weight: 500;
+      color: var(--gray-800);
+    }
+
+    .turma-info-small {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
   `]
 })
 export class AlunosComponent implements OnInit {
@@ -279,12 +360,13 @@ export class AlunosComponent implements OnInit {
   editingAluno = signal<Aluno | null>(null);
   filtroTurma = 0;
 
+  turmasSelecionadas: number[] = [];
+
   form = {
     nome: '',
     email: '',
     username: '',
     senha: '',
-    idTurma: 0,
     telefone: { codigoArea: '', numero: '' }
   };
 
@@ -296,9 +378,6 @@ export class AlunosComponent implements OnInit {
     this.apiService.getTurmas().subscribe({
       next: (turmas) => {
         this.turmas.set(turmas);
-        if (turmas.length > 0) {
-          this.form.idTurma = turmas[0].id;
-        }
       }
     });
 
@@ -322,8 +401,27 @@ export class AlunosComponent implements OnInit {
       this.alunosFiltrados.set(this.alunos());
     } else {
       this.alunosFiltrados.set(
-        this.alunos().filter(a => a.idTurma === this.filtroTurma)
+        this.alunos().filter(a => {
+          // Verificar se está em turmas (array) ou idTurma (legado)
+          if (a.turmas && a.turmas.length > 0) {
+            return a.turmas.some(t => t.id === this.filtroTurma);
+          }
+          return a.idTurma === this.filtroTurma;
+        })
       );
+    }
+  }
+
+  isTurmaSelected(turmaId: number): boolean {
+    return this.turmasSelecionadas.includes(turmaId);
+  }
+
+  toggleTurma(turmaId: number): void {
+    const index = this.turmasSelecionadas.indexOf(turmaId);
+    if (index > -1) {
+      this.turmasSelecionadas.splice(index, 1);
+    } else {
+      this.turmasSelecionadas.push(turmaId);
     }
   }
 
@@ -347,9 +445,9 @@ export class AlunosComponent implements OnInit {
       email: '',
       username: '',
       senha: '',
-      idTurma: this.turmas()[0]?.id || 0,
       telefone: { codigoArea: '', numero: '' }
     };
+    this.turmasSelecionadas = this.turmas().length > 0 ? [this.turmas()[0].id] : [];
     this.showModal.set(true);
   }
 
@@ -360,9 +458,18 @@ export class AlunosComponent implements OnInit {
       email: aluno.email,
       username: aluno.username,
       senha: '',
-      idTurma: aluno.idTurma,
       telefone: aluno.telefone || { codigoArea: '', numero: '' }
     };
+    
+    // Carregar turmas do aluno
+    if (aluno.turmas && aluno.turmas.length > 0) {
+      this.turmasSelecionadas = aluno.turmas.map(t => t.id);
+    } else if (aluno.idTurma) {
+      this.turmasSelecionadas = [aluno.idTurma];
+    } else {
+      this.turmasSelecionadas = [];
+    }
+    
     this.showModal.set(true);
   }
 
@@ -372,7 +479,14 @@ export class AlunosComponent implements OnInit {
 
   saveAluno(): void {
     this.saving.set(true);
-    const data = { ...this.form };
+    
+    // Enviar múltiplas turmas ou turma única (compatibilidade)
+    const data: any = { ...this.form };
+    
+    if (this.turmasSelecionadas.length === 1) {
+      data.idTurma = this.turmasSelecionadas[0];
+    }
+    data.idsTurmas = this.turmasSelecionadas;
 
     if (this.editingAluno()) {
       this.apiService.updateAluno(this.editingAluno()!.id, data).subscribe({
