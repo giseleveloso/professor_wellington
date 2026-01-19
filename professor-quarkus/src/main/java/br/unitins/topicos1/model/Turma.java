@@ -13,13 +13,20 @@ public class Turma extends DefaultEntity {
 
     private String nome;
     private Idioma idioma;
-    private Nivel nivel;
+    
+    @ManyToOne
+    @JoinColumn(name = "id_nivel_turma")
+    private NivelTurma nivelTurma;
+    
     private String horario;
     private String diasSemana;
     
     @ManyToOne
     @JoinColumn(name = "id_professor")
     private Professor professor;
+    
+    @OneToMany(mappedBy = "turma", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<HorarioDia> horariosPorDia;
     
     @OneToMany(mappedBy = "turma", cascade = CascadeType.ALL)
     private List<Aluno> alunos;
@@ -49,12 +56,12 @@ public class Turma extends DefaultEntity {
         this.idioma = idioma;
     }
 
-    public Nivel getNivel() {
-        return nivel;
+    public NivelTurma getNivelTurma() {
+        return nivelTurma;
     }
 
-    public void setNivel(Nivel nivel) {
-        this.nivel = nivel;
+    public void setNivelTurma(NivelTurma nivelTurma) {
+        this.nivelTurma = nivelTurma;
     }
 
     public String getHorario() {
@@ -79,6 +86,14 @@ public class Turma extends DefaultEntity {
 
     public void setProfessor(Professor professor) {
         this.professor = professor;
+    }
+
+    public List<HorarioDia> getHorariosPorDia() {
+        return horariosPorDia;
+    }
+
+    public void setHorariosPorDia(List<HorarioDia> horariosPorDia) {
+        this.horariosPorDia = horariosPorDia;
     }
 
     public List<Aluno> getAlunos() {

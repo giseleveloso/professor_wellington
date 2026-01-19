@@ -1,5 +1,7 @@
 package br.unitins.topicos1.dto;
 
+import java.util.List;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -13,12 +15,13 @@ public record TurmaDTO(
     Integer idIdioma,
     
     @NotNull(message = "Nível é obrigatório")
-    Integer idNivel,
+    Long idNivelTurma,
     
-    @NotBlank(message = "Horário é obrigatório")
     String horario,
     
     String diasSemana,
+    
+    List<HorarioDiaDTO> horariosPorDia,
     
     @NotNull(message = "Professor é obrigatório")
     Long idProfessor

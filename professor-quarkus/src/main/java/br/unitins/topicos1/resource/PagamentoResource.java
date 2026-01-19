@@ -114,6 +114,14 @@ public class PagamentoResource {
     }
 
     @PATCH
+    @Path("/{id}/desfazer")
+    @RolesAllowed({"Professor"})
+    public Response marcarComoNaoPago(@PathParam("id") Long id) {
+        pagamentoService.marcarComoNaoPago(id);
+        return Response.noContent().build();
+    }
+
+    @PATCH
     @Path("/atualizar-vencidos")
     @RolesAllowed({"Professor"})
     public Response atualizarStatusVencidos() {

@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { 
   Professor, Aluno, Turma, Aula, 
   Presenca, Desempenho, Pagamento, 
-  Video, MaterialExtraAula 
+  Video, MaterialExtraAula, NivelTurma 
 } from '../models/user.model';
 
 @Injectable({
@@ -191,6 +191,10 @@ export class ApiService {
     return this.http.patch<void>(`${this.apiUrl}/pagamentos/${id}/pagar`, {});
   }
 
+  marcarComoNaoPago(id: number): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/pagamentos/${id}/desfazer`, {});
+  }
+
   // ==================== VÍDEOS ====================
   getVideos(): Observable<Video[]> {
     return this.http.get<Video[]>(`${this.apiUrl}/videos`);
@@ -235,5 +239,34 @@ export class ApiService {
 
   deleteMaterial(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/materiais/${id}`);
+  }
+
+  // ==================== NÍVEIS DE TURMA ====================
+  getNiveisTurma(professorId: number): Observable<NivelTurma[]> {
+    return this.http.get<NivelTurma[]>(`${this.apiUrl}/niveis-turma/professor/${professorId}`);
+  }
+
+  getNivelTurma(id: number): Observable<NivelTurma> {
+    return this.http.get<NivelTurma>(`${this.apiUrl}/niveis-turma/${id}`);
+  }
+
+  createNivelTurma(professorId: number, data: any): Observable<NivelTurma> {
+    return this.http.post<NivelTurma>(`${this.apiUrl}/niveis-turma/professor/${professorId}`, data);
+  }
+
+  updateNivelTurma(id: number, data: any): Observable<NivelTurma> {
+    return this.http.put<NivelTurma>(`${this.apiUrl}/niveis-turma/${id}`, data);
+  }
+
+  deleteNivelTurma(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/niveis-turma/${id}`);
+  }
+
+  criarNiveisTurmaPadrao(professorId: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/niveis-turma/professor/${professorId}/padrao`, {});
+  }
+
+  reordenarNiveisTurma(professorId: number, ids: number[]): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/niveis-turma/professor/${professorId}/reordenar`, ids);
   }
 }

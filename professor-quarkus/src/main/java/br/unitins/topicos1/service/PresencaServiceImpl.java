@@ -8,6 +8,9 @@ import br.unitins.topicos1.dto.PresencaResponseDTO;
 import br.unitins.topicos1.model.Aluno;
 import br.unitins.topicos1.model.Aula;
 import br.unitins.topicos1.model.Presenca;
+import br.unitins.topicos1.model.StatusDeverCasa;
+import br.unitins.topicos1.model.StatusPreparacaoAula;
+import br.unitins.topicos1.model.StatusPresenca;
 import br.unitins.topicos1.repository.AlunoRepository;
 import br.unitins.topicos1.repository.AulaRepository;
 import br.unitins.topicos1.repository.PresencaRepository;
@@ -48,8 +51,7 @@ public class PresencaServiceImpl implements PresencaService {
         }
 
         Presenca presenca = new Presenca();
-        presenca.setPresente(dto.presente());
-        presenca.setObservacao(dto.observacao());
+        preencherPresenca(presenca, dto);
         presenca.setAula(aula);
         presenca.setAluno(aluno);
 
@@ -65,10 +67,34 @@ public class PresencaServiceImpl implements PresencaService {
             throw new ValidationException("id", "Presença não encontrada");
         }
 
-        presenca.setPresente(dto.presente());
-        presenca.setObservacao(dto.observacao());
+        preencherPresenca(presenca, dto);
 
         return PresencaResponseDTO.valueOf(presenca);
+    }
+
+    private void preencherPresenca(Presenca presenca, PresencaDTO dto) {
+        // Status de presença
+        if (dto.status() != null) {
+            presenca.setStatus(StatusPresenca.fromLabel(dto.status()));
+            presenca.setPresente(dto.status().equals("presente"));
+        } else if (dto.presente() != null) {
+            presenca.setPresente(dto.presente());
+            presenca.setStatus(dto.presente() ? StatusPresenca.PRESENTE : StatusPresenca.FALTA);
+        }
+
+        // Dever de casa
+        if (dto.deverCasa() != null) {
+            presenca.setDeverCasa(StatusDeverCasa.fromLabel(dto.deverCasa()));
+        }
+
+        // Preparação para aula
+        if (dto.preparacaoAula() != null) {
+            presenca.setPreparacaoAula(StatusPreparacaoAula.fromLabel(dto.preparacaoAula()));
+        }
+
+        // Comentário e observação
+        presenca.setComentario(dto.comentario());
+        presenca.setObservacao(dto.observacao());
     }
 
     @Override
@@ -131,12 +157,10 @@ public class PresencaServiceImpl implements PresencaService {
 
             Presenca existente = presencaRepository.findByAulaIdAndAlunoId(aulaId, dto.idAluno());
             if (existente != null) {
-                existente.setPresente(dto.presente());
-                existente.setObservacao(dto.observacao());
+                preencherPresenca(existente, dto);
             } else {
                 Presenca presenca = new Presenca();
-                presenca.setPresente(dto.presente());
-                presenca.setObservacao(dto.observacao());
+                preencherPresenca(presenca, dto);
                 presenca.setAula(aula);
                 presenca.setAluno(aluno);
                 presencaRepository.persist(presenca);

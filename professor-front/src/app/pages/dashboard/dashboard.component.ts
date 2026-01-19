@@ -158,7 +158,7 @@ import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
                 <div class="turma-card">
                   <div class="turma-header">
                     <span class="turma-idioma">{{ turma.idioma.label }}</span>
-                    <span class="turma-nivel badge badge-info">{{ turma.nivel.label }}</span>
+                    <span class="turma-nivel badge badge-info">{{ turma.nivelTurma?.codigo || 'Sem nível' }}</span>
                   </div>
                   <h4 class="turma-nome">{{ turma.nome }}</h4>
                   <div class="turma-info">

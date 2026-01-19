@@ -14,6 +14,6 @@ public interface TurmaService {
     List<TurmaResponseDTO> findAll();
     List<TurmaResponseDTO> findByProfessorId(Long professorId);
     List<TurmaResponseDTO> findByIdioma(Integer idIdioma);
-    List<TurmaResponseDTO> findByNivel(Integer idNivel);
+    List<TurmaResponseDTO> findByNivelTurma(Long idNivelTurma);
     List<TurmaResponseDTO> findByNome(String nome);
 }

@@ -79,8 +79,8 @@ public class TurmaResource {
     @GET
     @Path("/search/nivel")
     @RolesAllowed({"Professor"})
-    public Response findByNivel(@QueryParam("idNivel") Integer idNivel) {
-        return Response.ok(turmaService.findByNivel(idNivel)).build();
+    public Response findByNivelTurma(@QueryParam("idNivelTurma") Long idNivelTurma) {
+        return Response.ok(turmaService.findByNivelTurma(idNivelTurma)).build();
     }
 
     @GET

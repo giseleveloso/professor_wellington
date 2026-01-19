@@ -25,6 +25,8 @@ export interface Aluno {
   email: string;
   username: string;
   telefone?: Telefone;
+  telefoneResponsavel?: Telefone;
+  dataNascimento?: string;
   idTurma: number;
   nomeTurma: string;
   turmas?: TurmaSimples[];
@@ -45,12 +47,26 @@ export interface Turma {
   id: number;
   nome: string;
   idioma: EnumValue;
-  nivel: EnumValue;
+  nivelTurma: NivelTurmaSimples | null;
   horario: string;
   diasSemana: string;
+  horariosPorDia?: HorarioDia[];
   idProfessor: number;
   nomeProfessor: string;
   quantidadeAlunos: number;
+}
+
+export interface NivelTurmaSimples {
+  id: number;
+  codigo: string;
+  descricao: string;
+}
+
+export interface HorarioDia {
+  diaSemana: number;
+  diaNome: string;
+  horaInicio: string;
+  horaFim: string;
 }
 
 export interface Aula {
@@ -65,15 +81,34 @@ export interface Aula {
   nomeTurma: string;
 }
 
+// Status de presença do aluno na aula
+export type StatusPresenca = 'presente' | 'falta' | 'cancelada';
+export type StatusDeverCasa = 'feito' | 'nao_feito' | 'nao_aplica';
+export type StatusPreparacaoAula = 'feito' | 'nao_feito' | 'nao_aplica';
+
 export interface Presenca {
   id: number;
   presente: boolean;
+  status: StatusPresenca;
+  deverCasa: StatusDeverCasa;
+  preparacaoAula: StatusPreparacaoAula;
+  comentario: string;
   observacao: string;
   idAula: number;
   dataAula: string;
   topicoAula: string;
   idAluno: number;
   nomeAluno: string;
+}
+
+export interface PresencaRegistro {
+  idAluno: number;
+  idAula: number;
+  presente: boolean;
+  status: StatusPresenca;
+  deverCasa: StatusDeverCasa;
+  preparacaoAula: StatusPreparacaoAula;
+  comentario: string;
 }
 
 export interface Desempenho {
@@ -126,6 +161,14 @@ export interface MaterialExtraAula {
 export interface EnumValue {
   id: number;
   label: string;
+}
+
+// Nível de turma personalizável
+export interface NivelTurma {
+  id: number;
+  codigo: string;
+  descricao: string;
+  ordem: number;
 }
 
 // Estatísticas do Dashboard

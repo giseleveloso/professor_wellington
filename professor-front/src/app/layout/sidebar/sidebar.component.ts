@@ -178,8 +178,9 @@ export class SidebarComponent {
     { icon: '💰', label: 'Pagamentos', route: '/pagamentos' },
     { icon: '🎬', label: 'Vídeos', route: '/videos' },
     { icon: '🏷️', label: 'Categorias', route: '/categorias-video', professorOnly: true },
+    { icon: '📊', label: 'Níveis', route: '/niveis', professorOnly: true },
     { icon: '📚', label: 'Materiais', route: '/materiais' },
-    { icon: '📊', label: 'Meu Desempenho', route: '/meu-desempenho', alunoOnly: true },
+    { icon: '📈', label: 'Meu Desempenho', route: '/meu-desempenho', alunoOnly: true },
   ];
 
   shouldShowItem(item: MenuItem): boolean {

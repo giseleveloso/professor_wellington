@@ -19,5 +19,6 @@ public interface PagamentoService {
     List<PagamentoResponseDTO> findByTurmaId(Long turmaId);
     List<PagamentoResponseDTO> findByProfessorId(Long professorId);
     void marcarComoPago(Long id);
+    void marcarComoNaoPago(Long id);
     void atualizarStatusVencidos();
 }

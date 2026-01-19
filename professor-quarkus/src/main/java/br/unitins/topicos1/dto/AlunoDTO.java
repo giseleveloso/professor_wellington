@@ -1,8 +1,10 @@
 package br.unitins.topicos1.dto;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record AlunoDTO(
@@ -18,12 +20,17 @@ public record AlunoDTO(
     @Size(min = 3, max = 50, message = "Username deve ter entre 3 e 50 caracteres")
     String username,
     
-    @NotBlank(message = "Senha é obrigatória")
-    @Size(min = 6, message = "Senha deve ter no mínimo 6 caracteres")
     String senha,
+    
+    LocalDate dataNascimento,
     
     TelefoneDTO telefone,
     
-    @NotNull(message = "Turma é obrigatória")
-    Long idTurma
+    TelefoneDTO telefoneResponsavel,
+    
+    // Compatibilidade: turma única
+    Long idTurma,
+    
+    // Novo: múltiplas turmas
+    List<Long> idsTurmas
 ) {}

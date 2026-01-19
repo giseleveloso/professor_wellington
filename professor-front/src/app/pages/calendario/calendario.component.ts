@@ -2,7 +2,14 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
-import { Aula, Turma, Aluno } from '../../core/models/user.model';
+import { Aula, Turma, Aluno, StatusPresenca, StatusDeverCasa, StatusPreparacaoAula } from '../../core/models/user.model';
+
+interface PresencaAluno {
+  status: StatusPresenca;
+  deverCasa: StatusDeverCasa;
+  preparacaoAula: StatusPreparacaoAula;
+  comentario: string;
+}
 
 type ViewMode = 'month' | 'week';
 
@@ -257,15 +264,15 @@ interface WeekDay {
               </div>
             }
 
-            <!-- Registro de Presença -->
+            <!-- Registro de Presença Completo -->
             <div class="presenca-section">
               <div class="flex items-center justify-between mb-3">
-                <h4>📋 Lista de Presença</h4>
+                <h4>📋 Registro de Aula</h4>
                 <button class="btn btn-success btn-sm" (click)="savePresencas()" [disabled]="savingPresencas()">
                   @if (savingPresencas()) {
                     <span class="spinner"></span>
                   }
-                  ✓ Salvar Presenças
+                  ✓ Salvar Registros
                 </button>
               </div>
 
@@ -276,37 +283,106 @@ interface WeekDay {
                   <p>Nenhum aluno matriculado nesta turma</p>
                 </div>
               } @else {
-                <div class="presenca-list">
-                  <div class="presenca-header">
-                    <div class="presenca-actions-header">
-                      <button class="btn btn-sm btn-outline" (click)="marcarTodos(true)">Todos presentes</button>
-                      <button class="btn btn-sm btn-outline" (click)="marcarTodos(false)">Todos ausentes</button>
-                    </div>
-                  </div>
+                <div class="presenca-list-full">
                   @for (aluno of alunosTurma(); track aluno.id) {
-                    <div class="presenca-item">
-                      <div class="presenca-aluno">
-                        <div class="avatar">{{ getInitials(aluno.nome) }}</div>
-                        <div>
-                          <div class="font-medium">{{ aluno.nome }}</div>
-                          <div class="text-muted text-xs">{{ aluno.email }}</div>
+                    <div class="presenca-card">
+                      <div class="presenca-card-header">
+                        <div class="presenca-aluno">
+                          <div class="avatar">{{ getInitials(aluno.nome) }}</div>
+                          <div>
+                            <div class="font-medium">{{ aluno.nome }}</div>
+                            <div class="text-muted text-xs">{{ aluno.email }}</div>
+                          </div>
                         </div>
                       </div>
-                      <div class="presenca-toggle">
-                        <button 
-                          class="toggle-btn" 
-                          [class.presente]="presencasMap()[aluno.id].presente === true"
-                          (click)="togglePresenca(aluno.id, true)"
-                        >
-                          ✓ Presente
-                        </button>
-                        <button 
-                          class="toggle-btn" 
-                          [class.ausente]="presencasMap()[aluno.id].presente === false"
-                          (click)="togglePresenca(aluno.id, false)"
-                        >
-                          ✕ Ausente
-                        </button>
+
+                      <div class="presenca-card-body">
+                        <!-- Status da Presença -->
+                        <div class="presenca-row">
+                          <label class="presenca-label">Presença</label>
+                          <div class="status-buttons">
+                            <button 
+                              type="button"
+                              class="status-btn presente"
+                              [class.active]="presencasMap()[aluno.id]?.status === 'presente'"
+                              (click)="setStatus(aluno.id, 'presente')"
+                            >✓ Presente</button>
+                            <button 
+                              type="button"
+                              class="status-btn falta"
+                              [class.active]="presencasMap()[aluno.id]?.status === 'falta'"
+                              (click)="setStatus(aluno.id, 'falta')"
+                            >✕ Falta</button>
+                            <button 
+                              type="button"
+                              class="status-btn cancelada"
+                              [class.active]="presencasMap()[aluno.id]?.status === 'cancelada'"
+                              (click)="setStatus(aluno.id, 'cancelada')"
+                            >⊘ Cancelada</button>
+                          </div>
+                        </div>
+
+                        <!-- Dever de Casa -->
+                        <div class="presenca-row">
+                          <label class="presenca-label">📝 Dever de Casa</label>
+                          <div class="status-buttons small">
+                            <button 
+                              type="button"
+                              class="status-btn sm feito"
+                              [class.active]="presencasMap()[aluno.id]?.deverCasa === 'feito'"
+                              (click)="setDeverCasa(aluno.id, 'feito')"
+                            >Feito</button>
+                            <button 
+                              type="button"
+                              class="status-btn sm nao-feito"
+                              [class.active]="presencasMap()[aluno.id]?.deverCasa === 'nao_feito'"
+                              (click)="setDeverCasa(aluno.id, 'nao_feito')"
+                            >Não Feito</button>
+                            <button 
+                              type="button"
+                              class="status-btn sm na"
+                              [class.active]="presencasMap()[aluno.id]?.deverCasa === 'nao_aplica'"
+                              (click)="setDeverCasa(aluno.id, 'nao_aplica')"
+                            >N/A</button>
+                          </div>
+                        </div>
+
+                        <!-- Preparação para Aula -->
+                        <div class="presenca-row">
+                          <label class="presenca-label">📚 Preparação</label>
+                          <div class="status-buttons small">
+                            <button 
+                              type="button"
+                              class="status-btn sm feito"
+                              [class.active]="presencasMap()[aluno.id]?.preparacaoAula === 'feito'"
+                              (click)="setPreparacao(aluno.id, 'feito')"
+                            >Feito</button>
+                            <button 
+                              type="button"
+                              class="status-btn sm nao-feito"
+                              [class.active]="presencasMap()[aluno.id]?.preparacaoAula === 'nao_feito'"
+                              (click)="setPreparacao(aluno.id, 'nao_feito')"
+                            >Não Feito</button>
+                            <button 
+                              type="button"
+                              class="status-btn sm na"
+                              [class.active]="presencasMap()[aluno.id]?.preparacaoAula === 'nao_aplica'"
+                              (click)="setPreparacao(aluno.id, 'nao_aplica')"
+                            >N/A</button>
+                          </div>
+                        </div>
+
+                        <!-- Comentário -->
+                        <div class="presenca-row comentario-row">
+                          <label class="presenca-label">💬 Comentário</label>
+                          <textarea 
+                            class="form-control comentario-input"
+                            placeholder="Observações sobre o aluno nesta aula..."
+                            [value]="presencasMap()[aluno.id]?.comentario || ''"
+                            (input)="setComentario(aluno.id, $event)"
+                            rows="2"
+                          ></textarea>
+                        </div>
                       </div>
                     </div>
                   }
@@ -563,27 +639,61 @@ interface WeekDay {
     .info-label { font-size: 0.75rem; color: var(--gray-500); }
     .info-value { font-weight: 600; }
 
-    // Presença styles
+    // Presença styles - Full version
     .presenca-section { background: var(--gray-50); border-radius: var(--border-radius); padding: 1rem; }
-    .presenca-header { margin-bottom: 1rem; }
-    .presenca-actions-header { display: flex; gap: 0.5rem; }
-    .presenca-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .presenca-list-full { display: flex; flex-direction: column; gap: 1rem; }
     
-    .presenca-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.75rem 1rem;
+    .presenca-card {
       background: var(--white);
-      border-radius: var(--border-radius-sm);
+      border-radius: var(--border-radius);
       border: 1px solid var(--gray-200);
+      overflow: hidden;
+    }
+
+    .presenca-card-header {
+      padding: 0.75rem 1rem;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .presenca-card-body {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
     }
 
     .presenca-aluno { display: flex; align-items: center; gap: 0.75rem; }
-    .presenca-toggle { display: flex; gap: 0.5rem; }
     .text-xs { font-size: 0.75rem; }
 
-    .toggle-btn {
+    .presenca-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .comentario-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+    }
+
+    .presenca-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      min-width: 100px;
+    }
+
+    .status-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+
+      &.small { gap: 0.25rem; }
+    }
+
+    .status-btn {
       padding: 0.375rem 0.75rem;
       border: 1px solid var(--gray-300);
       background: var(--white);
@@ -593,8 +703,20 @@ interface WeekDay {
       transition: all 0.2s;
 
       &:hover { background: var(--gray-50); }
-      &.presente { background: var(--success); border-color: var(--success); color: white; }
-      &.ausente { background: var(--danger); border-color: var(--danger); color: white; }
+
+      &.sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+
+      &.presente.active { background: var(--success); border-color: var(--success); color: white; }
+      &.falta.active { background: var(--danger); border-color: var(--danger); color: white; }
+      &.cancelada.active { background: var(--gray-500); border-color: var(--gray-500); color: white; }
+      &.feito.active { background: var(--success); border-color: var(--success); color: white; }
+      &.nao-feito.active { background: var(--warning); border-color: var(--warning); color: white; }
+      &.na.active { background: var(--gray-400); border-color: var(--gray-400); color: white; }
+    }
+
+    .comentario-input {
+      font-size: 0.8125rem;
+      resize: none;
     }
 
     .loading-state, .empty-state-sm { text-align: center; padding: 2rem; color: var(--gray-500); }
@@ -606,7 +728,7 @@ export class CalendarioComponent implements OnInit {
   turmas = signal<Turma[]>([]);
   aulas = signal<Aula[]>([]);
   alunosTurma = signal<Aluno[]>([]);
-  presencasMap = signal<{ [alunoId: number]: { presente: boolean } }>({});
+  presencasMap = signal<{ [alunoId: number]: PresencaAluno }>({});
   
   showModal = signal(false);
   showDetailsModal = signal(false);
@@ -812,21 +934,36 @@ export class CalendarioComponent implements OnInit {
         
         this.apiService.getPresencasByAula(aula.id).subscribe({
           next: presencas => {
-            const map: { [key: number]: { presente: boolean } } = {};
+            const map: { [key: number]: PresencaAluno } = {};
             presencas.forEach(p => {
-              map[p.idAluno] = { presente: p.presente };
+              map[p.idAluno] = { 
+                status: p.status || (p.presente ? 'presente' : 'falta'),
+                deverCasa: p.deverCasa || 'nao_aplica',
+                preparacaoAula: p.preparacaoAula || 'nao_aplica',
+                comentario: p.comentario || ''
+              };
             });
             alunos.forEach(a => {
               if (!map[a.id]) {
-                map[a.id] = { presente: true };
+                map[a.id] = { 
+                  status: 'presente',
+                  deverCasa: 'nao_aplica',
+                  preparacaoAula: 'nao_aplica',
+                  comentario: ''
+                };
               }
             });
             this.presencasMap.set(map);
             this.loadingAlunos.set(false);
           },
           error: () => {
-            const map: { [key: number]: { presente: boolean } } = {};
-            alunos.forEach(a => map[a.id] = { presente: true });
+            const map: { [key: number]: PresencaAluno } = {};
+            alunos.forEach(a => map[a.id] = { 
+              status: 'presente',
+              deverCasa: 'nao_aplica',
+              preparacaoAula: 'nao_aplica',
+              comentario: ''
+            });
             this.presencasMap.set(map);
             this.loadingAlunos.set(false);
           }
@@ -836,16 +973,29 @@ export class CalendarioComponent implements OnInit {
     });
   }
 
-  togglePresenca(alunoId: number, presente: boolean): void {
+  setStatus(alunoId: number, status: StatusPresenca): void {
     const current = { ...this.presencasMap() };
-    current[alunoId] = { presente };
+    current[alunoId] = { ...current[alunoId], status };
     this.presencasMap.set(current);
   }
 
-  marcarTodos(presente: boolean): void {
-    const map: { [key: number]: { presente: boolean } } = {};
-    this.alunosTurma().forEach(a => map[a.id] = { presente });
-    this.presencasMap.set(map);
+  setDeverCasa(alunoId: number, deverCasa: StatusDeverCasa): void {
+    const current = { ...this.presencasMap() };
+    current[alunoId] = { ...current[alunoId], deverCasa };
+    this.presencasMap.set(current);
+  }
+
+  setPreparacao(alunoId: number, preparacaoAula: StatusPreparacaoAula): void {
+    const current = { ...this.presencasMap() };
+    current[alunoId] = { ...current[alunoId], preparacaoAula };
+    this.presencasMap.set(current);
+  }
+
+  setComentario(alunoId: number, event: Event): void {
+    const input = event.target as HTMLTextAreaElement;
+    const current = { ...this.presencasMap() };
+    current[alunoId] = { ...current[alunoId], comentario: input.value };
+    this.presencasMap.set(current);
   }
 
   savePresencas(): void {
@@ -853,7 +1003,11 @@ export class CalendarioComponent implements OnInit {
 
     this.savingPresencas.set(true);
     const presencas = Object.entries(this.presencasMap()).map(([alunoId, data]) => ({
-      presente: data.presente,
+      presente: data.status === 'presente',
+      status: data.status,
+      deverCasa: data.deverCasa,
+      preparacaoAula: data.preparacaoAula,
+      comentario: data.comentario,
       idAula: this.selectedAula()!.id,
       idAluno: parseInt(alunoId)
     }));
@@ -861,7 +1015,7 @@ export class CalendarioComponent implements OnInit {
     this.apiService.registrarPresencasEmLote(this.selectedAula()!.id, presencas).subscribe({
       next: () => {
         this.savingPresencas.set(false);
-        alert('Presenças salvas com sucesso!');
+        alert('Registros salvos com sucesso!');
       },
       error: () => this.savingPresencas.set(false)
     });

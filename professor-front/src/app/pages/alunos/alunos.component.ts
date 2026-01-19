@@ -1,8 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { Aluno, Turma } from '../../core/models/user.model';
+
+type TabView = 'todos' | 'aniversariantes';
 
 @Component({
   selector: 'app-alunos',
@@ -19,90 +21,164 @@ import { Aluno, Turma } from '../../core/models/user.model';
       </button>
     </div>
 
-    <!-- Filtro por Turma -->
-    <div class="filters card mb-4">
-      <div class="flex items-center gap-4">
-        <label class="form-label mb-0">Filtrar por turma:</label>
-        <select class="form-control" style="width: auto;" [(ngModel)]="filtroTurma" (change)="filterAlunos()">
-          <option [value]="0">Todas as turmas</option>
-          @for (turma of turmas(); track turma.id) {
-            <option [value]="turma.id">{{ turma.nome }}</option>
-          }
-        </select>
-      </div>
+    <!-- Tabs -->
+    <div class="tabs-container mb-4">
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab === 'todos'"
+        (click)="activeTab = 'todos'"
+      >
+        👥 Todos os Alunos
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab === 'aniversariantes'"
+        (click)="activeTab = 'aniversariantes'"
+      >
+        🎂 Aniversariantes da Semana
+        @if (aniversariantesSemana().length > 0) {
+          <span class="tab-badge">{{ aniversariantesSemana().length }}</span>
+        }
+      </button>
     </div>
 
-    @if (loading()) {
-      <div class="loading-state">
-        <span class="spinner"></span>
-        <p>Carregando alunos...</p>
-      </div>
-    } @else if (alunosFiltrados().length === 0) {
-      <div class="card">
-        <div class="empty-state">
-          <span class="empty-icon">🎓</span>
-          <h3>Nenhum aluno encontrado</h3>
-          <p>Cadastre seu primeiro aluno</p>
-          <button class="btn btn-primary mt-4" (click)="openModal()">
-            Cadastrar Aluno
-          </button>
+    <!-- Tab: Todos os Alunos -->
+    @if (activeTab === 'todos') {
+      <!-- Filtro por Turma -->
+      <div class="filters card mb-4">
+        <div class="flex items-center gap-4">
+          <label class="form-label mb-0">Filtrar por turma:</label>
+          <select class="form-control" style="width: auto;" [(ngModel)]="filtroTurma" (change)="filterAlunos()">
+            <option [value]="0">Todas as turmas</option>
+            @for (turma of turmas(); track turma.id) {
+              <option [value]="turma.id">{{ turma.nome }}</option>
+            }
+          </select>
         </div>
       </div>
-    } @else {
-      <div class="card">
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Aluno</th>
-                <th>Email</th>
-                <th>Turmas</th>
-                <th>Telefone</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (aluno of alunosFiltrados(); track aluno.id) {
+
+      @if (loading()) {
+        <div class="loading-state">
+          <span class="spinner"></span>
+          <p>Carregando alunos...</p>
+        </div>
+      } @else if (alunosFiltrados().length === 0) {
+        <div class="card">
+          <div class="empty-state">
+            <span class="empty-icon">🎓</span>
+            <h3>Nenhum aluno encontrado</h3>
+            <p>Cadastre seu primeiro aluno</p>
+            <button class="btn btn-primary mt-4" (click)="openModal()">
+              Cadastrar Aluno
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead>
                 <tr>
-                  <td>
-                    <div class="flex items-center gap-3">
-                      <div class="avatar">{{ getInitials(aluno.nome) }}</div>
-                      <div>
-                        <div class="font-semibold">{{ aluno.nome }}</div>
-                        <div class="text-muted" style="font-size: 0.75rem;">{{ aluno.username }}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>{{ aluno.email }}</td>
-                  <td>
-                    <div class="turmas-badges">
-                      @if (aluno.turmas && aluno.turmas.length > 0) {
-                        @for (turma of aluno.turmas; track turma.id) {
-                          <span class="badge badge-primary">{{ turma.nome }}</span>
-                        }
-                      } @else if (aluno.nomeTurma) {
-                        <span class="badge badge-primary">{{ aluno.nomeTurma }}</span>
-                      } @else {
-                        <span class="text-muted">-</span>
-                      }
-                    </div>
-                  </td>
-                  <td>{{ formatTelefone(aluno) }}</td>
-                  <td>
-                    <div class="flex gap-2">
-                      <button class="btn btn-outline btn-sm" (click)="editAluno(aluno)">
-                        Editar
-                      </button>
-                      <button class="btn btn-danger btn-sm" (click)="deleteAluno(aluno.id)">
-                        Excluir
-                      </button>
-                    </div>
-                  </td>
+                  <th>Aluno</th>
+                  <th>Email</th>
+                  <th>Turmas</th>
+                  <th>Telefone</th>
+                  <th>Nascimento</th>
+                  <th>Ações</th>
                 </tr>
-              }
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                @for (aluno of alunosFiltrados(); track aluno.id) {
+                  <tr>
+                    <td>
+                      <div class="flex items-center gap-3">
+                        <div class="avatar">{{ getInitials(aluno.nome) }}</div>
+                        <div>
+                          <div class="font-semibold">{{ aluno.nome }}</div>
+                          <div class="text-muted" style="font-size: 0.75rem;">{{ aluno.username }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{{ aluno.email }}</td>
+                    <td>
+                      <div class="turmas-badges">
+                        @if (aluno.turmas && aluno.turmas.length > 0) {
+                          @for (turma of aluno.turmas; track turma.id) {
+                            <span class="badge badge-primary">{{ turma.nome }}</span>
+                          }
+                        } @else if (aluno.nomeTurma) {
+                          <span class="badge badge-primary">{{ aluno.nomeTurma }}</span>
+                        } @else {
+                          <span class="text-muted">-</span>
+                        }
+                      </div>
+                    </td>
+                    <td>{{ formatTelefone(aluno.telefone) }}</td>
+                    <td>{{ formatDataNascimento(aluno.dataNascimento) }}</td>
+                    <td>
+                      <div class="flex gap-2">
+                        <button class="btn btn-outline btn-sm" (click)="editAluno(aluno)">
+                          Editar
+                        </button>
+                        <button class="btn btn-danger btn-sm" (click)="deleteAluno(aluno.id)">
+                          Excluir
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
+      }
+    }
+
+    <!-- Tab: Aniversariantes da Semana -->
+    @if (activeTab === 'aniversariantes') {
+      <div class="card">
+        @if (aniversariantesSemana().length === 0) {
+          <div class="empty-state">
+            <span class="empty-icon">🎂</span>
+            <h3>Nenhum aniversariante esta semana</h3>
+            <p class="text-muted">Os aniversariantes dos próximos 7 dias aparecerão aqui</p>
+          </div>
+        } @else {
+          <div class="aniversariantes-grid">
+            @for (aluno of aniversariantesSemana(); track aluno.id) {
+              <div class="aniversariante-card">
+                <div class="aniversariante-avatar">
+                  <div class="avatar avatar-lg">{{ getInitials(aluno.nome) }}</div>
+                  <span class="birthday-icon">🎂</span>
+                </div>
+                <div class="aniversariante-info">
+                  <h4>{{ aluno.nome }}</h4>
+                  <p class="aniversariante-data">
+                    {{ formatDataAniversario(aluno.dataNascimento) }}
+                    <span class="dias-restantes">{{ getDiasRestantes(aluno.dataNascimento) }}</span>
+                  </p>
+                  <div class="aniversariante-turmas">
+                    @if (aluno.turmas && aluno.turmas.length > 0) {
+                      @for (turma of aluno.turmas; track turma.id) {
+                        <span class="badge badge-primary badge-sm">{{ turma.nome }}</span>
+                      }
+                    } @else if (aluno.nomeTurma) {
+                      <span class="badge badge-primary badge-sm">{{ aluno.nomeTurma }}</span>
+                    }
+                  </div>
+                </div>
+                <div class="aniversariante-actions">
+                  @if (aluno.telefone) {
+                    <a [href]="'https://wa.me/55' + aluno.telefone.codigoArea + aluno.telefone.numero" 
+                       target="_blank" class="btn btn-success btn-sm">
+                      📱 WhatsApp
+                    </a>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
       </div>
     }
 
@@ -127,15 +203,26 @@ import { Aluno, Turma } from '../../core/models/user.model';
               />
             </div>
 
-            <div class="form-group">
-              <label class="form-label">Email</label>
-              <input 
-                type="email" 
-                class="form-control" 
-                [(ngModel)]="form.email" 
-                name="email"
-                required
-              />
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input 
+                  type="email" 
+                  class="form-control" 
+                  [(ngModel)]="form.email" 
+                  name="email"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Data de Nascimento</label>
+                <input 
+                  type="date" 
+                  class="form-control" 
+                  [(ngModel)]="form.dataNascimento" 
+                  name="dataNascimento"
+                />
+              </div>
             </div>
 
             <div class="form-row">
@@ -177,33 +264,59 @@ import { Aluno, Turma } from '../../core/models/user.model';
                     />
                     <div class="turma-checkbox-content">
                       <span class="turma-name">{{ turma.nome }}</span>
-                      <span class="turma-info-small">{{ turma.idioma.label }} • {{ turma.nivel.label }}</span>
+                      <span class="turma-info-small">{{ turma.idioma.label }} • {{ turma.nivelTurma?.codigo || 'Sem nível' }}</span>
                     </div>
                   </label>
                 }
               </div>
             </div>
 
-            <div class="form-row">
+            <!-- Telefones -->
+            <div class="telefones-section">
+              <h4 class="section-title">📱 Telefones</h4>
+              
+              <!-- Telefone do Aluno -->
               <div class="form-group">
-                <label class="form-label">DDD</label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  [(ngModel)]="form.telefone.codigoArea" 
-                  name="codigoArea"
-                  maxlength="2"
-                />
+                <label class="form-label">Celular do Aluno</label>
+                <div class="telefone-row">
+                  <input 
+                    type="text" 
+                    class="form-control ddd-input" 
+                    [(ngModel)]="form.telefone.codigoArea" 
+                    name="codigoArea"
+                    maxlength="2"
+                    placeholder="DDD"
+                  />
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    [(ngModel)]="form.telefone.numero" 
+                    name="numero"
+                    placeholder="Número"
+                  />
+                </div>
               </div>
 
+              <!-- Telefone do Responsável -->
               <div class="form-group">
-                <label class="form-label">Telefone</label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  [(ngModel)]="form.telefone.numero" 
-                  name="numero"
-                />
+                <label class="form-label">Celular do Responsável</label>
+                <div class="telefone-row">
+                  <input 
+                    type="text" 
+                    class="form-control ddd-input" 
+                    [(ngModel)]="form.telefoneResponsavel.codigoArea" 
+                    name="codigoAreaResp"
+                    maxlength="2"
+                    placeholder="DDD"
+                  />
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    [(ngModel)]="form.telefoneResponsavel.numero" 
+                    name="numeroResp"
+                    placeholder="Número"
+                  />
+                </div>
               </div>
             </div>
 
@@ -228,6 +341,47 @@ import { Aluno, Turma } from '../../core/models/user.model';
       margin-bottom: 1.5rem;
     }
 
+    .tabs-container {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 2px solid var(--gray-200);
+      padding-bottom: 0;
+    }
+
+    .tab-btn {
+      padding: 0.75rem 1.25rem;
+      border: none;
+      background: transparent;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &:hover {
+        color: var(--gray-800);
+      }
+
+      &.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+      }
+    }
+
+    .tab-badge {
+      background: var(--primary);
+      color: white;
+      font-size: 0.75rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
     .filters { padding: 1rem 1.5rem; }
 
     .loading-state, .empty-state {
@@ -244,6 +398,75 @@ import { Aluno, Turma } from '../../core/models/user.model';
       gap: 0.25rem;
     }
 
+    // Aniversariantes
+    .aniversariantes-grid {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .aniversariante-card {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--gray-100);
+
+      &:last-child { border-bottom: none; }
+
+      &:hover {
+        background: var(--gray-50);
+      }
+    }
+
+    .aniversariante-avatar {
+      position: relative;
+
+      .avatar-lg {
+        width: 56px;
+        height: 56px;
+        font-size: 1.25rem;
+      }
+
+      .birthday-icon {
+        position: absolute;
+        bottom: -4px;
+        right: -4px;
+        font-size: 1.25rem;
+      }
+    }
+
+    .aniversariante-info {
+      flex: 1;
+
+      h4 { margin-bottom: 0.25rem; }
+    }
+
+    .aniversariante-data {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .dias-restantes {
+      background: var(--primary-bg);
+      color: var(--primary);
+      font-size: 0.75rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .aniversariante-turmas {
+      margin-top: 0.5rem;
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .badge-sm { font-size: 0.7rem; padding: 0.125rem 0.375rem; }
+
+    // Modal
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -286,11 +509,33 @@ import { Aluno, Turma } from '../../core/models/user.model';
 
     .form-row {
       display: grid;
-      grid-template-columns: 1fr 2fr;
+      grid-template-columns: 1fr 1fr;
       gap: 1rem;
     }
 
     .text-sm { font-size: 0.8125rem; }
+
+    // Telefones Section
+    .telefones-section {
+      background: var(--gray-50);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .section-title {
+      font-size: 0.9375rem;
+      margin-bottom: 1rem;
+      color: var(--gray-700);
+    }
+
+    .telefone-row {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 0.5rem;
+    }
+
+    .ddd-input { text-align: center; }
 
     // Turmas Selection
     .turmas-selection {
@@ -359,6 +604,7 @@ export class AlunosComponent implements OnInit {
   saving = signal(false);
   editingAluno = signal<Aluno | null>(null);
   filtroTurma = 0;
+  activeTab: TabView = 'todos';
 
   turmasSelecionadas: number[] = [];
 
@@ -367,8 +613,36 @@ export class AlunosComponent implements OnInit {
     email: '',
     username: '',
     senha: '',
-    telefone: { codigoArea: '', numero: '' }
+    dataNascimento: '',
+    telefone: { codigoArea: '', numero: '' },
+    telefoneResponsavel: { codigoArea: '', numero: '' }
   };
+
+  aniversariantesSemana = computed(() => {
+    const hoje = new Date();
+    const seteDias = new Date();
+    seteDias.setDate(hoje.getDate() + 7);
+
+    return this.alunos()
+      .filter(a => {
+        if (!a.dataNascimento) return false;
+        
+        const nascimento = new Date(a.dataNascimento + 'T00:00:00');
+        const aniversarioEsteAno = new Date(hoje.getFullYear(), nascimento.getMonth(), nascimento.getDate());
+        
+        // Se já passou, verificar ano que vem
+        if (aniversarioEsteAno < hoje) {
+          aniversarioEsteAno.setFullYear(hoje.getFullYear() + 1);
+        }
+        
+        return aniversarioEsteAno >= hoje && aniversarioEsteAno <= seteDias;
+      })
+      .sort((a, b) => {
+        const dateA = this.getProximoAniversario(a.dataNascimento!);
+        const dateB = this.getProximoAniversario(b.dataNascimento!);
+        return dateA.getTime() - dateB.getTime();
+      });
+  });
 
   ngOnInit(): void {
     this.loadData();
@@ -402,7 +676,6 @@ export class AlunosComponent implements OnInit {
     } else {
       this.alunosFiltrados.set(
         this.alunos().filter(a => {
-          // Verificar se está em turmas (array) ou idTurma (legado)
           if (a.turmas && a.turmas.length > 0) {
             return a.turmas.some(t => t.id === this.filtroTurma);
           }
@@ -433,9 +706,47 @@ export class AlunosComponent implements OnInit {
     return nome.substring(0, 2).toUpperCase();
   }
 
-  formatTelefone(aluno: Aluno): string {
-    if (!aluno.telefone) return '-';
-    return `(${aluno.telefone.codigoArea}) ${aluno.telefone.numero}`;
+  formatTelefone(telefone?: { codigoArea: string; numero: string }): string {
+    if (!telefone || !telefone.numero) return '-';
+    return `(${telefone.codigoArea}) ${telefone.numero}`;
+  }
+
+  formatDataNascimento(data?: string): string {
+    if (!data) return '-';
+    return new Date(data + 'T00:00:00').toLocaleDateString('pt-BR');
+  }
+
+  formatDataAniversario(data?: string): string {
+    if (!data) return '-';
+    const d = new Date(data + 'T00:00:00');
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
+  }
+
+  getProximoAniversario(dataNascimento: string): Date {
+    const hoje = new Date();
+    const nascimento = new Date(dataNascimento + 'T00:00:00');
+    const aniversario = new Date(hoje.getFullYear(), nascimento.getMonth(), nascimento.getDate());
+    
+    if (aniversario < hoje) {
+      aniversario.setFullYear(hoje.getFullYear() + 1);
+    }
+    
+    return aniversario;
+  }
+
+  getDiasRestantes(dataNascimento?: string): string {
+    if (!dataNascimento) return '';
+    
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const aniversario = this.getProximoAniversario(dataNascimento);
+    
+    const diffTime = aniversario.getTime() - hoje.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return '🎉 Hoje!';
+    if (diffDays === 1) return 'Amanhã';
+    return `Em ${diffDays} dias`;
   }
 
   openModal(): void {
@@ -445,7 +756,9 @@ export class AlunosComponent implements OnInit {
       email: '',
       username: '',
       senha: '',
-      telefone: { codigoArea: '', numero: '' }
+      dataNascimento: '',
+      telefone: { codigoArea: '', numero: '' },
+      telefoneResponsavel: { codigoArea: '', numero: '' }
     };
     this.turmasSelecionadas = this.turmas().length > 0 ? [this.turmas()[0].id] : [];
     this.showModal.set(true);
@@ -458,10 +771,11 @@ export class AlunosComponent implements OnInit {
       email: aluno.email,
       username: aluno.username,
       senha: '',
-      telefone: aluno.telefone || { codigoArea: '', numero: '' }
+      dataNascimento: aluno.dataNascimento || '',
+      telefone: aluno.telefone || { codigoArea: '', numero: '' },
+      telefoneResponsavel: aluno.telefoneResponsavel || { codigoArea: '', numero: '' }
     };
     
-    // Carregar turmas do aluno
     if (aluno.turmas && aluno.turmas.length > 0) {
       this.turmasSelecionadas = aluno.turmas.map(t => t.id);
     } else if (aluno.idTurma) {
@@ -480,7 +794,6 @@ export class AlunosComponent implements OnInit {
   saveAluno(): void {
     this.saving.set(true);
     
-    // Enviar múltiplas turmas ou turma única (compatibilidade)
     const data: any = { ...this.form };
     
     if (this.turmasSelecionadas.length === 1) {

@@ -1,14 +1,19 @@
 package br.unitins.topicos1.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import br.unitins.topicos1.dto.HorarioDiaDTO;
 import br.unitins.topicos1.dto.TurmaDTO;
 import br.unitins.topicos1.dto.TurmaResponseDTO;
+import br.unitins.topicos1.model.HorarioDia;
 import br.unitins.topicos1.model.Idioma;
-import br.unitins.topicos1.model.Nivel;
+import br.unitins.topicos1.model.NivelTurma;
 import br.unitins.topicos1.model.Professor;
 import br.unitins.topicos1.model.Turma;
+import br.unitins.topicos1.repository.HorarioDiaRepository;
+import br.unitins.topicos1.repository.NivelTurmaRepository;
 import br.unitins.topicos1.repository.ProfessorRepository;
 import br.unitins.topicos1.repository.TurmaRepository;
 import br.unitins.topicos1.validation.ValidationException;
@@ -25,6 +30,12 @@ public class TurmaServiceImpl implements TurmaService {
     @Inject
     ProfessorRepository professorRepository;
 
+    @Inject
+    NivelTurmaRepository nivelTurmaRepository;
+
+    @Inject
+    HorarioDiaRepository horarioDiaRepository;
+
     @Override
     @Transactional
     public TurmaResponseDTO create(TurmaDTO dto) {
@@ -36,12 +47,38 @@ public class TurmaServiceImpl implements TurmaService {
         Turma turma = new Turma();
         turma.setNome(dto.nome());
         turma.setIdioma(Idioma.valueOf(dto.idIdioma()));
-        turma.setNivel(Nivel.valueOf(dto.idNivel()));
+        
+        // Nível da turma
+        if (dto.idNivelTurma() != null) {
+            NivelTurma nivelTurma = nivelTurmaRepository.findById(dto.idNivelTurma());
+            if (nivelTurma == null) {
+                throw new ValidationException("idNivelTurma", "Nível não encontrado");
+            }
+            turma.setNivelTurma(nivelTurma);
+        }
+        
         turma.setHorario(dto.horario());
         turma.setDiasSemana(dto.diasSemana());
         turma.setProfessor(professor);
 
         turmaRepository.persist(turma);
+
+        // Horários por dia
+        if (dto.horariosPorDia() != null && !dto.horariosPorDia().isEmpty()) {
+            List<HorarioDia> horarios = new ArrayList<>();
+            for (HorarioDiaDTO h : dto.horariosPorDia()) {
+                HorarioDia horario = new HorarioDia();
+                horario.setDiaSemana(h.diaSemana());
+                horario.setDiaNome(h.diaNome());
+                horario.setHoraInicio(h.horaInicio());
+                horario.setHoraFim(h.horaFim());
+                horario.setTurma(turma);
+                horarioDiaRepository.persist(horario);
+                horarios.add(horario);
+            }
+            turma.setHorariosPorDia(horarios);
+        }
+
         return TurmaResponseDTO.valueOf(turma);
     }
 
@@ -55,7 +92,16 @@ public class TurmaServiceImpl implements TurmaService {
 
         turma.setNome(dto.nome());
         turma.setIdioma(Idioma.valueOf(dto.idIdioma()));
-        turma.setNivel(Nivel.valueOf(dto.idNivel()));
+        
+        // Nível da turma
+        if (dto.idNivelTurma() != null) {
+            NivelTurma nivelTurma = nivelTurmaRepository.findById(dto.idNivelTurma());
+            if (nivelTurma == null) {
+                throw new ValidationException("idNivelTurma", "Nível não encontrado");
+            }
+            turma.setNivelTurma(nivelTurma);
+        }
+        
         turma.setHorario(dto.horario());
         turma.setDiasSemana(dto.diasSemana());
 
@@ -65,6 +111,28 @@ public class TurmaServiceImpl implements TurmaService {
                 throw new ValidationException("idProfessor", "Professor não encontrado");
             }
             turma.setProfessor(professor);
+        }
+
+        // Atualizar horários por dia
+        if (dto.horariosPorDia() != null) {
+            // Remove horários antigos
+            horarioDiaRepository.deleteByTurmaId(id);
+            
+            // Cria novos
+            if (!dto.horariosPorDia().isEmpty()) {
+                List<HorarioDia> horarios = new ArrayList<>();
+                for (HorarioDiaDTO h : dto.horariosPorDia()) {
+                    HorarioDia horario = new HorarioDia();
+                    horario.setDiaSemana(h.diaSemana());
+                    horario.setDiaNome(h.diaNome());
+                    horario.setHoraInicio(h.horaInicio());
+                    horario.setHoraFim(h.horaFim());
+                    horario.setTurma(turma);
+                    horarioDiaRepository.persist(horario);
+                    horarios.add(horario);
+                }
+                turma.setHorariosPorDia(horarios);
+            }
         }
 
         return TurmaResponseDTO.valueOf(turma);
@@ -77,6 +145,7 @@ public class TurmaServiceImpl implements TurmaService {
         if (turma == null) {
             throw new ValidationException("id", "Turma não encontrada");
         }
+        horarioDiaRepository.deleteByTurmaId(id);
         turmaRepository.delete(turma);
     }
 
@@ -114,8 +183,8 @@ public class TurmaServiceImpl implements TurmaService {
     }
 
     @Override
-    public List<TurmaResponseDTO> findByNivel(Integer idNivel) {
-        return turmaRepository.findByNivel(Nivel.valueOf(idNivel))
+    public List<TurmaResponseDTO> findByNivelTurma(Long idNivelTurma) {
+        return turmaRepository.findByNivelTurma(idNivelTurma)
                 .stream()
                 .map(TurmaResponseDTO::valueOf)
                 .collect(Collectors.toList());

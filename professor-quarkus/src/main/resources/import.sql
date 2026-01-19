@@ -15,11 +15,21 @@ INSERT INTO telefone (id, codigoarea, numero, datacadastro) VALUES
 INSERT INTO professor (id, nome, email, id_telefone, id_usuario, datacadastro) VALUES 
 (1, 'Professor Wellington', 'wellington@email.com', 1, 1, NOW());
 
+-- Inserir Níveis de Turma (personalizáveis por professor)
+INSERT INTO nivelturma (id, codigo, descricao, ordem, id_professor, datacadastro) VALUES 
+(1, 'A0', 'Iniciante Absoluto', 1, 1, NOW()),
+(2, 'A1', 'Iniciante', 2, 1, NOW()),
+(3, 'A2', 'Básico', 3, 1, NOW()),
+(4, 'B1', 'Intermediário', 4, 1, NOW()),
+(5, 'B2', 'Intermediário Superior', 5, 1, NOW()),
+(6, 'C1', 'Avançado', 6, 1, NOW()),
+(7, 'C2', 'Fluente', 7, 1, NOW());
+
 -- Inserir Turmas
-INSERT INTO turma (id, nome, idioma, nivel, horario, diassemana, id_professor, datacadastro) VALUES 
-(1, 'Inglês Básico - Manhã', 1, 2, '08:00 - 10:00', 'Segunda, Quarta, Sexta', 1, NOW()),
-(2, 'Inglês Intermediário - Tarde', 1, 3, '14:00 - 16:00', 'Terça, Quinta', 1, NOW()),
-(3, 'Espanhol Iniciante', 2, 1, '19:00 - 21:00', 'Segunda, Quarta', 1, NOW());
+INSERT INTO turma (id, nome, idioma, id_nivel_turma, horario, diassemana, id_professor, datacadastro) VALUES 
+(1, 'Inglês Básico - Manhã', 1, 3, '08:00 - 10:00', 'Segunda, Quarta, Sexta', 1, NOW()),
+(2, 'Inglês Intermediário - Tarde', 1, 4, '14:00 - 16:00', 'Terça, Quinta', 1, NOW()),
+(3, 'Espanhol Iniciante', 2, 2, '19:00 - 21:00', 'Segunda, Quarta', 1, NOW());
 
 -- Inserir Usuários dos Alunos
 INSERT INTO usuario (id, username, senha, datacadastro) VALUES 
@@ -34,10 +44,10 @@ INSERT INTO telefone (id, codigoarea, numero, datacadastro) VALUES
 (4, '63', '966666666', NOW());
 
 -- Inserir Alunos
-INSERT INTO aluno (id, nome, email, id_telefone, id_usuario, id_turma, datacadastro) VALUES 
-(1, 'Maria Silva', 'maria.silva@email.com', 2, 2, 1, NOW()),
-(2, 'João Santos', 'joao.santos@email.com', 3, 3, 1, NOW()),
-(3, 'Ana Costa', 'ana.costa@email.com', 4, 4, 2, NOW());
+INSERT INTO aluno (id, nome, email, id_telefone, id_usuario, id_turma, datanascimento, datacadastro) VALUES 
+(1, 'Maria Silva', 'maria.silva@email.com', 2, 2, 1, '2010-03-15', NOW()),
+(2, 'João Santos', 'joao.santos@email.com', 3, 3, 1, '2008-07-22', NOW()),
+(3, 'Ana Costa', 'ana.costa@email.com', 4, 4, 2, '2012-01-10', NOW());
 
 -- Inserir Aulas
 INSERT INTO aula (id, data, horainicio, horafim, topico, descricao, duracaominutos, id_turma, datacadastro) VALUES 
@@ -68,6 +78,7 @@ INSERT INTO pagamento (id, mesreferencia, anoreferencia, valor, datavencimento, 
 SELECT setval('usuario_id_seq', 10);
 SELECT setval('telefone_id_seq', 10);
 SELECT setval('professor_id_seq', 10);
+SELECT setval('nivelturma_id_seq', 10);
 SELECT setval('turma_id_seq', 10);
 SELECT setval('aluno_id_seq', 10);
 SELECT setval('aula_id_seq', 10);

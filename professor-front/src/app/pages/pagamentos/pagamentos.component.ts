@@ -117,7 +117,12 @@ import { Pagamento, Aluno } from '../../core/models/user.model';
                           ✓ Pago
                         </button>
                       } @else {
-                        <span class="text-muted">{{ formatDate(pag.dataPagamento) }}</span>
+                        <div class="pago-info">
+                          <span class="text-muted">{{ formatDate(pag.dataPagamento) }}</span>
+                          <button class="btn btn-outline btn-xs" (click)="marcarNaoPago(pag.id)" title="Desfazer pagamento">
+                            ↩️
+                          </button>
+                        </div>
                       }
                     </td>
                   }
@@ -362,6 +367,17 @@ import { Pagamento, Aluno } from '../../core/models/user.model';
       color: var(--primary);
     }
 
+    .pago-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-xs {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+
     @media (max-width: 768px) { 
       .stats-row { grid-template-columns: 1fr; } 
       .btn-group-select { flex-direction: column; }
@@ -480,6 +496,15 @@ export class PagamentosComponent implements OnInit {
 
   marcarPago(id: number): void {
     this.apiService.marcarComoPago(id).subscribe(() => this.loadPagamentos());
+  }
+
+  marcarNaoPago(id: number): void {
+    if (confirm('Deseja desfazer este pagamento e marcá-lo como pendente?')) {
+      this.apiService.marcarComoNaoPago(id).subscribe({
+        next: () => this.loadPagamentos(),
+        error: () => alert('Erro ao desfazer pagamento')
+      });
+    }
   }
 
   openModal(): void {

@@ -7,6 +7,10 @@ import br.unitins.topicos1.model.Presenca;
 public record PresencaResponseDTO(
     Long id,
     Boolean presente,
+    String status,
+    String deverCasa,
+    String preparacaoAula,
+    String comentario,
     String observacao,
     Long idAula,
     LocalDate dataAula,
@@ -18,6 +22,10 @@ public record PresencaResponseDTO(
         return new PresencaResponseDTO(
             presenca.getId(),
             presenca.getPresente(),
+            presenca.getStatus() != null ? presenca.getStatus().getLabel() : null,
+            presenca.getDeverCasa() != null ? presenca.getDeverCasa().getLabel() : null,
+            presenca.getPreparacaoAula() != null ? presenca.getPreparacaoAula().getLabel() : null,
+            presenca.getComentario(),
             presenca.getObservacao(),
             presenca.getAula() != null ? presenca.getAula().getId() : null,
             presenca.getAula() != null ? presenca.getAula().getData() : null,

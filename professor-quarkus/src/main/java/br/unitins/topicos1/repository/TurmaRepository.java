@@ -3,7 +3,6 @@ package br.unitins.topicos1.repository;
 import java.util.List;
 
 import br.unitins.topicos1.model.Idioma;
-import br.unitins.topicos1.model.Nivel;
 import br.unitins.topicos1.model.Turma;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -19,8 +18,8 @@ public class TurmaRepository implements PanacheRepository<Turma> {
         return find("idioma", idioma).list();
     }
 
-    public List<Turma> findByNivel(Nivel nivel) {
-        return find("nivel", nivel).list();
+    public List<Turma> findByNivelTurma(Long idNivelTurma) {
+        return find("nivelTurma.id", idNivelTurma).list();
     }
 
     public List<Turma> findByNome(String nome) {

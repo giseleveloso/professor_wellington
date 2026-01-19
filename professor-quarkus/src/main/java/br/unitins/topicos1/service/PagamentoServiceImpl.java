@@ -154,6 +154,17 @@ public class PagamentoServiceImpl implements PagamentoService {
 
     @Override
     @Transactional
+    public void marcarComoNaoPago(Long id) {
+        Pagamento pagamento = pagamentoRepository.findById(id);
+        if (pagamento == null) {
+            throw new ValidationException("id", "Pagamento não encontrado");
+        }
+        pagamento.setStatus(StatusPagamento.PENDENTE);
+        pagamento.setDataPagamento(null);
+    }
+
+    @Override
+    @Transactional
     public void atualizarStatusVencidos() {
         List<Pagamento> pendentesVencidos = pagamentoRepository.findPendentesVencidos();
         for (Pagamento pagamento : pendentesVencidos) {

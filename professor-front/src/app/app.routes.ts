@@ -50,6 +50,11 @@ export const routes: Routes = [
         canActivate: [professorGuard]
       },
       {
+        path: 'niveis',
+        loadComponent: () => import('./pages/niveis/niveis.component').then(m => m.NiveisComponent),
+        canActivate: [professorGuard]
+      },
+      {
         path: 'materiais',
         loadComponent: () => import('./pages/materiais/materiais.component').then(m => m.MateriaisComponent)
       }

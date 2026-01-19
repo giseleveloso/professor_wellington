@@ -2,13 +2,15 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
-import { Turma } from '../../core/models/user.model';
+import { Turma, NivelTurma } from '../../core/models/user.model';
 
 interface DiaSemana {
   id: number;
   nome: string;
   abrev: string;
   selecionado: boolean;
+  horaInicio: string;
+  horaFim: string;
 }
 
 interface AulaPreview {
@@ -64,7 +66,7 @@ interface AulaPreview {
             
             <div class="turma-badges">
               <span class="badge badge-primary">{{ turma.idioma.label }}</span>
-              <span class="badge badge-info">{{ turma.nivel.label }}</span>
+              <span class="badge badge-info">{{ turma.nivelTurma?.codigo || 'Sem nível' }}</span>
             </div>
             
             <div class="turma-info">
@@ -125,12 +127,17 @@ interface AulaPreview {
 
               <div class="form-group">
                 <label class="form-label">Nível</label>
-                <select class="form-control" [(ngModel)]="form.idNivel" name="idNivel" required>
-                  <option [value]="1">Iniciante</option>
-                  <option [value]="2">Básico</option>
-                  <option [value]="3">Intermediário</option>
-                  <option [value]="4">Avançado</option>
-                  <option [value]="5">Fluente</option>
+                <select class="form-control" [(ngModel)]="form.idNivelTurma" name="idNivelTurma" required>
+                  @for (nivel of niveisTurma(); track nivel.id) {
+                    <option [value]="nivel.id">{{ nivel.codigo }} - {{ nivel.descricao }}</option>
+                  }
+                  @if (niveisTurma().length === 0) {
+                    <option [value]="1">Iniciante</option>
+                    <option [value]="2">Básico</option>
+                    <option [value]="3">Intermediário</option>
+                    <option [value]="4">Avançado</option>
+                    <option [value]="5">Fluente</option>
+                  }
                 </select>
               </div>
             </div>
@@ -153,17 +160,47 @@ interface AulaPreview {
               </div>
             </div>
 
-            <!-- Horário -->
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Hora Início</label>
-                <input type="time" class="form-control" [(ngModel)]="form.horaInicio" name="horaInicio" required />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Hora Fim</label>
-                <input type="time" class="form-control" [(ngModel)]="form.horaFim" name="horaFim" required />
-              </div>
+            <!-- Opção de horário único ou por dia -->
+            <div class="form-group">
+              <label class="checkbox-container">
+                <input type="checkbox" [(ngModel)]="horarioUnico" name="horarioUnico" (change)="syncHorarios()" />
+                <span class="checkmark"></span>
+                Mesmo horário para todos os dias
+              </label>
             </div>
+
+            <!-- Horário Único -->
+            @if (horarioUnico) {
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Hora Início</label>
+                  <input type="time" class="form-control" [(ngModel)]="form.horaInicio" name="horaInicio" 
+                    (change)="syncHorarios()" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Hora Fim</label>
+                  <input type="time" class="form-control" [(ngModel)]="form.horaFim" name="horaFim" 
+                    (change)="syncHorarios()" required />
+                </div>
+              </div>
+            } @else {
+              <!-- Horários por Dia -->
+              <div class="horarios-por-dia">
+                <label class="form-label mb-2">Horários por Dia</label>
+                @for (dia of diasSemana; track dia.id) {
+                  @if (dia.selecionado) {
+                    <div class="horario-dia-row">
+                      <span class="dia-label">{{ dia.nome }}</span>
+                      <input type="time" class="form-control time-input" [(ngModel)]="dia.horaInicio" 
+                        [name]="'horaInicio_' + dia.id" (change)="updatePreview()" />
+                      <span class="horario-sep">às</span>
+                      <input type="time" class="form-control time-input" [(ngModel)]="dia.horaFim" 
+                        [name]="'horaFim_' + dia.id" (change)="updatePreview()" />
+                    </div>
+                  }
+                }
+              </div>
+            }
 
             <!-- Cadastro Automático de Aulas -->
             @if (!editingTurma()) {
@@ -395,6 +432,37 @@ interface AulaPreview {
     .dia-abrev { font-size: 1rem; font-weight: 600; color: var(--gray-700); }
     .dia-nome { font-size: 0.65rem; color: var(--gray-500); margin-top: 0.25rem; }
 
+    // Horários por dia
+    .horarios-por-dia {
+      background: var(--gray-50);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+    }
+
+    .horario-dia-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+
+      &:last-child { margin-bottom: 0; }
+    }
+
+    .dia-label {
+      font-weight: 500;
+      color: var(--gray-700);
+      min-width: 80px;
+    }
+
+    .time-input {
+      width: 100px;
+    }
+
+    .horario-sep {
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
     // Checkbox
     .checkbox-container {
       display: flex;
@@ -506,25 +574,28 @@ export class TurmasComponent implements OnInit {
   private apiService = inject(ApiService);
 
   turmas = signal<Turma[]>([]);
+  niveisTurma = signal<NivelTurma[]>([]);
   loading = signal(true);
   showModal = signal(false);
   saving = signal(false);
   editingTurma = signal<Turma | null>(null);
 
   diasSemana: DiaSemana[] = [
-    { id: 0, nome: 'Domingo', abrev: 'D', selecionado: false },
-    { id: 1, nome: 'Segunda', abrev: 'S', selecionado: true },
-    { id: 2, nome: 'Terça', abrev: 'T', selecionado: false },
-    { id: 3, nome: 'Quarta', abrev: 'Q', selecionado: true },
-    { id: 4, nome: 'Quinta', abrev: 'Q', selecionado: false },
-    { id: 5, nome: 'Sexta', abrev: 'S', selecionado: true },
-    { id: 6, nome: 'Sábado', abrev: 'S', selecionado: false },
+    { id: 0, nome: 'Domingo', abrev: 'D', selecionado: false, horaInicio: '08:00', horaFim: '10:00' },
+    { id: 1, nome: 'Segunda', abrev: 'S', selecionado: true, horaInicio: '08:00', horaFim: '10:00' },
+    { id: 2, nome: 'Terça', abrev: 'T', selecionado: false, horaInicio: '08:00', horaFim: '10:00' },
+    { id: 3, nome: 'Quarta', abrev: 'Q', selecionado: true, horaInicio: '08:00', horaFim: '10:00' },
+    { id: 4, nome: 'Quinta', abrev: 'Q', selecionado: false, horaInicio: '08:00', horaFim: '10:00' },
+    { id: 5, nome: 'Sexta', abrev: 'S', selecionado: true, horaInicio: '08:00', horaFim: '10:00' },
+    { id: 6, nome: 'Sábado', abrev: 'S', selecionado: false, horaInicio: '08:00', horaFim: '10:00' },
   ];
+
+  horarioUnico = true; // Se true, usa o mesmo horário para todos os dias
 
   form = {
     nome: '',
     idIdioma: 1,
-    idNivel: 1,
+    idNivelTurma: 0,
     horaInicio: '08:00',
     horaFim: '10:00',
     idProfessor: 1
@@ -540,7 +611,20 @@ export class TurmasComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadTurmas();
+    this.loadNiveis();
     this.initDates();
+  }
+
+  loadNiveis(): void {
+    const professorId = 1; // TODO: pegar do auth
+    this.apiService.getNiveisTurma(professorId).subscribe({
+      next: niveis => {
+        this.niveisTurma.set(niveis);
+        if (niveis.length > 0) {
+          this.form.idNivelTurma = niveis[0].id;
+        }
+      }
+    });
   }
 
   initDates(): void {
@@ -562,6 +646,16 @@ export class TurmasComponent implements OnInit {
 
   toggleDia(dia: DiaSemana): void {
     dia.selecionado = !dia.selecionado;
+    this.updatePreview();
+  }
+
+  syncHorarios(): void {
+    if (this.horarioUnico) {
+      this.diasSemana.forEach(dia => {
+        dia.horaInicio = this.form.horaInicio;
+        dia.horaFim = this.form.horaFim;
+      });
+    }
     this.updatePreview();
   }
 
@@ -631,12 +725,13 @@ export class TurmasComponent implements OnInit {
     this.form = {
       nome: '',
       idIdioma: 1,
-      idNivel: 1,
+      idNivelTurma: this.niveisTurma().length > 0 ? this.niveisTurma()[0].id : 0,
       horaInicio: '08:00',
       horaFim: '10:00',
       idProfessor: 1
     };
     this.diasSemana.forEach(d => d.selecionado = [1, 3, 5].includes(d.id)); // Segunda, Quarta, Sexta
+    this.horarioUnico = true;
     this.criarAulasAuto = false;
     this.mesesDuracao = 3;
     this.topicoDefault = 'Aula Regular';
@@ -655,7 +750,7 @@ export class TurmasComponent implements OnInit {
     this.form = {
       nome: turma.nome,
       idIdioma: turma.idioma.id,
-      idNivel: turma.nivel.id,
+      idNivelTurma: turma.nivelTurma?.id || 0,
       horaInicio,
       horaFim,
       idProfessor: turma.idProfessor
