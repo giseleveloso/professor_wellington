@@ -12,6 +12,8 @@ import jakarta.persistence.OneToMany;
 public class Turma extends DefaultEntity {
 
     private String nome;
+    private String descricao;
+    private String cor;
     private Idioma idioma;
     
     @ManyToOne
@@ -46,6 +48,22 @@ public class Turma extends DefaultEntity {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
+
+    public String getCor() {
+        return cor;
+    }
+
+    public void setCor(String cor) {
+        this.cor = cor;
     }
 
     public Idioma getIdioma() {

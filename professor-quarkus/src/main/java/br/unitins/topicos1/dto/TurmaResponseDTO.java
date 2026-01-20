@@ -9,6 +9,8 @@ import br.unitins.topicos1.model.Turma;
 public record TurmaResponseDTO(
     Long id,
     String nome,
+    String descricao,
+    String cor,
     Idioma idioma,
     NivelTurmaResponseDTO nivelTurma,
     String horario,
@@ -29,6 +31,8 @@ public record TurmaResponseDTO(
         return new TurmaResponseDTO(
             turma.getId(),
             turma.getNome(),
+            turma.getDescricao(),
+            turma.getCor(),
             turma.getIdioma(),
             turma.getNivelTurma() != null ? NivelTurmaResponseDTO.valueOf(turma.getNivelTurma()) : null,
             turma.getHorario(),

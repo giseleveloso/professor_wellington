@@ -39,7 +39,12 @@ public class PagamentoServiceImpl implements PagamentoService {
         pagamento.setValor(dto.valor());
         pagamento.setDataVencimento(dto.dataVencimento());
         pagamento.setDataPagamento(dto.dataPagamento());
-        pagamento.setStatus(StatusPagamento.valueOf(dto.idStatus()));
+        // Status padrão é PENDENTE se não fornecido ou inválido
+        if (dto.idStatus() != null && dto.idStatus() >= 1 && dto.idStatus() <= 4) {
+            pagamento.setStatus(StatusPagamento.valueOf(dto.idStatus()));
+        } else {
+            pagamento.setStatus(StatusPagamento.PENDENTE);
+        }
         pagamento.setObservacao(dto.observacao());
         pagamento.setAluno(aluno);
 
@@ -87,7 +92,7 @@ public class PagamentoServiceImpl implements PagamentoService {
 
     @Override
     public List<PagamentoResponseDTO> findAll() {
-        return pagamentoRepository.listAll()
+        return pagamentoRepository.findAllOrdered()
                 .stream()
                 .map(PagamentoResponseDTO::valueOf)
                 .collect(Collectors.toList());

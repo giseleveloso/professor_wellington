@@ -204,7 +204,7 @@ public class AlunoServiceImpl implements AlunoService {
 
     @Override
     public List<AlunoResponseDTO> findByTurmaId(Long turmaId) {
-        return alunoRepository.findByTurmaId(turmaId)
+        return alunoRepository.findByTurmaIdIncluindoMultiplas(turmaId)
                 .stream()
                 .map(AlunoResponseDTO::valueOf)
                 .collect(Collectors.toList());

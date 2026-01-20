@@ -22,10 +22,20 @@ public class AlunoRepository implements PanacheRepository<Aluno> {
     }
 
     public List<Aluno> findByTurmaId(Long turmaId) {
-        return find("turma.id", turmaId).list();
+        // Busca alunos pela turma principal (legado) ou pela tabela de associação many-to-many
+        return find("turma.id = ?1 OR ?1 IN (SELECT t.id FROM turmas t)", turmaId).list();
     }
 
     public List<Aluno> findByProfessorId(Long professorId) {
         return find("turma.professor.id", professorId).list();
+    }
+    
+    // Busca alunos que estão associados a uma turma (inclui many-to-many)
+    public List<Aluno> findByTurmaIdIncluindoMultiplas(Long turmaId) {
+        return getEntityManager().createQuery(
+            "SELECT DISTINCT a FROM Aluno a LEFT JOIN a.turmas t WHERE a.turma.id = :turmaId OR t.id = :turmaId", 
+            Aluno.class)
+            .setParameter("turmaId", turmaId)
+            .getResultList();
     }
 }

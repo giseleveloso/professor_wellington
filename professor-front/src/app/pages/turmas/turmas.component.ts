@@ -53,7 +53,7 @@ interface AulaPreview {
     } @else {
       <div class="turmas-grid">
         @for (turma of turmas(); track turma.id) {
-          <div class="card turma-card">
+          <div class="card turma-card" [style.border-left]="'4px solid ' + (turma.cor || '#4F46E5')">
             <div class="turma-header">
               <span class="turma-flag">{{ getIdiomaFlag(turma.idioma.id) }}</span>
               <div class="turma-actions">
@@ -63,6 +63,9 @@ interface AulaPreview {
             </div>
             
             <h3 class="turma-nome">{{ turma.nome }}</h3>
+            @if (turma.descricao) {
+              <p class="turma-descricao">{{ turma.descricao }}</p>
+            }
             
             <div class="turma-badges">
               <span class="badge badge-primary">{{ turma.idioma.label }}</span>
@@ -98,15 +101,43 @@ interface AulaPreview {
           </div>
           
           <form class="modal-body" (ngSubmit)="saveTurma()">
+            <div class="form-row">
+              <div class="form-group" style="flex: 2;">
+                <label class="form-label">Nome da Turma</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  [(ngModel)]="form.nome" 
+                  name="nome"
+                  placeholder="Ex: Inglês Básico - Manhã"
+                  required
+                />
+              </div>
+              <div class="form-group" style="flex: 1;">
+                <label class="form-label">Cor</label>
+                <div class="cores-grid">
+                  @for (cor of cores; track cor.valor) {
+                    <button 
+                      type="button"
+                      class="cor-btn"
+                      [class.selected]="form.cor === cor.valor"
+                      [style.background-color]="cor.valor"
+                      [title]="cor.nome"
+                      (click)="form.cor = cor.valor"
+                    ></button>
+                  }
+                </div>
+              </div>
+            </div>
+
             <div class="form-group">
-              <label class="form-label">Nome da Turma</label>
+              <label class="form-label">Descrição (opcional)</label>
               <input 
                 type="text" 
                 class="form-control" 
-                [(ngModel)]="form.nome" 
-                name="nome"
-                placeholder="Ex: Inglês Básico - Manhã"
-                required
+                [(ngModel)]="form.descricao" 
+                name="descricao"
+                placeholder="Ex: Kids - Online - Grupo"
               />
             </div>
 
@@ -352,11 +383,37 @@ interface AulaPreview {
 
     .turma-flag { font-size: 2.5rem; }
     .turma-actions { display: flex; gap: 0.5rem; }
-    .turma-nome { font-size: 1.125rem; margin-bottom: 0.75rem; }
+    .turma-nome { font-size: 1.125rem; margin-bottom: 0.5rem; }
+    .turma-descricao { font-size: 0.8125rem; color: var(--gray-500); margin-bottom: 0.75rem; }
     .turma-badges { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
     .turma-info { display: flex; flex-direction: column; gap: 0.5rem; }
     .info-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--gray-600); }
     .info-icon { width: 20px; text-align: center; }
+
+    // Cores
+    .cores-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0.375rem;
+    }
+
+    .cor-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      
+      &:hover {
+        transform: scale(1.1);
+      }
+
+      &.selected {
+        border-color: var(--gray-800);
+        box-shadow: 0 0 0 2px white, 0 0 0 4px var(--gray-400);
+      }
+    }
 
     // Modal
     .modal-overlay {
@@ -594,12 +651,29 @@ export class TurmasComponent implements OnInit {
 
   form = {
     nome: '',
+    descricao: '',
+    cor: '#4F46E5',
     idIdioma: 1,
     idNivelTurma: 0,
     horaInicio: '08:00',
     horaFim: '10:00',
     idProfessor: 1
   };
+
+  cores = [
+    { valor: '#4F46E5', nome: 'Índigo' },
+    { valor: '#7C3AED', nome: 'Violeta' },
+    { valor: '#EC4899', nome: 'Rosa' },
+    { valor: '#EF4444', nome: 'Vermelho' },
+    { valor: '#F97316', nome: 'Laranja' },
+    { valor: '#EAB308', nome: 'Amarelo' },
+    { valor: '#22C55E', nome: 'Verde' },
+    { valor: '#14B8A6', nome: 'Teal' },
+    { valor: '#06B6D4', nome: 'Ciano' },
+    { valor: '#3B82F6', nome: 'Azul' },
+    { valor: '#6366F1', nome: 'Azul Índigo' },
+    { valor: '#8B5CF6', nome: 'Roxo' },
+  ];
 
   criarAulasAuto = false;
   dataInicio = '';
@@ -724,6 +798,8 @@ export class TurmasComponent implements OnInit {
     this.editingTurma.set(null);
     this.form = {
       nome: '',
+      descricao: '',
+      cor: '#4F46E5',
       idIdioma: 1,
       idNivelTurma: this.niveisTurma().length > 0 ? this.niveisTurma()[0].id : 0,
       horaInicio: '08:00',
@@ -742,13 +818,15 @@ export class TurmasComponent implements OnInit {
   editTurma(turma: Turma): void {
     this.editingTurma.set(turma);
     
-    // Extrair horário inicio e fim
+    // Extrair horário inicio e fim do campo geral
     const horarioMatch = turma.horario?.match(/(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})/);
     const horaInicio = horarioMatch ? horarioMatch[1] : '08:00';
     const horaFim = horarioMatch ? horarioMatch[2] : '10:00';
 
     this.form = {
       nome: turma.nome,
+      descricao: turma.descricao || '',
+      cor: turma.cor || '#4F46E5',
       idIdioma: turma.idioma.id,
       idNivelTurma: turma.nivelTurma?.id || 0,
       horaInicio,
@@ -756,10 +834,38 @@ export class TurmasComponent implements OnInit {
       idProfessor: turma.idProfessor
     };
 
-    // Marcar dias da semana
+    // Resetar dias da semana
     this.diasSemana.forEach(d => {
-      d.selecionado = turma.diasSemana?.toLowerCase().includes(d.nome.toLowerCase()) || false;
+      d.selecionado = false;
+      d.horaInicio = horaInicio;
+      d.horaFim = horaFim;
     });
+
+    // Verificar se tem horários por dia e carregar
+    if (turma.horariosPorDia && turma.horariosPorDia.length > 0) {
+      // Marcar os dias e definir horários específicos
+      turma.horariosPorDia.forEach(h => {
+        const dia = this.diasSemana.find(d => d.id === h.diaSemana);
+        if (dia) {
+          dia.selecionado = true;
+          dia.horaInicio = h.horaInicio || horaInicio;
+          dia.horaFim = h.horaFim || horaFim;
+        }
+      });
+
+      // Verificar se os horários são iguais (horário único)
+      const diasSelecionados = this.diasSemana.filter(d => d.selecionado);
+      const primeiroHorario = diasSelecionados[0];
+      this.horarioUnico = diasSelecionados.every(d => 
+        d.horaInicio === primeiroHorario.horaInicio && d.horaFim === primeiroHorario.horaFim
+      );
+    } else {
+      // Fallback: marcar dias da semana pelo texto
+      this.diasSemana.forEach(d => {
+        d.selecionado = turma.diasSemana?.toLowerCase().includes(d.nome.toLowerCase()) || false;
+      });
+      this.horarioUnico = true;
+    }
 
     this.criarAulasAuto = false;
     this.showModal.set(true);
@@ -780,14 +886,36 @@ export class TurmasComponent implements OnInit {
     return 60;
   }
 
+  getHorariosPorDia(): any[] {
+    return this.diasSemana
+      .filter(d => d.selecionado)
+      .map(d => ({
+        diaSemana: d.id,
+        diaNome: d.nome,
+        horaInicio: this.horarioUnico ? this.form.horaInicio : d.horaInicio,
+        horaFim: this.horarioUnico ? this.form.horaFim : d.horaFim
+      }));
+  }
+
   saveTurma(): void {
     this.saving.set(true);
 
+    const horariosPorDia = this.getHorariosPorDia();
+
+    // Garantir que os valores são convertidos para os tipos corretos
     const data = {
-      ...this.form,
+      nome: this.form.nome,
+      descricao: this.form.descricao,
+      cor: this.form.cor,
+      idIdioma: Number(this.form.idIdioma),
+      idNivelTurma: Number(this.form.idNivelTurma),
       horario: `${this.form.horaInicio} - ${this.form.horaFim}`,
-      diasSemana: this.getDiasSelecionadosString()
+      diasSemana: this.getDiasSelecionadosString(),
+      horariosPorDia: horariosPorDia,
+      idProfessor: Number(this.form.idProfessor)
     };
+
+    console.log('Enviando turma:', data); // Debug
 
     if (this.editingTurma()) {
       this.apiService.updateTurma(this.editingTurma()!.id, data).subscribe({
@@ -796,7 +924,10 @@ export class TurmasComponent implements OnInit {
           this.closeModal();
           this.loadTurmas();
         },
-        error: () => this.saving.set(false)
+        error: (err) => {
+          console.error('Erro ao atualizar turma:', err);
+          this.saving.set(false);
+        }
       });
     } else {
       this.apiService.createTurma(data).subscribe({
@@ -815,19 +946,43 @@ export class TurmasComponent implements OnInit {
     }
   }
 
+  getHorarioParaDia(diaSemana: number): { horaInicio: string; horaFim: string } {
+    const dia = this.diasSemana.find(d => d.id === diaSemana);
+    if (dia && !this.horarioUnico) {
+      return { horaInicio: dia.horaInicio, horaFim: dia.horaFim };
+    }
+    return { horaInicio: this.form.horaInicio, horaFim: this.form.horaFim };
+  }
+
+  calculateDuracaoMinutosParaHorario(horaInicio: string, horaFim: string): number {
+    const [h1, m1] = horaInicio.split(':').map(Number);
+    const [h2, m2] = horaFim.split(':').map(Number);
+    const start = h1 * 60 + m1;
+    const end = h2 * 60 + m2;
+    return end > start ? end - start : 60;
+  }
+
   criarAulasAutomaticamente(turmaId: number): void {
-    const duracaoMinutos = this.calculateDuracaoMinutos();
     const aulas = this.aulasPreview();
     let completed = 0;
+    const diasNomes = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
     aulas.forEach((aulaPreview, index) => {
+      // Descobrir qual dia da semana é essa aula
+      const dataAula = new Date(aulaPreview.data + 'T00:00:00');
+      const diaSemana = dataAula.getDay();
+      
+      // Pegar o horário específico para esse dia
+      const horario = this.getHorarioParaDia(diaSemana);
+      const duracaoMinutos = this.calculateDuracaoMinutosParaHorario(horario.horaInicio, horario.horaFim);
+
       const aula = {
         idTurma: turmaId,
         topico: this.topicoDefault || `Aula ${index + 1}`,
         descricao: '',
         data: aulaPreview.data,
-        horaInicio: this.form.horaInicio,
-        horaFim: this.form.horaFim,
+        horaInicio: horario.horaInicio,
+        horaFim: horario.horaFim,
         duracaoMinutos
       };
 

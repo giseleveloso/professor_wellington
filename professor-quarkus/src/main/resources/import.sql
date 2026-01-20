@@ -26,10 +26,10 @@ INSERT INTO nivelturma (id, codigo, descricao, ordem, id_professor, datacadastro
 (7, 'C2', 'Fluente', 7, 1, NOW());
 
 -- Inserir Turmas
-INSERT INTO turma (id, nome, idioma, id_nivel_turma, horario, diassemana, id_professor, datacadastro) VALUES 
-(1, 'Inglês Básico - Manhã', 1, 3, '08:00 - 10:00', 'Segunda, Quarta, Sexta', 1, NOW()),
-(2, 'Inglês Intermediário - Tarde', 1, 4, '14:00 - 16:00', 'Terça, Quinta', 1, NOW()),
-(3, 'Espanhol Iniciante', 2, 2, '19:00 - 21:00', 'Segunda, Quarta', 1, NOW());
+INSERT INTO turma (id, nome, descricao, cor, idioma, id_nivel_turma, horario, diassemana, id_professor, datacadastro) VALUES 
+(1, 'Inglês Básico - Manhã', 'Kids - Presencial - Grupo', '#3B82F6', 1, 3, '08:00 - 10:00', 'Segunda, Quarta, Sexta', 1, NOW()),
+(2, 'Inglês Intermediário - Tarde', 'Teens - Online', '#22C55E', 1, 4, '14:00 - 16:00', 'Terça, Quinta', 1, NOW()),
+(3, 'Espanhol Iniciante', 'Adultos - Presencial', '#EC4899', 2, 2, '19:00 - 21:00', 'Segunda, Quarta', 1, NOW());
 
 -- Inserir Usuários dos Alunos
 INSERT INTO usuario (id, username, senha, datacadastro) VALUES 

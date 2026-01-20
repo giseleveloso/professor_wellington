@@ -46,6 +46,8 @@ export interface Telefone {
 export interface Turma {
   id: number;
   nome: string;
+  descricao: string;
+  cor: string;
   idioma: EnumValue;
   nivelTurma: NivelTurmaSimples | null;
   horario: string;

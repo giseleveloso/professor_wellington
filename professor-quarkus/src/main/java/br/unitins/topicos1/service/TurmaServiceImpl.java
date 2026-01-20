@@ -46,6 +46,8 @@ public class TurmaServiceImpl implements TurmaService {
 
         Turma turma = new Turma();
         turma.setNome(dto.nome());
+        turma.setDescricao(dto.descricao());
+        turma.setCor(dto.cor());
         turma.setIdioma(Idioma.valueOf(dto.idIdioma()));
         
         // Nível da turma
@@ -91,47 +93,45 @@ public class TurmaServiceImpl implements TurmaService {
         }
 
         turma.setNome(dto.nome());
+        turma.setDescricao(dto.descricao());
+        turma.setCor(dto.cor());
         turma.setIdioma(Idioma.valueOf(dto.idIdioma()));
         
         // Nível da turma
-        if (dto.idNivelTurma() != null) {
+        if (dto.idNivelTurma() != null && dto.idNivelTurma() > 0) {
             NivelTurma nivelTurma = nivelTurmaRepository.findById(dto.idNivelTurma());
-            if (nivelTurma == null) {
-                throw new ValidationException("idNivelTurma", "Nível não encontrado");
+            if (nivelTurma != null) {
+                turma.setNivelTurma(nivelTurma);
             }
-            turma.setNivelTurma(nivelTurma);
         }
         
         turma.setHorario(dto.horario());
         turma.setDiasSemana(dto.diasSemana());
 
-        if (dto.idProfessor() != null) {
+        if (dto.idProfessor() != null && dto.idProfessor() > 0) {
             Professor professor = professorRepository.findById(dto.idProfessor());
-            if (professor == null) {
-                throw new ValidationException("idProfessor", "Professor não encontrado");
+            if (professor != null) {
+                turma.setProfessor(professor);
             }
-            turma.setProfessor(professor);
         }
 
-        // Atualizar horários por dia
-        if (dto.horariosPorDia() != null) {
-            // Remove horários antigos
-            horarioDiaRepository.deleteByTurmaId(id);
-            
-            // Cria novos
-            if (!dto.horariosPorDia().isEmpty()) {
-                List<HorarioDia> horarios = new ArrayList<>();
-                for (HorarioDiaDTO h : dto.horariosPorDia()) {
-                    HorarioDia horario = new HorarioDia();
-                    horario.setDiaSemana(h.diaSemana());
-                    horario.setDiaNome(h.diaNome());
-                    horario.setHoraInicio(h.horaInicio());
-                    horario.setHoraFim(h.horaFim());
-                    horario.setTurma(turma);
-                    horarioDiaRepository.persist(horario);
-                    horarios.add(horario);
-                }
-                turma.setHorariosPorDia(horarios);
+        // Atualizar horários por dia - NÃO substituir a lista, apenas modificá-la
+        // (necessário por causa do orphanRemoval = true)
+        if (turma.getHorariosPorDia() == null) {
+            turma.setHorariosPorDia(new ArrayList<>());
+        } else {
+            turma.getHorariosPorDia().clear();
+        }
+        
+        if (dto.horariosPorDia() != null && !dto.horariosPorDia().isEmpty()) {
+            for (HorarioDiaDTO h : dto.horariosPorDia()) {
+                HorarioDia horario = new HorarioDia();
+                horario.setDiaSemana(h.diaSemana());
+                horario.setDiaNome(h.diaNome());
+                horario.setHoraInicio(h.horaInicio());
+                horario.setHoraFim(h.horaFim());
+                horario.setTurma(turma);
+                turma.getHorariosPorDia().add(horario);  // Adiciona na lista existente
             }
         }
 

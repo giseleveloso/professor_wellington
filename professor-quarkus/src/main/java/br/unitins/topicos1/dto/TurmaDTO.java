@@ -11,11 +11,14 @@ public record TurmaDTO(
     @Size(min = 2, max = 100, message = "Nome deve ter entre 2 e 100 caracteres")
     String nome,
     
+    String descricao,
+    
+    String cor,
+    
     @NotNull(message = "Idioma é obrigatório")
     Integer idIdioma,
     
-    @NotNull(message = "Nível é obrigatório")
-    Long idNivelTurma,
+    Long idNivelTurma,  // Opcional no update
     
     String horario,
     

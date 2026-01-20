@@ -112,8 +112,10 @@ interface WeekDay {
               </div>
               <div class="day-events">
                 @for (aula of day.aulas.slice(0, 3); track aula.id) {
-                  <div class="event" [title]="aula.topico" (click)="openAulaDetails(aula, $event)">
-                    <span class="event-time">{{ aula.horaInicio }}</span>
+                  <div class="event" [title]="aula.topico" (click)="openAulaDetails(aula, $event)"
+                    [style.border-left-color]="getTurmaCor(aula.idTurma)"
+                    [style.background-color]="getTurmaCor(aula.idTurma) + '15'">
+                    <span class="event-time" [style.color]="getTurmaCor(aula.idTurma)">{{ aula.horaInicio }}</span>
                     <span class="event-title">{{ aula.nomeTurma }}</span>
                   </div>
                 }
@@ -148,8 +150,10 @@ interface WeekDay {
                 </div>
               } @else {
                 @for (aula of day.aulas; track aula.id) {
-                  <div class="week-event" (click)="openAulaDetails(aula, $event)">
-                    <div class="week-event-time">{{ aula.horaInicio }} - {{ aula.horaFim || '--:--' }}</div>
+                  <div class="week-event" (click)="openAulaDetails(aula, $event)"
+                    [style.border-left-color]="getTurmaCor(aula.idTurma)"
+                    [style.background-color]="getTurmaCor(aula.idTurma) + '10'">
+                    <div class="week-event-time" [style.color]="getTurmaCor(aula.idTurma)">{{ aula.horaInicio }} - {{ aula.horaFim || '--:--' }}</div>
                     <div class="week-event-turma">{{ aula.nomeTurma }}</div>
                     <div class="week-event-topic">{{ aula.topico }}</div>
                   </div>
@@ -304,19 +308,19 @@ interface WeekDay {
                             <button 
                               type="button"
                               class="status-btn presente"
-                              [class.active]="presencasMap()[aluno.id]?.status === 'presente'"
+                              [class.active]="presencasMap()[aluno.id].status === 'presente'"
                               (click)="setStatus(aluno.id, 'presente')"
                             >✓ Presente</button>
                             <button 
                               type="button"
                               class="status-btn falta"
-                              [class.active]="presencasMap()[aluno.id]?.status === 'falta'"
+                              [class.active]="presencasMap()[aluno.id].status === 'falta'"
                               (click)="setStatus(aluno.id, 'falta')"
                             >✕ Falta</button>
                             <button 
                               type="button"
                               class="status-btn cancelada"
-                              [class.active]="presencasMap()[aluno.id]?.status === 'cancelada'"
+                              [class.active]="presencasMap()[aluno.id].status === 'cancelada'"
                               (click)="setStatus(aluno.id, 'cancelada')"
                             >⊘ Cancelada</button>
                           </div>
@@ -329,19 +333,19 @@ interface WeekDay {
                             <button 
                               type="button"
                               class="status-btn sm feito"
-                              [class.active]="presencasMap()[aluno.id]?.deverCasa === 'feito'"
+                              [class.active]="presencasMap()[aluno.id].deverCasa === 'feito'"
                               (click)="setDeverCasa(aluno.id, 'feito')"
                             >Feito</button>
                             <button 
                               type="button"
                               class="status-btn sm nao-feito"
-                              [class.active]="presencasMap()[aluno.id]?.deverCasa === 'nao_feito'"
+                              [class.active]="presencasMap()[aluno.id].deverCasa === 'nao_feito'"
                               (click)="setDeverCasa(aluno.id, 'nao_feito')"
                             >Não Feito</button>
                             <button 
                               type="button"
                               class="status-btn sm na"
-                              [class.active]="presencasMap()[aluno.id]?.deverCasa === 'nao_aplica'"
+                              [class.active]="presencasMap()[aluno.id].deverCasa === 'nao_aplica'"
                               (click)="setDeverCasa(aluno.id, 'nao_aplica')"
                             >N/A</button>
                           </div>
@@ -354,19 +358,19 @@ interface WeekDay {
                             <button 
                               type="button"
                               class="status-btn sm feito"
-                              [class.active]="presencasMap()[aluno.id]?.preparacaoAula === 'feito'"
+                              [class.active]="presencasMap()[aluno.id].preparacaoAula === 'feito'"
                               (click)="setPreparacao(aluno.id, 'feito')"
                             >Feito</button>
                             <button 
                               type="button"
                               class="status-btn sm nao-feito"
-                              [class.active]="presencasMap()[aluno.id]?.preparacaoAula === 'nao_feito'"
+                              [class.active]="presencasMap()[aluno.id].preparacaoAula === 'nao_feito'"
                               (click)="setPreparacao(aluno.id, 'nao_feito')"
                             >Não Feito</button>
                             <button 
                               type="button"
                               class="status-btn sm na"
-                              [class.active]="presencasMap()[aluno.id]?.preparacaoAula === 'nao_aplica'"
+                              [class.active]="presencasMap()[aluno.id].preparacaoAula === 'nao_aplica'"
                               (click)="setPreparacao(aluno.id, 'nao_aplica')"
                             >N/A</button>
                           </div>
@@ -378,7 +382,7 @@ interface WeekDay {
                           <textarea 
                             class="form-control comentario-input"
                             placeholder="Observações sobre o aluno nesta aula..."
-                            [value]="presencasMap()[aluno.id]?.comentario || ''"
+                            [value]="presencasMap()[aluno.id].comentario || ''"
                             (input)="setComentario(aluno.id, $event)"
                             rows="2"
                           ></textarea>
@@ -492,8 +496,7 @@ interface WeekDay {
     .event {
       padding: 2px 6px;
       border-radius: 4px;
-      background: var(--primary-bg);
-      border-left: 3px solid var(--primary);
+      border-left: 3px solid;
       font-size: 0.7rem;
       display: flex;
       gap: 4px;
@@ -501,11 +504,13 @@ interface WeekDay {
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+      cursor: pointer;
+      transition: all 0.2s;
 
-      &:hover { background: var(--primary-light); color: white; .event-time { color: white; } }
+      &:hover { filter: brightness(0.95); }
     }
 
-    .event-time { font-weight: 600; color: var(--primary); }
+    .event-time { font-weight: 600; }
     .event-title { color: var(--gray-700); }
     .event-more { font-size: 0.7rem; color: var(--gray-500); padding: 2px 6px; }
 
@@ -726,6 +731,7 @@ export class CalendarioComponent implements OnInit {
   private apiService = inject(ApiService);
 
   turmas = signal<Turma[]>([]);
+  turmasMap = signal<{ [id: number]: Turma }>({});
   aulas = signal<Aula[]>([]);
   alunosTurma = signal<Aluno[]>([]);
   presencasMap = signal<{ [alunoId: number]: PresencaAluno }>({});
@@ -862,9 +868,17 @@ export class CalendarioComponent implements OnInit {
   ngOnInit(): void {
     this.apiService.getTurmas().subscribe(t => {
       this.turmas.set(t);
+      // Criar mapa de turmas para acesso rápido à cor
+      const map: { [id: number]: Turma } = {};
+      t.forEach(turma => map[turma.id] = turma);
+      this.turmasMap.set(map);
       if (t.length) this.form.idTurma = t[0].id;
     });
     this.loadAulas();
+  }
+
+  getTurmaCor(turmaId: number): string {
+    return this.turmasMap()[turmaId]?.cor || '#4F46E5';
   }
 
   loadAulas(): void {

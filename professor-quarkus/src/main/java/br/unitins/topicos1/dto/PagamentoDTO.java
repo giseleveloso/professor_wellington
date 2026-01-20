@@ -23,8 +23,7 @@ public record PagamentoDTO(
     
     LocalDate dataPagamento,
     
-    @NotNull(message = "Status é obrigatório")
-    Integer idStatus,
+    Integer idStatus,  // Opcional - padrão é PENDENTE (1)
     
     String observacao,
     
