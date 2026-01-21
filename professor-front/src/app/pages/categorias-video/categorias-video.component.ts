@@ -1,15 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
-
-interface CategoriaVideo {
-  id: number;
-  label: string;
-  icon: string;
-  descricao?: string;
-  quantidadeVideos?: number;
-}
+import { CategoriaVideo } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-categorias-video',
@@ -45,28 +39,27 @@ interface CategoriaVideo {
     } @else {
       <div class="categorias-grid">
         @for (cat of categorias(); track cat.id) {
-          <div class="card categoria-card">
+          <div class="card categoria-card" [style.border-left]="'4px solid ' + cat.cor">
             <div class="categoria-header">
-              <div class="categoria-icon-wrapper">
-                <span class="categoria-icon">{{ cat.icon }}</span>
-              </div>
+              <div class="categoria-color" [style.background-color]="cat.cor"></div>
               <div class="categoria-actions">
-                <button class="btn btn-icon btn-sm" (click)="editCategoria(cat)">✏️</button>
-                <button class="btn btn-icon btn-sm" (click)="deleteCategoria(cat.id)">🗑️</button>
+                <button class="btn btn-icon btn-sm" (click)="verSubcategorias(cat)" title="Ver subcategorias">
+                  📁
+                </button>
+                <button class="btn btn-icon btn-sm" (click)="editCategoria(cat)" title="Editar">
+                  ✏️
+                </button>
+                <button class="btn btn-icon btn-sm" (click)="deleteCategoria(cat.id)" title="Excluir">
+                  🗑️
+                </button>
               </div>
             </div>
-            
-            <h3 class="categoria-nome">{{ cat.label }}</h3>
-            
+
+            <h3 class="categoria-nome">{{ cat.nome }}</h3>
+
             @if (cat.descricao) {
               <p class="categoria-descricao">{{ cat.descricao }}</p>
             }
-            
-            <div class="categoria-footer">
-              <span class="videos-count">
-                <span class="count">{{ cat.quantidadeVideos || 0 }}</span> vídeos
-              </span>
-            </div>
           </div>
         }
       </div>
@@ -80,43 +73,49 @@ interface CategoriaVideo {
             <h3>{{ editingCategoria() ? 'Editar Categoria' : 'Nova Categoria' }}</h3>
             <button class="btn btn-icon" (click)="closeModal()">✕</button>
           </div>
-          
+
           <form class="modal-body" (ngSubmit)="saveCategoria()">
             <div class="form-group">
-              <label class="form-label">Nome da Categoria</label>
-              <input 
-                type="text" 
-                class="form-control" 
-                [(ngModel)]="form.label" 
-                name="label"
+              <label class="form-label">Nome da Categoria *</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="form.nome"
+                name="nome"
                 placeholder="Ex: Gramática, Vocabulário"
                 required
               />
             </div>
 
             <div class="form-group">
-              <label class="form-label">Ícone (emoji)</label>
-              <div class="icon-selector">
-                @for (icon of iconsDisponiveis; track icon) {
-                  <button 
+              <label class="form-label">Cor *</label>
+              <div class="color-selector">
+                @for (color of coresDisponiveis; track color) {
+                  <button
                     type="button"
-                    class="icon-btn"
-                    [class.selected]="form.icon === icon"
-                    (click)="form.icon = icon"
-                  >
-                    {{ icon }}
-                  </button>
+                    class="color-btn"
+                    [class.selected]="form.cor === color"
+                    [style.background-color]="color"
+                    (click)="form.cor = color"
+                    [title]="color"
+                  ></button>
                 }
               </div>
+              <input
+                type="color"
+                class="form-control mt-2"
+                [(ngModel)]="form.cor"
+                name="cor"
+              />
             </div>
 
             <div class="form-group">
-              <label class="form-label">Descrição (opcional)</label>
-              <textarea 
-                class="form-control" 
-                [(ngModel)]="form.descricao" 
+              <label class="form-label">Descrição</label>
+              <textarea
+                class="form-control"
+                [(ngModel)]="form.descricao"
                 name="descricao"
-                rows="2"
+                rows="3"
                 placeholder="Descrição breve da categoria"
               ></textarea>
             </div>
@@ -125,7 +124,7 @@ interface CategoriaVideo {
               <button type="button" class="btn btn-secondary" (click)="closeModal()">
                 Cancelar
               </button>
-              <button type="submit" class="btn btn-primary" [disabled]="saving() || !form.label">
+              <button type="submit" class="btn btn-primary" [disabled]="saving() || !form.nome || !form.cor">
                 @if (saving()) {
                   <span class="spinner"></span>
                 }
@@ -143,7 +142,6 @@ interface CategoriaVideo {
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 1.5rem;
-
       h2 { margin-bottom: 0.25rem; }
     }
 
@@ -151,24 +149,18 @@ interface CategoriaVideo {
       text-align: center;
       padding: 4rem;
       color: var(--gray-500);
-
       .empty-icon { font-size: 4rem; display: block; margin-bottom: 1rem; }
     }
 
     .categorias-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 1.5rem;
-
-      @media (max-width: 1200px) { grid-template-columns: repeat(3, 1fr); }
-      @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
-      @media (max-width: 600px) { grid-template-columns: 1fr; }
     }
 
     .categoria-card {
       padding: 1.5rem;
       transition: transform 0.2s, box-shadow 0.2s;
-
       &:hover {
         transform: translateY(-4px);
         box-shadow: var(--shadow-lg);
@@ -178,22 +170,15 @@ interface CategoriaVideo {
     .categoria-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
       margin-bottom: 1rem;
     }
 
-    .categoria-icon-wrapper {
-      width: 56px;
-      height: 56px;
-      background: var(--primary-bg);
-      border-radius: var(--border-radius);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .categoria-icon {
-      font-size: 2rem;
+    .categoria-color {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
     .categoria-actions {
@@ -211,26 +196,9 @@ interface CategoriaVideo {
     .categoria-descricao {
       font-size: 0.875rem;
       color: var(--gray-500);
-      margin-bottom: 1rem;
-      line-height: 1.4;
+      line-height: 1.5;
     }
 
-    .categoria-footer {
-      padding-top: 1rem;
-      border-top: 1px solid var(--gray-100);
-    }
-
-    .videos-count {
-      font-size: 0.875rem;
-      color: var(--gray-600);
-
-      .count {
-        font-weight: 700;
-        color: var(--primary);
-      }
-    }
-
-    // Modal
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -245,7 +213,7 @@ interface CategoriaVideo {
       background: var(--white);
       border-radius: var(--border-radius);
       width: 100%;
-      max-width: 450px;
+      max-width: 500px;
       max-height: 90vh;
       overflow-y: auto;
     }
@@ -256,7 +224,6 @@ interface CategoriaVideo {
       align-items: center;
       padding: 1.25rem 1.5rem;
       border-bottom: 1px solid var(--gray-100);
-
       h3 { margin: 0; }
     }
 
@@ -271,37 +238,34 @@ interface CategoriaVideo {
       border-top: 1px solid var(--gray-100);
     }
 
-    // Icon Selector
-    .icon-selector {
-      display: flex;
-      flex-wrap: wrap;
+    .color-selector {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
       gap: 0.5rem;
     }
 
-    .icon-btn {
-      width: 44px;
-      height: 44px;
-      font-size: 1.5rem;
+    .color-btn {
+      width: 100%;
+      aspect-ratio: 1;
       border: 2px solid var(--gray-200);
-      background: var(--white);
-      border-radius: var(--border-radius-sm);
+      border-radius: 6px;
       cursor: pointer;
       transition: all 0.2s;
-
       &:hover {
-        border-color: var(--primary-light);
-        background: var(--gray-50);
+        transform: scale(1.1);
+        border-color: var(--gray-400);
       }
-
       &.selected {
-        border-color: var(--primary);
-        background: var(--primary-bg);
+        border-color: var(--gray-800);
+        border-width: 3px;
+        transform: scale(1.05);
       }
     }
   `]
 })
 export class CategoriasVideoComponent implements OnInit {
   private apiService = inject(ApiService);
+  private router = inject(Router);
 
   categorias = signal<CategoriaVideo[]>([]);
   loading = signal(true);
@@ -309,11 +273,16 @@ export class CategoriasVideoComponent implements OnInit {
   saving = signal(false);
   editingCategoria = signal<CategoriaVideo | null>(null);
 
-  iconsDisponiveis = ['📖', '💬', '📕', '🗣️', '🎵', '🎬', '📝', '🎯', '🧠', '✍️', '📚', '🌍', '🎤', '📢', '💡', '🔤'];
+  coresDisponiveis = [
+    '#3B82F6', '#22C55E', '#EC4899', '#F59E0B',
+    '#8B5CF6', '#EF4444', '#10B981', '#F97316',
+    '#6366F1', '#14B8A6', '#F43F5E', '#84CC16',
+    '#06B6D4', '#A855F7', '#EAB308', '#64748B'
+  ];
 
   form = {
-    label: '',
-    icon: '📖',
+    nome: '',
+    cor: '#3B82F6',
     descricao: ''
   };
 
@@ -323,34 +292,24 @@ export class CategoriasVideoComponent implements OnInit {
 
   loadCategorias(): void {
     this.loading.set(true);
-    
-    // Carregar categorias - por enquanto usando dados locais
-    // TODO: Implementar endpoint no backend para categorias de vídeo
-    const categoriasDefault: CategoriaVideo[] = [
-      { id: 1, label: 'Gramática', icon: '📖', descricao: 'Regras gramaticais e estruturas', quantidadeVideos: 0 },
-      { id: 2, label: 'Vocabulário', icon: '💬', descricao: 'Palavras e expressões novas', quantidadeVideos: 0 },
-      { id: 3, label: 'Histórias', icon: '📕', descricao: 'Contos e narrativas para prática', quantidadeVideos: 0 },
-      { id: 4, label: 'Conversação', icon: '🗣️', descricao: 'Diálogos e situações reais', quantidadeVideos: 0 },
-    ];
-
-    // Simular carregamento
-    setTimeout(() => {
-      const saved = localStorage.getItem('categorias_video');
-      if (saved) {
-        this.categorias.set(JSON.parse(saved));
-      } else {
-        this.categorias.set(categoriasDefault);
-        localStorage.setItem('categorias_video', JSON.stringify(categoriasDefault));
+    this.apiService.getCategorias().subscribe({
+      next: (data) => {
+        this.categorias.set(data);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Erro ao carregar categorias:', err);
+        alert('Erro ao carregar categorias');
+        this.loading.set(false);
       }
-      this.loading.set(false);
-    }, 300);
+    });
   }
 
   openModal(): void {
     this.editingCategoria.set(null);
     this.form = {
-      label: '',
-      icon: '📖',
+      nome: '',
+      cor: '#3B82F6',
       descricao: ''
     };
     this.showModal.set(true);
@@ -359,8 +318,8 @@ export class CategoriasVideoComponent implements OnInit {
   editCategoria(cat: CategoriaVideo): void {
     this.editingCategoria.set(cat);
     this.form = {
-      label: cat.label,
-      icon: cat.icon,
+      nome: cat.nome,
+      cor: cat.cor,
       descricao: cat.descricao || ''
     };
     this.showModal.set(true);
@@ -371,42 +330,49 @@ export class CategoriasVideoComponent implements OnInit {
   }
 
   saveCategoria(): void {
+    if (!this.form.nome || !this.form.cor) return;
+
     this.saving.set(true);
 
-    setTimeout(() => {
-      const current = this.categorias();
-      
-      if (this.editingCategoria()) {
-        // Editar
-        const updated = current.map(c => 
-          c.id === this.editingCategoria()!.id 
-            ? { ...c, ...this.form }
-            : c
-        );
-        this.categorias.set(updated);
-        localStorage.setItem('categorias_video', JSON.stringify(updated));
-      } else {
-        // Criar nova
-        const newCat: CategoriaVideo = {
-          id: Math.max(0, ...current.map(c => c.id)) + 1,
-          ...this.form,
-          quantidadeVideos: 0
-        };
-        const updated = [...current, newCat];
-        this.categorias.set(updated);
-        localStorage.setItem('categorias_video', JSON.stringify(updated));
-      }
+    const data = {
+      nome: this.form.nome.trim(),
+      cor: this.form.cor,
+      descricao: this.form.descricao?.trim() || null
+    };
 
-      this.saving.set(false);
-      this.closeModal();
-    }, 300);
+    const request = this.editingCategoria()
+      ? this.apiService.updateCategoria(this.editingCategoria()!.id, data)
+      : this.apiService.createCategoria(data);
+
+    request.subscribe({
+      next: () => {
+        this.loadCategorias();
+        this.closeModal();
+        this.saving.set(false);
+      },
+      error: (err) => {
+        console.error('Erro ao salvar categoria:', err);
+        alert(err.error?.message || 'Erro ao salvar categoria');
+        this.saving.set(false);
+      }
+    });
   }
 
   deleteCategoria(id: number): void {
-    if (confirm('Tem certeza que deseja excluir esta categoria?')) {
-      const updated = this.categorias().filter(c => c.id !== id);
-      this.categorias.set(updated);
-      localStorage.setItem('categorias_video', JSON.stringify(updated));
-    }
+    if (!confirm('Tem certeza que deseja excluir esta categoria?')) return;
+
+    this.apiService.deleteCategoria(id).subscribe({
+      next: () => {
+        this.loadCategorias();
+      },
+      error: (err) => {
+        console.error('Erro ao excluir categoria:', err);
+        alert(err.error?.message || 'Erro ao excluir categoria. Verifique se não há vídeos ou subcategorias associadas.');
+      }
+    });
+  }
+
+  verSubcategorias(cat: CategoriaVideo): void {
+    this.router.navigate(['/subcategorias-video'], { queryParams: { categoria: cat.id } });
   }
 }

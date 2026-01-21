@@ -179,22 +179,22 @@ export class AulasComponent implements OnInit {
   showModal = signal(false);
   editingAula = signal<Aula | null>(null);
 
-  filtroTurma = 0;
-  filtroData = '';
+  filtroTurma = signal(0);
+  filtroData = signal('');
 
   form = { idTurma: 0, topico: '', descricao: '', data: '', horaInicio: '08:00', horaFim: '10:00', duracaoMinutos: 120 };
 
-  aulasFiltradas = () => {
+  aulasFiltradas = computed(() => {
     let result = this.aulas();
-    
-    if (this.filtroTurma > 0) {
-      result = result.filter(a => a.idTurma === this.filtroTurma);
+
+    if (this.filtroTurma() > 0) {
+      result = result.filter(a => a.idTurma === this.filtroTurma());
     }
-    
-    if (this.filtroData) {
-      result = result.filter(a => a.data === this.filtroData);
+
+    if (this.filtroData()) {
+      result = result.filter(a => a.data === this.filtroData());
     }
-    
+
     return result.sort((a, b) => {
       const dateCompare = b.data.localeCompare(a.data);
       if (dateCompare !== 0) return dateCompare;
@@ -219,8 +219,8 @@ export class AulasComponent implements OnInit {
   }
 
   limparFiltros(): void {
-    this.filtroTurma = 0;
-    this.filtroData = '';
+    this.filtroTurma.set(0);
+    this.filtroData.set('');
   }
 
   formatDate(d: string): string {

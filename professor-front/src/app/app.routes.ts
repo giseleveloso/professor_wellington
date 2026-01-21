@@ -50,6 +50,11 @@ export const routes: Routes = [
         canActivate: [professorGuard]
       },
       {
+        path: 'subcategorias-video',
+        loadComponent: () => import('./pages/subcategorias-video/subcategorias-video.component').then(m => m.SubcategoriasVideoComponent),
+        canActivate: [professorGuard]
+      },
+      {
         path: 'niveis',
         loadComponent: () => import('./pages/niveis/niveis.component').then(m => m.NiveisComponent),
         canActivate: [professorGuard]

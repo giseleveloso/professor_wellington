@@ -34,6 +34,29 @@ interface AulaPreview {
       </button>
     </div>
 
+    <!-- Filtros -->
+    <div class="filters-section mb-4">
+      <div class="form-row">
+        <div class="form-group">
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="filtroNome"
+            (ngModelChange)="aplicarFiltros()"
+            placeholder="🔍 Buscar por nome da turma..."
+          />
+        </div>
+        <div class="form-group">
+          <select class="form-control" [(ngModel)]="filtroNivel" (ngModelChange)="aplicarFiltros()">
+            <option [value]="null">Todos os níveis</option>
+            @for (nivel of niveisTurma(); track nivel.id) {
+              <option [value]="nivel.id">{{ nivel.codigo }} - {{ nivel.descricao }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
     @if (loading()) {
       <div class="loading-state">
         <span class="spinner"></span>
@@ -52,7 +75,7 @@ interface AulaPreview {
       </div>
     } @else {
       <div class="turmas-grid">
-        @for (turma of turmas(); track turma.id) {
+        @for (turma of turmasFiltradas(); track turma.id) {
           <div class="card turma-card" [style.border-left]="'4px solid ' + (turma.cor || '#4F46E5')">
             <div class="turma-header">
               <span class="turma-flag">{{ getIdiomaFlag(turma.idioma.id) }}</span>
@@ -343,6 +366,13 @@ interface AulaPreview {
       h2 { margin-bottom: 0.25rem; }
     }
 
+    .filters-section {
+      background: var(--white);
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+    }
+
     .loading-state {
       display: flex;
       flex-direction: column;
@@ -631,11 +661,34 @@ export class TurmasComponent implements OnInit {
   private apiService = inject(ApiService);
 
   turmas = signal<Turma[]>([]);
+  turmasFiltradas = computed(() => {
+    let filtered = this.turmas();
+
+    // Filtro por nome
+    if (this.filtroNome.trim()) {
+      const termo = this.filtroNome.toLowerCase();
+      filtered = filtered.filter(t =>
+        t.nome.toLowerCase().includes(termo) ||
+        t.descricao?.toLowerCase().includes(termo)
+      );
+    }
+
+    // Filtro por nível
+    if (this.filtroNivel !== null) {
+      filtered = filtered.filter(t => t.nivelTurma?.id === this.filtroNivel);
+    }
+
+    return filtered;
+  });
+
   niveisTurma = signal<NivelTurma[]>([]);
   loading = signal(true);
   showModal = signal(false);
   saving = signal(false);
   editingTurma = signal<Turma | null>(null);
+
+  filtroNome = '';
+  filtroNivel: number | null = null;
 
   diasSemana: DiaSemana[] = [
     { id: 0, nome: 'Domingo', abrev: 'D', selecionado: false, horaInicio: '08:00', horaFim: '10:00' },
@@ -687,6 +740,10 @@ export class TurmasComponent implements OnInit {
     this.loadTurmas();
     this.loadNiveis();
     this.initDates();
+  }
+
+  aplicarFiltros(): void {
+    // Triggers recomputation of turmasFiltradas computed signal
   }
 
   loadNiveis(): void {

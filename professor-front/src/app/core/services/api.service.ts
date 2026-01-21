@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { 
-  Professor, Aluno, Turma, Aula, 
-  Presenca, Desempenho, Pagamento, 
-  Video, MaterialExtraAula, NivelTurma 
+import {
+  Professor, Aluno, Turma, Aula,
+  Presenca, Desempenho, Pagamento,
+  Video, MaterialExtraAula, NivelTurma,
+  CategoriaVideo, SubcategoriaVideo
 } from '../models/user.model';
 
 @Injectable({
@@ -195,6 +196,68 @@ export class ApiService {
     return this.http.patch<void>(`${this.apiUrl}/pagamentos/${id}/desfazer`, {});
   }
 
+  // ==================== CATEGORIAS DE VÍDEO ====================
+  getCategorias(): Observable<CategoriaVideo[]> {
+    return this.http.get<CategoriaVideo[]>(`${this.apiUrl}/categorias-video`);
+  }
+
+  getCategoria(id: number): Observable<CategoriaVideo> {
+    return this.http.get<CategoriaVideo>(`${this.apiUrl}/categorias-video/${id}`);
+  }
+
+  createCategoria(data: any): Observable<CategoriaVideo> {
+    return this.http.post<CategoriaVideo>(`${this.apiUrl}/categorias-video`, data);
+  }
+
+  updateCategoria(id: number, data: any): Observable<CategoriaVideo> {
+    return this.http.put<CategoriaVideo>(`${this.apiUrl}/categorias-video/${id}`, data);
+  }
+
+  deleteCategoria(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/categorias-video/${id}`);
+  }
+
+  searchCategorias(nome: string): Observable<CategoriaVideo[]> {
+    return this.http.get<CategoriaVideo[]>(`${this.apiUrl}/categorias-video/search?nome=${nome}`);
+  }
+
+  // ==================== SUBCATEGORIAS DE VÍDEO ====================
+  getSubcategorias(): Observable<SubcategoriaVideo[]> {
+    return this.http.get<SubcategoriaVideo[]>(`${this.apiUrl}/subcategorias-video`);
+  }
+
+  getSubcategoria(id: number): Observable<SubcategoriaVideo> {
+    return this.http.get<SubcategoriaVideo>(`${this.apiUrl}/subcategorias-video/${id}`);
+  }
+
+  getSubcategoriasByCategoria(categoriaId: number): Observable<SubcategoriaVideo[]> {
+    return this.http.get<SubcategoriaVideo[]>(`${this.apiUrl}/subcategorias-video/categoria/${categoriaId}`);
+  }
+
+  getSubcategoriasByPai(paiId: number): Observable<SubcategoriaVideo[]> {
+    return this.http.get<SubcategoriaVideo[]>(`${this.apiUrl}/subcategorias-video/pai/${paiId}`);
+  }
+
+  getSubcategoriasRaizes(categoriaId: number): Observable<SubcategoriaVideo[]> {
+    return this.http.get<SubcategoriaVideo[]>(`${this.apiUrl}/subcategorias-video/raizes?idCategoria=${categoriaId}`);
+  }
+
+  createSubcategoria(data: any): Observable<SubcategoriaVideo> {
+    return this.http.post<SubcategoriaVideo>(`${this.apiUrl}/subcategorias-video`, data);
+  }
+
+  updateSubcategoria(id: number, data: any): Observable<SubcategoriaVideo> {
+    return this.http.put<SubcategoriaVideo>(`${this.apiUrl}/subcategorias-video/${id}`, data);
+  }
+
+  deleteSubcategoria(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/subcategorias-video/${id}`);
+  }
+
+  searchSubcategorias(nome: string): Observable<SubcategoriaVideo[]> {
+    return this.http.get<SubcategoriaVideo[]>(`${this.apiUrl}/subcategorias-video/search?nome=${nome}`);
+  }
+
   // ==================== VÍDEOS ====================
   getVideos(): Observable<Video[]> {
     return this.http.get<Video[]>(`${this.apiUrl}/videos`);
@@ -206,6 +269,10 @@ export class ApiService {
 
   getVideosByCategoria(turmaId: number, categoriaId: number): Observable<Video[]> {
     return this.http.get<Video[]>(`${this.apiUrl}/videos/turma/${turmaId}/categoria?idCategoria=${categoriaId}`);
+  }
+
+  getVideosBySubcategoria(turmaId: number, subcategoriaId: number): Observable<Video[]> {
+    return this.http.get<Video[]>(`${this.apiUrl}/videos/turma/${turmaId}/subcategoria/${subcategoriaId}`);
   }
 
   createVideo(data: any): Observable<Video> {

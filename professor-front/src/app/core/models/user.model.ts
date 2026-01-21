@@ -138,12 +138,38 @@ export interface Pagamento {
   nomeAluno: string;
 }
 
+export interface CategoriaVideo {
+  id: number;
+  nome: string;
+  descricao: string;
+  cor: string;
+}
+
+export interface SubcategoriaVideo {
+  id: number;
+  nome: string;
+  descricao: string;
+  categoriaRaiz: CategoriaVideo;
+  idSubcategoriaPai: number | null;
+  nomeSubcategoriaPai: string | null;
+  nivel: number;
+  subcategoriasFilhas: SubcategoriaVideoSimple[] | null;
+}
+
+export interface SubcategoriaVideoSimple {
+  id: number;
+  nome: string;
+  descricao: string;
+  nivel: number;
+}
+
 export interface Video {
   id: number;
   titulo: string;
   linkYoutube: string;
   descricao: string;
-  categoria: EnumValue;
+  categoria: CategoriaVideo | null;
+  subcategoria: SubcategoriaVideoSimple | null;
   idTurma: number;
   nomeTurma: string;
 }

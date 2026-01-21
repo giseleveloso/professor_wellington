@@ -663,7 +663,7 @@ export class AlunosComponent implements OnInit {
     this.apiService.getAlunos().subscribe({
       next: (alunos) => {
         this.alunos.set(alunos);
-        this.alunosFiltrados.set(alunos);
+        this.filterAlunos(); // Aplicar filtro após carregar
         this.loading.set(false);
       },
       error: () => this.loading.set(false)

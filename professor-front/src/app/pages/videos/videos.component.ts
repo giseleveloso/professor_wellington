@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
-import { Video, Turma } from '../../core/models/user.model';
+import { Video, Turma, CategoriaVideo, SubcategoriaVideo } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-videos',
@@ -21,15 +21,45 @@ import { Video, Turma } from '../../core/models/user.model';
       }
     </div>
 
-    <!-- Categorias -->
-    <div class="categories mb-4">
-      @for (cat of categorias; track cat.id) {
-        <button 
-          [class]="'category-btn ' + (categoriaAtiva === cat.id ? 'active' : '')"
-          (click)="filterByCategoria(cat.id)"
+    <!-- Filtros -->
+    <div class="filters-section mb-4">
+      <div class="categories">
+        <button
+          [class]="'category-btn ' + (!categoriaAtiva() ? 'active' : '')"
+          (click)="filterByCategoria(null)"
         >
-          {{ cat.icon }} {{ cat.label }}
+          📚 Todas as Categorias
         </button>
+        @for (cat of categorias(); track cat.id) {
+          <button
+            [class]="'category-btn ' + (categoriaAtiva()?.id === cat.id ? 'active' : '')"
+            [style.border-color]="categoriaAtiva()?.id === cat.id ? cat.cor : ''"
+            [style.color]="categoriaAtiva()?.id === cat.id ? cat.cor : ''"
+            (click)="filterByCategoria(cat)"
+          >
+            <span class="color-dot" [style.background-color]="cat.cor"></span>
+            {{ cat.nome }}
+          </button>
+        }
+      </div>
+
+      @if (categoriaAtiva() && subcategorias().length > 0) {
+        <div class="subcategories">
+          <button
+            [class]="'subcategory-btn ' + (!subcategoriaAtiva() ? 'active' : '')"
+            (click)="filterBySubcategoria(null)"
+          >
+            Todas
+          </button>
+          @for (sub of subcategorias(); track sub.id) {
+            <button
+              [class]="'subcategory-btn ' + (subcategoriaAtiva()?.id === sub.id ? 'active' : '')"
+              (click)="filterBySubcategoria(sub)"
+            >
+              {{ sub.nome }}
+            </button>
+          }
+        </div>
       }
     </div>
 
@@ -43,16 +73,30 @@ import { Video, Turma } from '../../core/models/user.model';
     } @else {
       <div class="videos-grid">
         @for (video of videosFiltrados(); track video.id) {
-          <div class="card video-card" (click)="openVideo(video)">
-            <div class="video-thumbnail">
+          <div class="card video-card">
+            <div class="video-thumbnail" (click)="openVideo(video)">
               <img [src]="getThumbnail(video.linkYoutube)" alt="">
               <span class="play-icon">▶</span>
             </div>
             <div class="video-info">
-              <h4>{{ video.titulo }}</h4>
+              <div class="video-header">
+                <h4 (click)="openVideo(video)">{{ video.titulo }}</h4>
+                @if (authService.isProfessor()) {
+                  <button class="btn btn-icon btn-sm btn-danger" (click)="deleteVideo(video.id)" title="Excluir">
+                    🗑️
+                  </button>
+                }
+              </div>
               <p class="text-muted">{{ video.descricao }}</p>
               <div class="video-meta">
-                <span class="badge badge-primary">{{ video.categoria.label }}</span>
+                @if (video.categoria) {
+                  <span class="badge badge-primary" [style.background-color]="video.categoria.cor">
+                    {{ video.categoria.nome }}
+                  </span>
+                }
+                @if (video.subcategoria) {
+                  <span class="badge badge-secondary">{{ video.subcategoria.nome }}</span>
+                }
                 <span class="badge badge-info">{{ video.nomeTurma }}</span>
               </div>
             </div>
@@ -105,24 +149,37 @@ import { Video, Turma } from '../../core/models/user.model';
               <label class="form-label">Descrição</label>
               <textarea class="form-control" [(ngModel)]="form.descricao" name="descricao" rows="2"></textarea>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Categoria</label>
-                <select class="form-control" [(ngModel)]="form.idCategoria" name="idCategoria">
-                  @for (cat of categorias; track cat.id) {
-                    <option [value]="cat.id">{{ cat.label }}</option>
-                  }
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Turma</label>
-                <select class="form-control" [(ngModel)]="form.idTurma" name="idTurma">
-                  @for (turma of turmas(); track turma.id) {
-                    <option [value]="turma.id">{{ turma.nome }}</option>
-                  }
-                </select>
-              </div>
+            <div class="form-group">
+              <label class="form-label">Turma *</label>
+              <select class="form-control" [(ngModel)]="form.idTurma" name="idTurma" required>
+                @for (turma of turmas(); track turma.id) {
+                  <option [value]="turma.id">{{ turma.nome }}</option>
+                }
+              </select>
             </div>
+
+            <div class="form-group">
+              <label class="form-label">Categoria *</label>
+              <select class="form-control" [(ngModel)]="form.idCategoria" name="idCategoria"
+                      (change)="onCategoriaChange()" required>
+                <option [value]="null">Selecione uma categoria</option>
+                @for (cat of categorias(); track cat.id) {
+                  <option [value]="cat.id">{{ cat.nome }}</option>
+                }
+              </select>
+            </div>
+
+            @if (form.idCategoria && subcategoriasForm().length > 0) {
+              <div class="form-group">
+                <label class="form-label">Subcategoria (opcional)</label>
+                <select class="form-control" [(ngModel)]="form.idSubcategoria" name="idSubcategoria">
+                  <option [value]="null">Nenhuma</option>
+                  @for (sub of subcategoriasForm(); track sub.id) {
+                    <option [value]="sub.id">{{ sub.nome }}</option>
+                  }
+                </select>
+              </div>
+            }
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
               <button type="submit" class="btn btn-primary">Salvar</button>
@@ -134,17 +191,62 @@ import { Video, Turma } from '../../core/models/user.model';
   `,
   styles: [`
     .page-header { display: flex; justify-content: space-between; margin-bottom: 1.5rem; }
-    
+
+    .filters-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
     .categories { display: flex; gap: 0.75rem; flex-wrap: wrap; }
     .category-btn {
       padding: 0.5rem 1rem;
-      border: 1px solid var(--gray-200);
+      border: 2px solid var(--gray-200);
       background: var(--white);
       border-radius: 9999px;
       cursor: pointer;
       transition: all 0.2s;
-      &:hover { border-color: var(--primary); }
-      &.active { background: var(--primary); color: white; border-color: var(--primary); }
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      &:hover { border-color: var(--gray-400); }
+      &.active {
+        background: var(--white);
+        border-width: 2px;
+        font-weight: 600;
+      }
+    }
+
+    .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .subcategories {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding-left: 1rem;
+      border-left: 3px solid var(--gray-200);
+    }
+
+    .subcategory-btn {
+      padding: 0.375rem 0.75rem;
+      border: 1px solid var(--gray-200);
+      background: var(--white);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.875rem;
+      &:hover { border-color: var(--gray-400); background: var(--gray-50); }
+      &.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+        font-weight: 600;
+      }
     }
 
     .loading-state, .empty-state { text-align: center; padding: 4rem; }
@@ -154,9 +256,8 @@ import { Video, Turma } from '../../core/models/user.model';
     @media (max-width: 1024px) { .videos-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 640px) { .videos-grid { grid-template-columns: 1fr; } }
 
-    .video-card { 
-      cursor: pointer; 
-      padding: 0; 
+    .video-card {
+      padding: 0;
       overflow: hidden;
       transition: transform 0.2s;
       &:hover { transform: translateY(-4px); }
@@ -166,6 +267,7 @@ import { Video, Turma } from '../../core/models/user.model';
       position: relative;
       aspect-ratio: 16/9;
       background: var(--gray-200);
+      cursor: pointer;
       img { width: 100%; height: 100%; object-fit: cover; }
       .play-icon {
         position: absolute;
@@ -180,8 +282,25 @@ import { Video, Turma } from '../../core/models/user.model';
       }
     }
 
-    .video-info { padding: 1rem; h4 { margin-bottom: 0.5rem; } }
-    .video-meta { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+    .video-info {
+      padding: 1rem;
+    }
+
+    .video-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      h4 {
+        margin: 0;
+        flex: 1;
+        cursor: pointer;
+        &:hover { color: var(--primary-color); }
+      }
+    }
+
+    .video-meta { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
 
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal { background: var(--white); border-radius: var(--border-radius); width: 100%; max-width: 500px; }
@@ -206,37 +325,110 @@ export class VideosComponent implements OnInit {
   videos = signal<Video[]>([]);
   videosFiltrados = signal<Video[]>([]);
   turmas = signal<Turma[]>([]);
+  categorias = signal<CategoriaVideo[]>([]);
+  subcategorias = signal<SubcategoriaVideo[]>([]);
+  subcategoriasForm = signal<SubcategoriaVideo[]>([]);
   loading = signal(true);
   showModal = signal(false);
   videoAtivo = signal<Video | null>(null);
-  categoriaAtiva = 0;
+  categoriaAtiva = signal<CategoriaVideo | null>(null);
+  subcategoriaAtiva = signal<SubcategoriaVideo | null>(null);
 
-  categorias = [
-    { id: 0, label: 'Todos', icon: '📚' },
-    { id: 1, label: 'Gramática', icon: '📖' },
-    { id: 2, label: 'Vocabulário', icon: '💬' },
-    { id: 3, label: 'Histórias', icon: '📕' },
-    { id: 4, label: 'Conversação', icon: '🗣️' }
-  ];
-
-  form = { titulo: '', linkYoutube: '', descricao: '', idCategoria: 1, idTurma: 0 };
+  form = {
+    titulo: '',
+    linkYoutube: '',
+    descricao: '',
+    idCategoria: null as number | null,
+    idSubcategoria: null as number | null,
+    idTurma: 0
+  };
 
   ngOnInit(): void {
+    this.loadCategorias();
     this.loadVideos();
-    this.apiService.getTurmas().subscribe(t => { this.turmas.set(t); if (t.length) this.form.idTurma = t[0].id; });
+    this.apiService.getTurmas().subscribe(t => {
+      this.turmas.set(t);
+      if (t.length) this.form.idTurma = t[0].id;
+    });
+  }
+
+  loadCategorias(): void {
+    this.apiService.getCategorias().subscribe({
+      next: (data) => {
+        this.categorias.set(data);
+      },
+      error: (err) => {
+        console.error('Erro ao carregar categorias:', err);
+      }
+    });
   }
 
   loadVideos(): void {
     this.loading.set(true);
     this.apiService.getVideos().subscribe({
-      next: v => { this.videos.set(v); this.videosFiltrados.set(v); this.loading.set(false); },
+      next: v => {
+        this.videos.set(v);
+        this.applyFilters();
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false)
     });
   }
 
-  filterByCategoria(id: number): void {
-    this.categoriaAtiva = id;
-    this.videosFiltrados.set(id === 0 ? this.videos() : this.videos().filter(v => v.categoria.id === id));
+  filterByCategoria(cat: CategoriaVideo | null): void {
+    this.categoriaAtiva.set(cat);
+    this.subcategoriaAtiva.set(null);
+
+    if (cat) {
+      this.apiService.getSubcategoriasByCategoria(cat.id).subscribe({
+        next: (data) => {
+          this.subcategorias.set(data);
+        },
+        error: (err) => {
+          console.error('Erro ao carregar subcategorias:', err);
+          this.subcategorias.set([]);
+        }
+      });
+    } else {
+      this.subcategorias.set([]);
+    }
+
+    this.applyFilters();
+  }
+
+  filterBySubcategoria(sub: SubcategoriaVideo | null): void {
+    this.subcategoriaAtiva.set(sub);
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    let filtered = this.videos();
+
+    if (this.subcategoriaAtiva()) {
+      filtered = filtered.filter(v => v.subcategoria?.id === this.subcategoriaAtiva()!.id);
+    } else if (this.categoriaAtiva()) {
+      filtered = filtered.filter(v => v.categoria?.id === this.categoriaAtiva()!.id);
+    }
+
+    this.videosFiltrados.set(filtered);
+  }
+
+  onCategoriaChange(): void {
+    this.form.idSubcategoria = null;
+
+    if (this.form.idCategoria) {
+      this.apiService.getSubcategoriasByCategoria(this.form.idCategoria).subscribe({
+        next: (data) => {
+          this.subcategoriasForm.set(data);
+        },
+        error: (err) => {
+          console.error('Erro ao carregar subcategorias:', err);
+          this.subcategoriasForm.set([]);
+        }
+      });
+    } else {
+      this.subcategoriasForm.set([]);
+    }
   }
 
   getThumbnail(link: string): string {
@@ -254,13 +446,60 @@ export class VideosComponent implements OnInit {
     return match ? match[1] : '';
   }
 
-  openVideo(video: Video): void { this.videoAtivo.set(video); }
-  closeVideo(): void { this.videoAtivo.set(null); }
+  openVideo(video: Video): void {
+    this.videoAtivo.set(video);
+  }
 
-  openModal(): void { this.form = { titulo: '', linkYoutube: '', descricao: '', idCategoria: 1, idTurma: this.turmas()[0]?.id || 0 }; this.showModal.set(true); }
-  closeModal(): void { this.showModal.set(false); }
+  closeVideo(): void {
+    this.videoAtivo.set(null);
+  }
+
+  openModal(): void {
+    this.form = {
+      titulo: '',
+      linkYoutube: '',
+      descricao: '',
+      idCategoria: null,
+      idSubcategoria: null,
+      idTurma: this.turmas()[0]?.id || 0
+    };
+    this.subcategoriasForm.set([]);
+    this.showModal.set(true);
+  }
+
+  closeModal(): void {
+    this.showModal.set(false);
+  }
 
   saveVideo(): void {
-    this.apiService.createVideo(this.form).subscribe(() => { this.closeModal(); this.loadVideos(); });
+    if (!this.form.titulo || !this.form.linkYoutube || !this.form.idTurma || !this.form.idCategoria) {
+      alert('Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    this.apiService.createVideo(this.form).subscribe({
+      next: () => {
+        this.closeModal();
+        this.loadVideos();
+      },
+      error: (err) => {
+        console.error('Erro ao salvar vídeo:', err);
+        alert(err.error?.message || 'Erro ao salvar vídeo');
+      }
+    });
+  }
+
+  deleteVideo(id: number): void {
+    if (!confirm('Tem certeza que deseja excluir este vídeo?')) return;
+
+    this.apiService.deleteVideo(id).subscribe({
+      next: () => {
+        this.loadVideos();
+      },
+      error: (err) => {
+        console.error('Erro ao excluir vídeo:', err);
+        alert(err.error?.message || 'Erro ao excluir vídeo');
+      }
+    });
   }
 }
