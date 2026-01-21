@@ -25,4 +25,12 @@ public class VideoRepository implements PanacheRepository<Video> {
     public List<Video> findByTitulo(String titulo) {
         return find("LOWER(titulo) LIKE LOWER(?1)", "%" + titulo + "%").list();
     }
+
+    public List<Video> findBySubcategoria(Long idSubcategoria) {
+        return find("subcategoria.id", idSubcategoria).list();
+    }
+
+    public List<Video> findByTurmaIdAndSubcategoria(Long turmaId, Long idSubcategoria) {
+        return find("turma.id = ?1 AND subcategoria.id = ?2", turmaId, idSubcategoria).list();
+    }
 }

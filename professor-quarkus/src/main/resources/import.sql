@@ -55,12 +55,29 @@ INSERT INTO aula (id, data, horainicio, horafim, topico, descricao, duracaominut
 (2, '2026-01-15', '08:00:00', '10:00:00', 'Numbers and Colors', 'Números de 1 a 100 e cores básicas', 120, 1, NOW()),
 (3, '2026-01-14', '14:00:00', '16:00:00', 'Past Tense Review', 'Revisão do passado simples', 120, 2, NOW());
 
+-- Inserir Categorias de Vídeo
+INSERT INTO categoriavideo (id, nome, descricao, cor, datacadastro) VALUES
+(1, 'Gramática', 'Aulas sobre estrutura e regras gramaticais', '#3B82F6', NOW()),
+(2, 'Vocabulário', 'Palavras e expressões do dia a dia', '#22C55E', NOW()),
+(3, 'Histórias', 'Narrativas e contos para prática', '#EC4899', NOW()),
+(4, 'Conversação', 'Diálogos e prática de conversação', '#F59E0B', NOW()),
+(5, 'Pronúncia', 'Exercícios de pronúncia e fonética', '#8B5CF6', NOW()),
+(6, 'Cultura', 'Aspectos culturais e curiosidades', '#EF4444', NOW());
+
+-- Inserir Subcategorias de Vídeo (exemplo: Gramática > Kids, Teens)
+INSERT INTO subcategoriavideo (id, nome, descricao, id_categoria_raiz, id_subcategoria_pai, nivel, datacadastro) VALUES
+(1, 'Kids', 'Conteúdo para crianças', 1, NULL, 0, NOW()),
+(2, 'Teens', 'Conteúdo para adolescentes', 1, NULL, 0, NOW()),
+(3, 'Adults', 'Conteúdo para adultos', 1, NULL, 0, NOW()),
+(4, 'Kids', 'Conteúdo para crianças', 2, NULL, 0, NOW()),
+(5, 'Teens', 'Conteúdo para adolescentes', 2, NULL, 0, NOW());
+
 -- Inserir Vídeos de Exemplo
-INSERT INTO video (id, titulo, linkyoutube, descricao, categoria, id_turma, datacadastro) VALUES 
-(1, 'English Greetings for Beginners', 'https://www.youtube.com/watch?v=example1', 'Aprenda as saudações básicas em inglês', 2, 1, NOW()),
-(2, 'English Grammar - Present Tense', 'https://www.youtube.com/watch?v=example2', 'Gramática: Presente simples', 1, 1, NOW()),
-(3, 'English Vocabulary - Family Members', 'https://www.youtube.com/watch?v=example3', 'Vocabulário: Membros da família', 2, 1, NOW()),
-(4, 'English Story - The Little Prince', 'https://www.youtube.com/watch?v=example4', 'História: O Pequeno Príncipe', 3, 1, NOW());
+INSERT INTO video (id, titulo, linkyoutube, descricao, id_categoria, id_subcategoria, id_turma, datacadastro) VALUES
+(1, 'English Greetings for Beginners', 'https://www.youtube.com/watch?v=example1', 'Aprenda as saudações básicas em inglês', 2, 4, 1, NOW()),
+(2, 'English Grammar - Present Tense', 'https://www.youtube.com/watch?v=example2', 'Gramática: Presente simples', 1, 1, 1, NOW()),
+(3, 'English Vocabulary - Family Members', 'https://www.youtube.com/watch?v=example3', 'Vocabulário: Membros da família', 2, 4, 1, NOW()),
+(4, 'English Story - The Little Prince', 'https://www.youtube.com/watch?v=example4', 'História: O Pequeno Príncipe', 3, NULL, 1, NOW());
 
 -- Inserir Materiais Extra Aula
 INSERT INTO materialextraaula (id, titulo, tipoconteudo, descricao, urlarquivo, datapublicacao, id_turma, datacadastro) VALUES 
@@ -82,6 +99,8 @@ SELECT setval('nivelturma_id_seq', 10);
 SELECT setval('turma_id_seq', 10);
 SELECT setval('aluno_id_seq', 10);
 SELECT setval('aula_id_seq', 10);
+SELECT setval('categoriavideo_id_seq', 10);
+SELECT setval('subcategoriavideo_id_seq', 10);
 SELECT setval('video_id_seq', 10);
 SELECT setval('materialextraaula_id_seq', 10);
 SELECT setval('pagamento_id_seq', 10);

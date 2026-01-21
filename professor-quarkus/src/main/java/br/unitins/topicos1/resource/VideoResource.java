@@ -72,7 +72,7 @@ public class VideoResource {
     @GET
     @Path("/categoria")
     @RolesAllowed({"Professor", "Aluno"})
-    public Response findByCategoria(@QueryParam("idCategoria") Integer idCategoria) {
+    public Response findByCategoria(@QueryParam("idCategoria") Long idCategoria) {
         return Response.ok(videoService.findByCategoria(idCategoria)).build();
     }
 
@@ -81,7 +81,7 @@ public class VideoResource {
     @RolesAllowed({"Professor", "Aluno"})
     public Response findByTurmaIdAndCategoria(
             @PathParam("turmaId") Long turmaId,
-            @QueryParam("idCategoria") Integer idCategoria) {
+            @QueryParam("idCategoria") Long idCategoria) {
         return Response.ok(videoService.findByTurmaIdAndCategoria(turmaId, idCategoria)).build();
     }
 
@@ -90,5 +90,21 @@ public class VideoResource {
     @RolesAllowed({"Professor", "Aluno"})
     public Response findByTitulo(@QueryParam("titulo") String titulo) {
         return Response.ok(videoService.findByTitulo(titulo)).build();
+    }
+
+    @GET
+    @Path("/subcategoria/{idSubcategoria}")
+    @RolesAllowed({"Professor", "Aluno"})
+    public Response findBySubcategoria(@PathParam("idSubcategoria") Long idSubcategoria) {
+        return Response.ok(videoService.findBySubcategoria(idSubcategoria)).build();
+    }
+
+    @GET
+    @Path("/turma/{turmaId}/subcategoria/{idSubcategoria}")
+    @RolesAllowed({"Professor", "Aluno"})
+    public Response findByTurmaIdAndSubcategoria(
+            @PathParam("turmaId") Long turmaId,
+            @PathParam("idSubcategoria") Long idSubcategoria) {
+        return Response.ok(videoService.findByTurmaIdAndSubcategoria(turmaId, idSubcategoria)).build();
     }
 }

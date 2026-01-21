@@ -1,6 +1,5 @@
 package br.unitins.topicos1.dto;
 
-import br.unitins.topicos1.model.CategoriaVideo;
 import br.unitins.topicos1.model.Video;
 
 public record VideoResponseDTO(
@@ -8,7 +7,8 @@ public record VideoResponseDTO(
     String titulo,
     String linkYoutube,
     String descricao,
-    CategoriaVideo categoria,
+    CategoriaVideoResponseDTO categoria,
+    SubcategoriaVideoSimpleDTO subcategoria,
     Long idTurma,
     String nomeTurma
 ) {
@@ -18,7 +18,8 @@ public record VideoResponseDTO(
             video.getTitulo(),
             video.getLinkYoutube(),
             video.getDescricao(),
-            video.getCategoria(),
+            video.getCategoria() != null ? CategoriaVideoResponseDTO.valueOf(video.getCategoria()) : null,
+            video.getSubcategoria() != null ? SubcategoriaVideoSimpleDTO.valueOf(video.getSubcategoria()) : null,
             video.getTurma() != null ? video.getTurma().getId() : null,
             video.getTurma() != null ? video.getTurma().getNome() : null
         );

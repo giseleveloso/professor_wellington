@@ -1,40 +1,41 @@
 package br.unitins.topicos1.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 
-@JsonFormat(shape = JsonFormat.Shape.OBJECT)
-public enum CategoriaVideo {
-    GRAMATICA(1, "Gramática"),
-    VOCABULARIO(2, "Vocabulário"),
-    HISTORIAS(3, "Histórias"),
-    CONVERSACAO(4, "Conversação"),
-    PRONUNCIA(5, "Pronúncia"),
-    CULTURA(6, "Cultura"),
-    OUTRO(7, "Outro");
+@Entity
+public class CategoriaVideo extends DefaultEntity {
 
-    private final Integer id;
-    private final String label;
+    @Column(nullable = false, unique = true, length = 100)
+    private String nome;
 
-    CategoriaVideo(Integer id, String label) {
-        this.id = id;
-        this.label = label;
+    @Column(length = 500)
+    private String descricao;
+
+    @Column(length = 50)
+    private String cor;
+
+    public String getNome() {
+        return nome;
     }
 
-    public Integer getId() {
-        return id;
+    public void setNome(String nome) {
+        this.nome = nome;
     }
 
-    public String getLabel() {
-        return label;
+    public String getDescricao() {
+        return descricao;
     }
 
-    public static CategoriaVideo valueOf(Integer id) {
-        if (id == null)
-            return null;
-        for (CategoriaVideo categoria : CategoriaVideo.values()) {
-            if (categoria.getId().equals(id))
-                return categoria;
-        }
-        throw new IllegalArgumentException("Id inválido: " + id);
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
+
+    public String getCor() {
+        return cor;
+    }
+
+    public void setCor(String cor) {
+        this.cor = cor;
     }
 }

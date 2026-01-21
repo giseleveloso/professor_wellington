@@ -15,9 +15,17 @@ public class Video extends DefaultEntity {
     
     @Column(length = 1000)
     private String descricao;
-    
+
+    // Mantém a categoria para compatibilidade (vídeos sem subcategoria)
+    @ManyToOne
+    @JoinColumn(name = "id_categoria")
     private CategoriaVideo categoria;
-    
+
+    // Nova referência à subcategoria (hierarquia de pastas)
+    @ManyToOne
+    @JoinColumn(name = "id_subcategoria")
+    private SubcategoriaVideo subcategoria;
+
     @ManyToOne
     @JoinColumn(name = "id_turma")
     private Turma turma;
@@ -60,5 +68,13 @@ public class Video extends DefaultEntity {
 
     public void setTurma(Turma turma) {
         this.turma = turma;
+    }
+
+    public SubcategoriaVideo getSubcategoria() {
+        return subcategoria;
+    }
+
+    public void setSubcategoria(SubcategoriaVideo subcategoria) {
+        this.subcategoria = subcategoria;
     }
 }
