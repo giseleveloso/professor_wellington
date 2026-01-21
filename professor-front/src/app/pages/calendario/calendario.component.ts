@@ -787,7 +787,7 @@ export class CalendarioComponent implements OnInit {
     const lastDay = new Date(year, month + 1, 0);
     const startDay = firstDay.getDay();
     const today = new Date();
-    const filtro = this.filtroTurma();
+    const filtro = Number(this.filtroTurma());
     const todasAulas = this.aulas();
 
     const prevMonth = new Date(year, month, 0);
@@ -814,7 +814,7 @@ export class CalendarioComponent implements OnInit {
     const days: WeekDay[] = [];
     const today = new Date();
     const weekStart = this.currentWeekStart();
-    const filtro = this.filtroTurma();
+    const filtro = Number(this.filtroTurma());
     const todasAulas = this.aulas();
 
     for (let i = 0; i < 7; i++) {

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
@@ -24,7 +24,7 @@ import { Aula, Turma } from '../../core/models/user.model';
       <div class="flex items-center gap-4 flex-wrap">
         <div class="form-group mb-0" style="min-width: 200px;">
           <label class="form-label mb-1">Turma</label>
-          <select class="form-control" [(ngModel)]="filtroTurma" (change)="loadAulas()">
+          <select class="form-control" [ngModel]="filtroTurma()" (ngModelChange)="filtroTurma.set($event)">
             <option [value]="0">Todas as turmas</option>
             @for (turma of turmas(); track turma.id) {
               <option [value]="turma.id">{{ turma.nome }}</option>
@@ -33,7 +33,7 @@ import { Aula, Turma } from '../../core/models/user.model';
         </div>
         <div class="form-group mb-0" style="min-width: 150px;">
           <label class="form-label mb-1">Data</label>
-          <input type="date" class="form-control" [(ngModel)]="filtroData" (change)="loadAulas()" />
+          <input type="date" class="form-control" [ngModel]="filtroData()" (ngModelChange)="filtroData.set($event)" />
         </div>
         <div class="form-group mb-0" style="align-self: flex-end;">
           <button class="btn btn-outline" (click)="limparFiltros()">Limpar filtros</button>
@@ -186,9 +186,10 @@ export class AulasComponent implements OnInit {
 
   aulasFiltradas = computed(() => {
     let result = this.aulas();
+    const turmaId = Number(this.filtroTurma());
 
-    if (this.filtroTurma() > 0) {
-      result = result.filter(a => a.idTurma === this.filtroTurma());
+    if (turmaId > 0) {
+      result = result.filter(a => a.idTurma === turmaId);
     }
 
     if (this.filtroData()) {
@@ -200,7 +201,7 @@ export class AulasComponent implements OnInit {
       if (dateCompare !== 0) return dateCompare;
       return a.horaInicio.localeCompare(b.horaInicio);
     });
-  };
+  });
 
   ngOnInit(): void {
     this.apiService.getTurmas().subscribe(t => {

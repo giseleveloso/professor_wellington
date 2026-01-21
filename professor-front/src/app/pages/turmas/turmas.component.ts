@@ -41,14 +41,14 @@ interface AulaPreview {
           <input
             type="text"
             class="form-control"
-            [(ngModel)]="filtroNome"
-            (ngModelChange)="aplicarFiltros()"
+            [ngModel]="filtroNome()"
+            (ngModelChange)="filtroNome.set($event)"
             placeholder="🔍 Buscar por nome da turma..."
           />
         </div>
         <div class="form-group">
-          <select class="form-control" [(ngModel)]="filtroNivel" (ngModelChange)="aplicarFiltros()">
-            <option [value]="null">Todos os níveis</option>
+          <select class="form-control" [ngModel]="filtroNivel()" (ngModelChange)="filtroNivel.set($event)">
+            <option [value]="0">Todos os níveis</option>
             @for (nivel of niveisTurma(); track nivel.id) {
               <option [value]="nivel.id">{{ nivel.codigo }} - {{ nivel.descricao }}</option>
             }
@@ -80,8 +80,9 @@ interface AulaPreview {
             <div class="turma-header">
               <span class="turma-flag">{{ getIdiomaFlag(turma.idioma.id) }}</span>
               <div class="turma-actions">
-                <button class="btn btn-icon btn-secondary" (click)="editTurma(turma)">✏️</button>
-                <button class="btn btn-icon btn-secondary" (click)="deleteTurma(turma.id)">🗑️</button>
+                <button class="btn btn-icon btn-secondary" (click)="openGerarAulasModal(turma)" title="Gerar aulas">📅</button>
+                <button class="btn btn-icon btn-secondary" (click)="editTurma(turma)" title="Editar">✏️</button>
+                <button class="btn btn-icon btn-secondary" (click)="deleteTurma(turma.id)" title="Excluir">🗑️</button>
               </div>
             </div>
             
@@ -256,7 +257,7 @@ interface AulaPreview {
               </div>
             }
 
-            <!-- Cadastro Automático de Aulas -->
+            <!-- Cadastro Automático de Aulas (apenas ao criar nova turma) -->
             @if (!editingTurma()) {
               <div class="auto-aulas-section">
                 <div class="form-group">
@@ -352,6 +353,98 @@ interface AulaPreview {
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    }
+
+    <!-- Modal Gerar Aulas para Turma Existente -->
+    @if (showGerarAulasModal()) {
+      <div class="modal-overlay" (click)="closeGerarAulasModal()">
+        <div class="modal modal-lg" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <div>
+              <h3>📅 Gerar Aulas</h3>
+              <p class="text-muted">{{ turmaParaGerarAulas()?.nome }}</p>
+            </div>
+            <button class="btn btn-icon" (click)="closeGerarAulasModal()">✕</button>
+          </div>
+
+          <div class="modal-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Data Início</label>
+                <input type="date" class="form-control" [(ngModel)]="gerarAulasDataInicio"
+                  (change)="updateGerarAulasPreview()" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Duração do Período</label>
+                <div class="btn-group-select">
+                  @for (mes of [1, 3, 6, 12]; track mes) {
+                    <button
+                      type="button"
+                      class="btn-select"
+                      [class.active]="gerarAulasMeses === mes"
+                      (click)="gerarAulasMeses = mes; updateGerarAulasPreview()"
+                    >
+                      {{ mes }} {{ mes === 1 ? 'mês' : 'meses' }}
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Tópico padrão das aulas</label>
+              <input type="text" class="form-control" [(ngModel)]="gerarAulasTopico"
+                placeholder="Ex: Aula Regular" />
+            </div>
+
+            <!-- Preview das aulas -->
+            @if (gerarAulasPreview().length > 0) {
+              <div class="preview-section">
+                <div class="preview-header">
+                  <span>📋 {{ gerarAulasPreview().length }} aulas serão criadas:</span>
+                </div>
+                <div class="preview-list">
+                  @for (aula of gerarAulasPreview().slice(0, 10); track aula.data) {
+                    <div class="preview-item">
+                      <span class="preview-dia">{{ aula.diaSemana }}</span>
+                      <span class="preview-data">{{ aula.dataFormatada }}</span>
+                      <span class="preview-horario text-muted">{{ aula.horario }}</span>
+                    </div>
+                  }
+                  @if (gerarAulasPreview().length > 10) {
+                    <div class="preview-more">
+                      ... e mais {{ gerarAulasPreview().length - 10 }} aulas
+                    </div>
+                  }
+                </div>
+                <div class="preview-summary">
+                  <div class="summary-item">
+                    <strong>Total:</strong> {{ gerarAulasPreview().length }} aulas
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <div class="empty-state-sm">
+                <p class="text-muted">Selecione as datas para ver o preview das aulas</p>
+              </div>
+            }
+
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" (click)="closeGerarAulasModal()">
+                Cancelar
+              </button>
+              <button type="button" class="btn btn-primary"
+                [disabled]="gerarAulasPreview().length === 0 || savingGerarAulas()"
+                (click)="confirmarGerarAulas()">
+                @if (savingGerarAulas()) {
+                  <span class="spinner"></span>
+                }
+                Criar {{ gerarAulasPreview().length }} Aulas
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     }
@@ -663,10 +756,12 @@ export class TurmasComponent implements OnInit {
   turmas = signal<Turma[]>([]);
   turmasFiltradas = computed(() => {
     let filtered = this.turmas();
+    const nome = this.filtroNome();
+    const nivel = this.filtroNivel();
 
     // Filtro por nome
-    if (this.filtroNome.trim()) {
-      const termo = this.filtroNome.toLowerCase();
+    if (nome.trim()) {
+      const termo = nome.toLowerCase();
       filtered = filtered.filter(t =>
         t.nome.toLowerCase().includes(termo) ||
         t.descricao?.toLowerCase().includes(termo)
@@ -674,8 +769,8 @@ export class TurmasComponent implements OnInit {
     }
 
     // Filtro por nível
-    if (this.filtroNivel !== null) {
-      filtered = filtered.filter(t => t.nivelTurma?.id === this.filtroNivel);
+    if (nivel !== null && nivel !== 0) {
+      filtered = filtered.filter(t => t.nivelTurma?.id === Number(nivel));
     }
 
     return filtered;
@@ -687,8 +782,8 @@ export class TurmasComponent implements OnInit {
   saving = signal(false);
   editingTurma = signal<Turma | null>(null);
 
-  filtroNome = '';
-  filtroNivel: number | null = null;
+  filtroNome = signal('');
+  filtroNivel = signal<number | null>(null);
 
   diasSemana: DiaSemana[] = [
     { id: 0, nome: 'Domingo', abrev: 'D', selecionado: false, horaInicio: '08:00', horaFim: '10:00' },
@@ -736,15 +831,21 @@ export class TurmasComponent implements OnInit {
 
   aulasPreview = signal<AulaPreview[]>([]);
 
+  // Gerar aulas para turma existente
+  showGerarAulasModal = signal(false);
+  turmaParaGerarAulas = signal<Turma | null>(null);
+  gerarAulasDataInicio = '';
+  gerarAulasMeses = 3;
+  gerarAulasTopico = 'Aula Regular';
+  gerarAulasPreview = signal<(AulaPreview & { horario: string })[]>([]);
+  savingGerarAulas = signal(false);
+
   ngOnInit(): void {
     this.loadTurmas();
     this.loadNiveis();
     this.initDates();
   }
 
-  aplicarFiltros(): void {
-    // Triggers recomputation of turmasFiltradas computed signal
-  }
 
   loadNiveis(): void {
     const professorId = 1; // TODO: pegar do auth
@@ -1072,5 +1173,130 @@ export class TurmasComponent implements OnInit {
         error: () => {}
       });
     }
+  }
+
+  // ==================== GERAR AULAS PARA TURMA EXISTENTE ====================
+
+  openGerarAulasModal(turma: Turma): void {
+    this.turmaParaGerarAulas.set(turma);
+    this.gerarAulasDataInicio = new Date().toISOString().split('T')[0];
+    this.gerarAulasMeses = 3;
+    this.gerarAulasTopico = 'Aula Regular';
+    this.gerarAulasPreview.set([]);
+    this.showGerarAulasModal.set(true);
+    this.updateGerarAulasPreview();
+  }
+
+  closeGerarAulasModal(): void {
+    this.showGerarAulasModal.set(false);
+    this.turmaParaGerarAulas.set(null);
+  }
+
+  updateGerarAulasPreview(): void {
+    const turma = this.turmaParaGerarAulas();
+    if (!turma || !this.gerarAulasDataInicio) {
+      this.gerarAulasPreview.set([]);
+      return;
+    }
+
+    // Extrair dias da semana da turma
+    const diasSelecionados: number[] = [];
+    const diasNomes = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+    if (turma.horariosPorDia && turma.horariosPorDia.length > 0) {
+      turma.horariosPorDia.forEach(h => diasSelecionados.push(h.diaSemana));
+    } else if (turma.diasSemana) {
+      diasNomes.forEach((dia, index) => {
+        if (turma.diasSemana.toLowerCase().includes(dia.toLowerCase())) {
+          diasSelecionados.push(index);
+        }
+      });
+    }
+
+    if (diasSelecionados.length === 0) {
+      this.gerarAulasPreview.set([]);
+      return;
+    }
+
+    const inicio = new Date(this.gerarAulasDataInicio + 'T00:00:00');
+    const fim = new Date(inicio);
+    fim.setMonth(fim.getMonth() + this.gerarAulasMeses);
+
+    const aulas: (AulaPreview & { horario: string })[] = [];
+    const current = new Date(inicio);
+
+    while (current < fim) {
+      if (diasSelecionados.includes(current.getDay())) {
+        // Pegar horário para esse dia
+        let horario = turma.horario || '08:00 - 10:00';
+        if (turma.horariosPorDia && turma.horariosPorDia.length > 0) {
+          const horarioDia = turma.horariosPorDia.find(h => h.diaSemana === current.getDay());
+          if (horarioDia) {
+            horario = `${horarioDia.horaInicio} - ${horarioDia.horaFim}`;
+          }
+        }
+
+        aulas.push({
+          data: current.toISOString().split('T')[0],
+          dataFormatada: current.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+          diaSemana: diasNomes[current.getDay()],
+          horario
+        });
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    this.gerarAulasPreview.set(aulas);
+  }
+
+  confirmarGerarAulas(): void {
+    const turma = this.turmaParaGerarAulas();
+    const aulas = this.gerarAulasPreview();
+
+    if (!turma || aulas.length === 0) return;
+
+    this.savingGerarAulas.set(true);
+    let completed = 0;
+
+    aulas.forEach((aulaPreview, index) => {
+      // Extrair horário
+      const horarioParts = aulaPreview.horario.split(' - ');
+      const horaInicio = horarioParts[0] || '08:00';
+      const horaFim = horarioParts[1] || '10:00';
+
+      // Calcular duração
+      const [h1, m1] = horaInicio.split(':').map(Number);
+      const [h2, m2] = horaFim.split(':').map(Number);
+      const duracaoMinutos = ((h2 * 60 + m2) - (h1 * 60 + m1)) || 60;
+
+      const aula = {
+        idTurma: turma.id,
+        topico: this.gerarAulasTopico || `Aula ${index + 1}`,
+        descricao: '',
+        data: aulaPreview.data,
+        horaInicio,
+        horaFim,
+        duracaoMinutos
+      };
+
+      this.apiService.createAula(aula).subscribe({
+        next: () => {
+          completed++;
+          if (completed === aulas.length) {
+            this.savingGerarAulas.set(false);
+            this.closeGerarAulasModal();
+            alert(`${aulas.length} aulas foram criadas com sucesso para a turma "${turma.nome}"!`);
+          }
+        },
+        error: () => {
+          completed++;
+          if (completed === aulas.length) {
+            this.savingGerarAulas.set(false);
+            this.closeGerarAulasModal();
+            alert(`Processo finalizado. Algumas aulas podem não ter sido criadas.`);
+          }
+        }
+      });
+    });
   }
 }

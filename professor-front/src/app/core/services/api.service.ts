@@ -196,6 +196,10 @@ export class ApiService {
     return this.http.patch<void>(`${this.apiUrl}/pagamentos/${id}/desfazer`, {});
   }
 
+  deletePagamento(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/pagamentos/${id}`);
+  }
+
   // ==================== CATEGORIAS DE VÍDEO ====================
   getCategorias(): Observable<CategoriaVideo[]> {
     return this.http.get<CategoriaVideo[]>(`${this.apiUrl}/categorias-video`);

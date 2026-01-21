@@ -112,18 +112,23 @@ import { Pagamento, Aluno } from '../../core/models/user.model';
                   </td>
                   @if (authService.isProfessor()) {
                     <td>
-                      @if (pag.status.id !== 2) {
-                        <button class="btn btn-success btn-sm" (click)="marcarPago(pag.id)">
-                          ✓ Pago
-                        </button>
-                      } @else {
-                        <div class="pago-info">
-                          <span class="text-muted">{{ formatDate(pag.dataPagamento) }}</span>
-                          <button class="btn btn-outline btn-xs" (click)="marcarNaoPago(pag.id)" title="Desfazer pagamento">
-                            ↩️
+                      <div class="flex gap-2 items-center">
+                        @if (pag.status.id !== 2) {
+                          <button class="btn btn-success btn-sm" (click)="marcarPago(pag.id)">
+                            ✓ Pago
                           </button>
-                        </div>
-                      }
+                        } @else {
+                          <div class="pago-info">
+                            <span class="text-muted">{{ formatDate(pag.dataPagamento) }}</span>
+                            <button class="btn btn-outline btn-xs" (click)="marcarNaoPago(pag.id)" title="Desfazer pagamento">
+                              ↩️
+                            </button>
+                          </div>
+                        }
+                        <button class="btn btn-danger btn-xs" (click)="deletePagamento(pag.id)" title="Excluir pagamento">
+                          🗑️
+                        </button>
+                      </div>
                     </td>
                   }
                 </tr>
@@ -503,6 +508,15 @@ export class PagamentosComponent implements OnInit {
       this.apiService.marcarComoNaoPago(id).subscribe({
         next: () => this.loadPagamentos(),
         error: () => alert('Erro ao desfazer pagamento')
+      });
+    }
+  }
+
+  deletePagamento(id: number): void {
+    if (confirm('Tem certeza que deseja excluir este pagamento? Esta ação não pode ser desfeita.')) {
+      this.apiService.deletePagamento(id).subscribe({
+        next: () => this.loadPagamentos(),
+        error: () => alert('Erro ao excluir pagamento')
       });
     }
   }

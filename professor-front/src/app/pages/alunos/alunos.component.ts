@@ -671,15 +671,16 @@ export class AlunosComponent implements OnInit {
   }
 
   filterAlunos(): void {
-    if (this.filtroTurma === 0) {
+    const turmaId = Number(this.filtroTurma);
+    if (turmaId === 0) {
       this.alunosFiltrados.set(this.alunos());
     } else {
       this.alunosFiltrados.set(
         this.alunos().filter(a => {
           if (a.turmas && a.turmas.length > 0) {
-            return a.turmas.some(t => t.id === this.filtroTurma);
+            return a.turmas.some(t => t.id === turmaId);
           }
-          return a.idTurma === this.filtroTurma;
+          return a.idTurma === turmaId;
         })
       );
     }

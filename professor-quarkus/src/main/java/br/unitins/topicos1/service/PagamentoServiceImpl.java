@@ -91,7 +91,11 @@ public class PagamentoServiceImpl implements PagamentoService {
     }
 
     @Override
+    @Transactional
     public List<PagamentoResponseDTO> findAll() {
+        // Atualiza status dos pagamentos vencidos antes de retornar
+        atualizarStatusVencidos();
+
         return pagamentoRepository.findAllOrdered()
                 .stream()
                 .map(PagamentoResponseDTO::valueOf)
