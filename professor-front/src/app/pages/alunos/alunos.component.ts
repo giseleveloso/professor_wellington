@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
-import { Aluno, Turma } from '../../core/models/user.model';
+import { Aluno, Turma, Pagamento } from '../../core/models/user.model';
 
 type TabView = 'todos' | 'aniversariantes';
 
@@ -91,10 +91,10 @@ type TabView = 'todos' | 'aniversariantes';
                 @for (aluno of alunosFiltrados(); track aluno.id) {
                   <tr>
                     <td>
-                      <div class="flex items-center gap-3">
+                      <div class="flex items-center gap-3 aluno-nome-cell" (click)="openProfileModal(aluno)">
                         <div class="avatar">{{ getInitials(aluno.nome) }}</div>
                         <div>
-                          <div class="font-semibold">{{ aluno.nome }}</div>
+                          <div class="font-semibold aluno-nome-link">{{ aluno.nome }}</div>
                           <div class="text-muted" style="font-size: 0.75rem;">{{ aluno.username }}</div>
                         </div>
                       </div>
@@ -329,6 +329,227 @@ type TabView = 'todos' | 'aniversariantes';
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    }
+
+    <!-- Modal Perfil do Aluno -->
+    @if (showProfileModal()) {
+      <div class="modal-overlay" (click)="closeProfileModal()">
+        <div class="modal modal-profile" (click)="$event.stopPropagation()">
+          <div class="modal-header profile-header">
+            <div class="profile-header-content">
+              <div class="avatar avatar-xl">{{ getInitials(selectedAluno()?.nome || '') }}</div>
+              <div class="profile-header-info">
+                <h3>{{ selectedAluno()?.nome }}</h3>
+                <p class="text-muted">{{ selectedAluno()?.email }}</p>
+              </div>
+            </div>
+            <button class="btn btn-icon" (click)="closeProfileModal()">✕</button>
+          </div>
+
+          <div class="modal-body profile-body">
+            <!-- Tabs do Perfil -->
+            <div class="profile-tabs">
+              <button
+                class="profile-tab"
+                [class.active]="profileTab === 'info'"
+                (click)="profileTab = 'info'"
+              >
+                📋 Informações
+              </button>
+              <button
+                class="profile-tab"
+                [class.active]="profileTab === 'pagamentos'"
+                (click)="profileTab = 'pagamentos'"
+              >
+                💰 Pagamentos
+                @if (pagamentosPendentesCount() > 0) {
+                  <span class="tab-badge-alert">{{ pagamentosPendentesCount() }}</span>
+                }
+              </button>
+              <button
+                class="profile-tab"
+                [class.active]="profileTab === 'observacoes'"
+                (click)="profileTab = 'observacoes'"
+              >
+                📝 Observações
+              </button>
+            </div>
+
+            <!-- Tab: Informações -->
+            @if (profileTab === 'info') {
+              <div class="profile-section">
+                <h4 class="section-title">🎓 Turmas e Horários</h4>
+                @if (getAlunoTurmasDetails().length > 0) {
+                  @for (turma of getAlunoTurmasDetails(); track turma.id) {
+                    <div class="turma-info-block">
+                      <div class="turma-info-header">
+                        <span class="turma-info-nome">{{ turma.nome }}</span>
+                        @if (turma.nivelTurma) {
+                          <span class="badge badge-secondary">{{ turma.nivelTurma.codigo }}</span>
+                        }
+                      </div>
+                      <div class="info-grid">
+                        <div class="info-card">
+                          <span class="info-label">Horário</span>
+                          <span class="info-value">{{ turma.horario || '-' }}</span>
+                        </div>
+                        <div class="info-card">
+                          <span class="info-label">Dias</span>
+                          <span class="info-value">{{ turma.diasSemana || '-' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                } @else if (selectedAluno()?.nomeTurma) {
+                  <div class="info-grid">
+                    <div class="info-card">
+                      <span class="info-label">Turma</span>
+                      <span class="info-value">{{ selectedAluno()!.nomeTurma }}</span>
+                    </div>
+                  </div>
+                } @else {
+                  <p class="text-muted">Nenhuma turma associada</p>
+                }
+              </div>
+
+              <div class="profile-section">
+                <h4 class="section-title">👤 Dados Pessoais</h4>
+                <div class="info-grid">
+                  <div class="info-card">
+                    <span class="info-label">Email</span>
+                    <span class="info-value">{{ selectedAluno()?.email || '-' }}</span>
+                  </div>
+                  <div class="info-card">
+                    <span class="info-label">Usuário</span>
+                    <span class="info-value">{{ selectedAluno()?.username || '-' }}</span>
+                  </div>
+                  <div class="info-card">
+                    <span class="info-label">Nascimento</span>
+                    <span class="info-value">{{ formatDataNascimento(selectedAluno()?.dataNascimento) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="profile-section">
+                <h4 class="section-title">📱 Contatos</h4>
+                <div class="info-grid">
+                  <div class="info-card">
+                    <span class="info-label">Celular do Aluno</span>
+                    <span class="info-value">
+                      {{ formatTelefone(selectedAluno()?.telefone) }}
+                      @if (selectedAluno()?.telefone?.numero) {
+                        <a [href]="'https://wa.me/55' + selectedAluno()!.telefone!.codigoArea + selectedAluno()!.telefone!.numero"
+                           target="_blank" class="whatsapp-link">📱</a>
+                      }
+                    </span>
+                  </div>
+                  <div class="info-card">
+                    <span class="info-label">Celular do Responsável</span>
+                    <span class="info-value">
+                      {{ formatTelefone(selectedAluno()?.telefoneResponsavel) }}
+                      @if (selectedAluno()?.telefoneResponsavel?.numero) {
+                        <a [href]="'https://wa.me/55' + selectedAluno()!.telefoneResponsavel!.codigoArea + selectedAluno()!.telefoneResponsavel!.numero"
+                           target="_blank" class="whatsapp-link">📱</a>
+                      }
+                    </span>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Tab: Pagamentos -->
+            @if (profileTab === 'pagamentos') {
+              <div class="profile-section">
+                <div class="pagamentos-summary">
+                  <div class="summary-card summary-pendente">
+                    <span class="summary-value">{{ pagamentosPendentesCount() }}</span>
+                    <span class="summary-label">Pendentes</span>
+                  </div>
+                  <div class="summary-card summary-atrasado">
+                    <span class="summary-value">{{ pagamentosAtrasadosCount() }}</span>
+                    <span class="summary-label">Atrasados</span>
+                  </div>
+                  <div class="summary-card summary-pago">
+                    <span class="summary-value">{{ pagamentosPagosCount() }}</span>
+                    <span class="summary-label">Pagos</span>
+                  </div>
+                </div>
+
+                @if (loadingPagamentos()) {
+                  <div class="loading-state">
+                    <span class="spinner"></span>
+                    <p>Carregando pagamentos...</p>
+                  </div>
+                } @else if (alunoPagamentos().length === 0) {
+                  <div class="empty-state-small">
+                    <p>Nenhum pagamento registrado</p>
+                  </div>
+                } @else {
+                  <div class="table-container">
+                    <table class="table-compact">
+                      <thead>
+                        <tr>
+                          <th>Referência</th>
+                          <th>Vencimento</th>
+                          <th>Valor</th>
+                          <th>Status</th>
+                          <th>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (pag of alunoPagamentos(); track pag.id) {
+                          <tr>
+                            <td>{{ pag.mesReferencia }}/{{ pag.anoReferencia }}</td>
+                            <td>{{ formatDataPagamento(pag.dataVencimento) }}</td>
+                            <td class="font-semibold">{{ formatCurrency(pag.valor) }}</td>
+                            <td>
+                              <span class="status-badge" [class]="'status-' + pag.status.label.toLowerCase()">
+                                {{ pag.status.label }}
+                              </span>
+                            </td>
+                            <td>
+                              @if (pag.status.label !== 'Pago') {
+                                <button class="btn btn-success btn-xs" (click)="marcarComoPago(pag.id)">
+                                  ✓ Pagar
+                                </button>
+                              } @else {
+                                <button class="btn btn-outline btn-xs" (click)="marcarComoNaoPago(pag.id)">
+                                  ↩ Desfazer
+                                </button>
+                              }
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Tab: Observações -->
+            @if (profileTab === 'observacoes') {
+              <div class="profile-section">
+                <div class="observacoes-area">
+                  <textarea
+                    class="form-control observacoes-textarea"
+                    placeholder="Adicione observações sobre o aluno aqui..."
+                    rows="6"
+                  ></textarea>
+                  <p class="text-muted text-sm mt-2">
+                    💡 As observações são visíveis apenas para você
+                  </p>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="closeProfileModal()">Fechar</button>
+            <button class="btn btn-primary" (click)="editAluno(selectedAluno()!)">Editar Aluno</button>
+          </div>
         </div>
       </div>
     }
@@ -591,6 +812,300 @@ type TabView = 'todos' | 'aniversariantes';
       font-size: 0.75rem;
       color: var(--gray-500);
     }
+
+    // Nome clicável
+    .aluno-nome-cell {
+      cursor: pointer;
+      transition: all 0.2s;
+      padding: 0.25rem;
+      margin: -0.25rem;
+      border-radius: var(--border-radius-sm);
+
+      &:hover {
+        background: var(--gray-50);
+      }
+    }
+
+    .aluno-nome-link {
+      color: var(--primary);
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    // Profile Modal
+    .modal-profile {
+      max-width: 700px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .profile-header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark, #4338ca));
+      color: white;
+      padding: 1.5rem;
+    }
+
+    .profile-header-content {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .profile-header-info {
+      h3 {
+        color: white;
+        margin-bottom: 0.25rem;
+      }
+      p {
+        color: rgba(255, 255, 255, 0.8);
+        margin: 0;
+      }
+    }
+
+    .profile-header .btn-icon {
+      color: white;
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+
+    .avatar-xl {
+      width: 64px;
+      height: 64px;
+      font-size: 1.5rem;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .profile-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+
+    .profile-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--gray-200);
+      background: var(--gray-50);
+    }
+
+    .profile-tab {
+      flex: 1;
+      padding: 0.875rem 1rem;
+      border: none;
+      background: transparent;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+
+      &:hover {
+        color: var(--gray-800);
+        background: var(--gray-100);
+      }
+
+      &.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+        background: white;
+      }
+    }
+
+    .tab-badge-alert {
+      background: var(--danger);
+      color: white;
+      font-size: 0.7rem;
+      padding: 0.125rem 0.4rem;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .profile-section {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--gray-100);
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    .section-title {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--gray-700);
+    }
+
+    .turma-info-block {
+      background: var(--gray-50);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    .turma-info-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .turma-info-nome {
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    .turma-info-block .info-grid {
+      background: transparent;
+    }
+
+    .turma-info-block .info-card {
+      background: white;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .info-card {
+      background: var(--gray-50);
+      padding: 0.875rem;
+      border-radius: var(--border-radius-sm);
+    }
+
+    .info-label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-bottom: 0.25rem;
+    }
+
+    .info-value {
+      font-weight: 500;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .whatsapp-link {
+      font-size: 1.1rem;
+      text-decoration: none;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+
+    // Pagamentos Summary
+    .pagamentos-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .summary-card {
+      padding: 1rem;
+      border-radius: var(--border-radius-sm);
+      text-align: center;
+    }
+
+    .summary-value {
+      display: block;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .summary-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-pendente {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .summary-atrasado {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .summary-pago {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    // Table compact
+    .table-compact {
+      font-size: 0.875rem;
+
+      th, td {
+        padding: 0.625rem 0.75rem;
+      }
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.625rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .status-pendente {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-atrasado {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .status-pago {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .btn-xs {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    .empty-state-small {
+      text-align: center;
+      padding: 2rem;
+      color: var(--gray-500);
+    }
+
+    // Observações
+    .observacoes-textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
   `]
 })
 export class AlunosComponent implements OnInit {
@@ -605,6 +1120,23 @@ export class AlunosComponent implements OnInit {
   editingAluno = signal<Aluno | null>(null);
   filtroTurma = 0;
   activeTab: TabView = 'todos';
+
+  // Profile Modal
+  showProfileModal = signal(false);
+  selectedAluno = signal<Aluno | null>(null);
+  alunoPagamentos = signal<Pagamento[]>([]);
+  loadingPagamentos = signal(false);
+  profileTab: 'info' | 'pagamentos' | 'observacoes' = 'info';
+
+  pagamentosPendentesCount = computed(() =>
+    this.alunoPagamentos().filter(p => p.status.label === 'Pendente').length
+  );
+  pagamentosAtrasadosCount = computed(() =>
+    this.alunoPagamentos().filter(p => p.status.label === 'Atrasado').length
+  );
+  pagamentosPagosCount = computed(() =>
+    this.alunoPagamentos().filter(p => p.status.label === 'Pago').length
+  );
 
   turmasSelecionadas: number[] = [];
 
@@ -766,6 +1298,11 @@ export class AlunosComponent implements OnInit {
   }
 
   editAluno(aluno: Aluno): void {
+    // Fechar modal de perfil se estiver aberto
+    if (this.showProfileModal()) {
+      this.closeProfileModal();
+    }
+
     this.editingAluno.set(aluno);
     this.form = {
       nome: aluno.nome,
@@ -776,7 +1313,7 @@ export class AlunosComponent implements OnInit {
       telefone: aluno.telefone || { codigoArea: '', numero: '' },
       telefoneResponsavel: aluno.telefoneResponsavel || { codigoArea: '', numero: '' }
     };
-    
+
     if (aluno.turmas && aluno.turmas.length > 0) {
       this.turmasSelecionadas = aluno.turmas.map(t => t.id);
     } else if (aluno.idTurma) {
@@ -784,7 +1321,7 @@ export class AlunosComponent implements OnInit {
     } else {
       this.turmasSelecionadas = [];
     }
-    
+
     this.showModal.set(true);
   }
 
@@ -829,5 +1366,85 @@ export class AlunosComponent implements OnInit {
         next: () => this.loadAlunos()
       });
     }
+  }
+
+  // ==================== PROFILE MODAL ====================
+
+  openProfileModal(aluno: Aluno): void {
+    this.selectedAluno.set(aluno);
+    this.profileTab = 'info';
+    this.alunoPagamentos.set([]);
+    this.showProfileModal.set(true);
+    this.loadAlunoPagamentos(aluno.id);
+  }
+
+  closeProfileModal(): void {
+    this.showProfileModal.set(false);
+    this.selectedAluno.set(null);
+  }
+
+  loadAlunoPagamentos(alunoId: number): void {
+    this.loadingPagamentos.set(true);
+    this.apiService.getPagamentosByAluno(alunoId).subscribe({
+      next: (pagamentos) => {
+        this.alunoPagamentos.set(pagamentos);
+        this.loadingPagamentos.set(false);
+      },
+      error: () => this.loadingPagamentos.set(false)
+    });
+  }
+
+  getAlunoTurmasDetails(): Turma[] {
+    const aluno = this.selectedAluno();
+    if (!aluno) return [];
+
+    const todasTurmas = this.turmas();
+
+    // Buscar todas as turmas do aluno
+    if (aluno.turmas && aluno.turmas.length > 0) {
+      return aluno.turmas
+        .map(t => todasTurmas.find(turma => turma.id === t.id))
+        .filter((t): t is Turma => t !== undefined);
+    }
+
+    // Fallback para idTurma único
+    if (aluno.idTurma) {
+      const turma = todasTurmas.find(t => t.id === aluno.idTurma);
+      return turma ? [turma] : [];
+    }
+
+    return [];
+  }
+
+  getTurmaDetails(): Turma | null {
+    const turmas = this.getAlunoTurmasDetails();
+    return turmas.length > 0 ? turmas[0] : null;
+  }
+
+  formatDataPagamento(data?: string): string {
+    if (!data) return '-';
+    return new Date(data + 'T00:00:00').toLocaleDateString('pt-BR');
+  }
+
+  formatCurrency(valor: number): string {
+    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  marcarComoPago(id: number): void {
+    this.apiService.marcarComoPago(id).subscribe({
+      next: () => {
+        const aluno = this.selectedAluno();
+        if (aluno) this.loadAlunoPagamentos(aluno.id);
+      }
+    });
+  }
+
+  marcarComoNaoPago(id: number): void {
+    this.apiService.marcarComoNaoPago(id).subscribe({
+      next: () => {
+        const aluno = this.selectedAluno();
+        if (aluno) this.loadAlunoPagamentos(aluno.id);
+      }
+    });
   }
 }
