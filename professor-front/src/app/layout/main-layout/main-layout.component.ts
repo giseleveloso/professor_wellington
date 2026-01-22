@@ -1,15 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
+import { SidebarService } from '../../core/services/sidebar.service';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
   imports: [CommonModule, RouterOutlet, SidebarComponent, HeaderComponent],
   template: `
-    <div class="app-layout">
+    <div class="app-layout" [class.sidebar-collapsed]="sidebarService.collapsed()">
       <app-sidebar />
       <div class="main-area">
         <app-header [pageTitle]="pageTitle" />
@@ -30,6 +31,11 @@ import { HeaderComponent } from '../header/header.component';
       margin-left: var(--sidebar-width);
       display: flex;
       flex-direction: column;
+      transition: margin-left 0.3s ease;
+    }
+
+    .app-layout.sidebar-collapsed .main-area {
+      margin-left: var(--sidebar-width-collapsed, 72px);
     }
 
     .main-content {
@@ -46,5 +52,6 @@ import { HeaderComponent } from '../header/header.component';
   `]
 })
 export class MainLayoutComponent {
+  sidebarService = inject(SidebarService);
   pageTitle = 'Dashboard';
 }
