@@ -62,6 +62,14 @@ export const routes: Routes = [
       {
         path: 'materiais',
         loadComponent: () => import('./pages/materiais/materiais.component').then(m => m.MateriaisComponent)
+      },
+      {
+        path: 'meu-desempenho',
+        loadComponent: () => import('./pages/meu-desempenho/meu-desempenho.component').then(m => m.MeuDesempenhoComponent)
+      },
+      {
+        path: 'minhas-aulas',
+        loadComponent: () => import('./pages/minhas-aulas/minhas-aulas.component').then(m => m.MinhasAulasComponent)
       }
     ]
   },

@@ -1,8 +1,10 @@
 package br.unitins.topicos1.resource;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 
 import br.unitins.topicos1.dto.AulaDTO;
+import br.unitins.topicos1.service.AlunoService;
 import br.unitins.topicos1.service.AulaService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -19,6 +21,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 @Path("/aulas")
 @Produces(MediaType.APPLICATION_JSON)
@@ -27,6 +30,12 @@ public class AulaResource {
 
     @Inject
     AulaService aulaService;
+
+    @Inject
+    AlunoService alunoService;
+
+    @Inject
+    JsonWebToken jwt;
 
     @POST
     @RolesAllowed({"Professor"})
@@ -106,5 +115,20 @@ public class AulaResource {
             @QueryParam("data") String dataStr) {
         LocalDate data = LocalDate.parse(dataStr);
         return Response.ok(aulaService.findByProfessorIdAndData(professorId, data)).build();
+    }
+
+    @GET
+    @Path("/me")
+    @RolesAllowed({"Aluno"})
+    public Response getMinhasAulas() {
+        String username = jwt.getSubject();
+        var aluno = alunoService.findByUsername(username);
+        var todasAulas = new ArrayList<br.unitins.topicos1.dto.AulaResponseDTO>();
+        if (aluno.turmas() != null && !aluno.turmas().isEmpty()) {
+            for (var turma : aluno.turmas()) {
+                todasAulas.addAll(aulaService.findByTurmaId(turma.id()));
+            }
+        }
+        return Response.ok(todasAulas).build();
     }
 }

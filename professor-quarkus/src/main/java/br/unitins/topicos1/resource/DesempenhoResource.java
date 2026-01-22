@@ -1,6 +1,7 @@
 package br.unitins.topicos1.resource;
 
 import br.unitins.topicos1.dto.DesempenhoDTO;
+import br.unitins.topicos1.service.AlunoService;
 import br.unitins.topicos1.service.DesempenhoService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -16,6 +17,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 @Path("/desempenhos")
 @Produces(MediaType.APPLICATION_JSON)
@@ -24,6 +26,12 @@ public class DesempenhoResource {
 
     @Inject
     DesempenhoService desempenhoService;
+
+    @Inject
+    AlunoService alunoService;
+
+    @Inject
+    JsonWebToken jwt;
 
     @POST
     @RolesAllowed({"Professor"})
@@ -84,5 +92,14 @@ public class DesempenhoResource {
             @PathParam("aulaId") Long aulaId,
             @PathParam("alunoId") Long alunoId) {
         return Response.ok(desempenhoService.findByAulaIdAndAlunoId(aulaId, alunoId)).build();
+    }
+
+    @GET
+    @Path("/me")
+    @RolesAllowed({"Aluno"})
+    public Response getMeusDesempenhos() {
+        String username = jwt.getSubject();
+        var aluno = alunoService.findByUsername(username);
+        return Response.ok(desempenhoService.findByAlunoIdParaAluno(aluno.id())).build();
     }
 }

@@ -1,6 +1,7 @@
 package br.unitins.topicos1.resource;
 
 import br.unitins.topicos1.dto.PagamentoDTO;
+import br.unitins.topicos1.service.AlunoService;
 import br.unitins.topicos1.service.PagamentoService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -18,6 +19,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 @Path("/pagamentos")
 @Produces(MediaType.APPLICATION_JSON)
@@ -26,6 +28,12 @@ public class PagamentoResource {
 
     @Inject
     PagamentoService pagamentoService;
+
+    @Inject
+    AlunoService alunoService;
+
+    @Inject
+    JsonWebToken jwt;
 
     @POST
     @RolesAllowed({"Professor"})
@@ -127,5 +135,14 @@ public class PagamentoResource {
     public Response atualizarStatusVencidos() {
         pagamentoService.atualizarStatusVencidos();
         return Response.noContent().build();
+    }
+
+    @GET
+    @Path("/me")
+    @RolesAllowed({"Aluno"})
+    public Response getMeusPagamentos() {
+        String username = jwt.getSubject();
+        var aluno = alunoService.findByUsername(username);
+        return Response.ok(pagamentoService.findByAlunoId(aluno.id())).build();
     }
 }

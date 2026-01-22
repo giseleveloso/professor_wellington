@@ -1,6 +1,10 @@
 package br.unitins.topicos1.resource;
 
+import java.util.ArrayList;
+
 import br.unitins.topicos1.dto.VideoDTO;
+import br.unitins.topicos1.dto.VideoResponseDTO;
+import br.unitins.topicos1.service.AlunoService;
 import br.unitins.topicos1.service.VideoService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -17,6 +21,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 @Path("/videos")
 @Produces(MediaType.APPLICATION_JSON)
@@ -25,6 +30,12 @@ public class VideoResource {
 
     @Inject
     VideoService videoService;
+
+    @Inject
+    AlunoService alunoService;
+
+    @Inject
+    JsonWebToken jwt;
 
     @POST
     @RolesAllowed({"Professor"})
@@ -106,5 +117,20 @@ public class VideoResource {
             @PathParam("turmaId") Long turmaId,
             @PathParam("idSubcategoria") Long idSubcategoria) {
         return Response.ok(videoService.findByTurmaIdAndSubcategoria(turmaId, idSubcategoria)).build();
+    }
+
+    @GET
+    @Path("/me")
+    @RolesAllowed({"Aluno"})
+    public Response getMeusVideos() {
+        String username = jwt.getSubject();
+        var aluno = alunoService.findByUsername(username);
+        var todosVideos = new ArrayList<VideoResponseDTO>();
+        if (aluno.turmas() != null && !aluno.turmas().isEmpty()) {
+            for (var turma : aluno.turmas()) {
+                todosVideos.addAll(videoService.findByTurmaId(turma.id()));
+            }
+        }
+        return Response.ok(todosVideos).build();
     }
 }

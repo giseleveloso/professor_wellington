@@ -3,6 +3,7 @@ package br.unitins.topicos1.resource;
 import java.util.List;
 
 import br.unitins.topicos1.dto.PresencaDTO;
+import br.unitins.topicos1.service.AlunoService;
 import br.unitins.topicos1.service.PresencaService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -18,6 +19,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 @Path("/presencas")
 @Produces(MediaType.APPLICATION_JSON)
@@ -26,6 +28,12 @@ public class PresencaResource {
 
     @Inject
     PresencaService presencaService;
+
+    @Inject
+    AlunoService alunoService;
+
+    @Inject
+    JsonWebToken jwt;
 
     @POST
     @RolesAllowed({"Professor"})
@@ -97,6 +105,15 @@ public class PresencaResource {
         return Response.ok()
                 .entity(new ContagemPresencaDTO(presencas, faltas))
                 .build();
+    }
+
+    @GET
+    @Path("/me")
+    @RolesAllowed({"Aluno"})
+    public Response getMinhasPresencas() {
+        String username = jwt.getSubject();
+        var aluno = alunoService.findByUsername(username);
+        return Response.ok(presencaService.findByAlunoId(aluno.id())).build();
     }
 
     public record ContagemPresencaDTO(long presencas, long faltas) {}

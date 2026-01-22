@@ -1,10 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
-import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
+import { Turma, Aluno, Aula, Pagamento, Presenca } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-dashboard',
@@ -43,6 +43,28 @@ import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
             <div class="stat-card-icon warning">💰</div>
             <div class="stat-card-value">{{ formatCurrency(receitaMensal()) }}</div>
             <div class="stat-card-label">Receita projetada</div>
+          </div>
+        }
+
+        @if (authService.isAluno()) {
+          <div class="stat-card">
+            <div class="stat-card-icon success">✅</div>
+            <div class="stat-card-value">{{ taxaPresencaAluno() }}%</div>
+            <div class="stat-card-label">Taxa de presença</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-icon info">📊</div>
+            <div class="stat-card-value">{{ proximasAulasAluno().length }}</div>
+            <div class="stat-card-label">Próximas aulas</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-icon" [class.warning]="pagamentosPendentesAluno().length > 0" [class.success]="pagamentosPendentesAluno().length === 0">
+              {{ pagamentosPendentesAluno().length > 0 ? '⚠️' : '✓' }}
+            </div>
+            <div class="stat-card-value">{{ pagamentosPendentesAluno().length }}</div>
+            <div class="stat-card-label">Pagamentos pendentes</div>
           </div>
         }
       </div>
@@ -138,7 +160,7 @@ import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
         </div>
       }
 
-      <!-- Minhas Turmas -->
+      <!-- Minhas Turmas (Professor) -->
       @if (authService.isProfessor()) {
         <div class="card mt-6">
           <div class="card-header">
@@ -177,6 +199,139 @@ import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
               }
             </div>
           }
+        </div>
+      }
+
+      <!-- Seções do Aluno -->
+      @if (authService.isAluno()) {
+        <!-- Minhas Turmas (Aluno) -->
+        <div class="card mt-6">
+          <div class="card-header">
+            <h3 class="card-title">📚 Minhas Turmas</h3>
+          </div>
+
+          @if (turmas().length === 0) {
+            <div class="empty-state">
+              <span class="empty-icon">📚</span>
+              <p>Você ainda não está matriculado em nenhuma turma</p>
+            </div>
+          } @else {
+            <div class="turmas-grid">
+              @for (turma of turmas(); track turma.id) {
+                <div class="turma-card">
+                  <div class="turma-header">
+                    <span class="turma-idioma">{{ turma.idioma.label }}</span>
+                    <span class="turma-nivel badge badge-info">{{ turma.nivelTurma?.codigo || 'Sem nível' }}</span>
+                  </div>
+                  <h4 class="turma-nome">{{ turma.nome }}</h4>
+                  <div class="turma-info">
+                    <span>🕐 {{ turma.horario }}</span>
+                    <span>📅 {{ turma.diasSemana }}</span>
+                  </div>
+                  <div class="turma-footer">
+                    <span class="text-muted">Professor: {{ turma.nomeProfessor }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Próximas Aulas (Aluno) -->
+        @if (proximasAulasAluno().length > 0) {
+          <div class="card mt-6">
+            <div class="card-header">
+              <h3 class="card-title">📅 Próximas Aulas</h3>
+              <a routerLink="/minhas-aulas" class="btn btn-outline btn-sm">Ver calendário</a>
+            </div>
+
+            <div class="proximas-aulas-list">
+              @for (aula of proximasAulasAluno(); track aula.id) {
+                <div class="proxima-aula-item">
+                  <div class="proxima-aula-data">
+                    <span class="dia">{{ getDiaAula(aula.data) }}</span>
+                    <span class="mes">{{ getMesAula(aula.data) }}</span>
+                  </div>
+                  <div class="proxima-aula-info">
+                    <span class="topico">{{ aula.topico }}</span>
+                    <span class="turma">{{ aula.nomeTurma }}</span>
+                  </div>
+                  <div class="proxima-aula-horario">
+                    {{ aula.horaInicio }} - {{ aula.horaFim }}
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Pagamentos Pendentes (Aluno) -->
+        @if (pagamentosPendentesAluno().length > 0) {
+          <div class="card mt-6">
+            <div class="card-header">
+              <h3 class="card-title">⚠️ Pagamentos Pendentes</h3>
+              <a routerLink="/pagamentos" class="btn btn-outline btn-sm">Ver todos</a>
+            </div>
+
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Referência</th>
+                    <th>Valor</th>
+                    <th>Vencimento</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (pag of pagamentosPendentesAluno(); track pag.id) {
+                    <tr>
+                      <td>{{ pag.mesReferencia }}/{{ pag.anoReferencia }}</td>
+                      <td class="font-semibold">{{ formatCurrency(pag.valor) }}</td>
+                      <td>{{ formatDate(pag.dataVencimento) }}</td>
+                      <td>
+                        <span [class]="'badge badge-' + getStatusClass(pag.status)">
+                          {{ pag.status.label }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+
+        <!-- Desempenho Recente -->
+        <div class="card mt-6">
+          <div class="card-header">
+            <h3 class="card-title">📈 Meu Desempenho</h3>
+            <a routerLink="/meu-desempenho" class="btn btn-outline btn-sm">Ver detalhes</a>
+          </div>
+
+          <div class="desempenho-summary">
+            <div class="desempenho-item">
+              <span class="desempenho-icon success">✅</span>
+              <div class="desempenho-info">
+                <span class="desempenho-value">{{ getTotalPresencas() }}</span>
+                <span class="desempenho-label">Presenças</span>
+              </div>
+            </div>
+            <div class="desempenho-item">
+              <span class="desempenho-icon danger">❌</span>
+              <div class="desempenho-info">
+                <span class="desempenho-value">{{ getTotalFaltas() }}</span>
+                <span class="desempenho-label">Faltas</span>
+              </div>
+            </div>
+            <div class="desempenho-item">
+              <span class="desempenho-icon primary">📊</span>
+              <div class="desempenho-info">
+                <span class="desempenho-value">{{ taxaPresencaAluno() }}%</span>
+                <span class="desempenho-label">Frequência</span>
+              </div>
+            </div>
+          </div>
         </div>
       }
     </div>
@@ -396,6 +551,103 @@ import { Turma, Aluno, Aula, Pagamento } from '../../core/models/user.model';
     }
 
     .loading-state, .empty-state-sm { text-align: center; padding: 2rem; color: var(--gray-500); }
+
+    // Próximas Aulas (Aluno)
+    .proximas-aulas-list { display: flex; flex-direction: column; }
+
+    .proxima-aula-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--gray-100);
+      transition: background 0.2s;
+
+      &:last-child { border-bottom: none; }
+      &:hover { background: var(--gray-50); }
+    }
+
+    .proxima-aula-data {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 50px;
+      padding: 0.5rem;
+      background: var(--primary-bg);
+      border-radius: var(--border-radius-sm);
+
+      .dia { font-size: 1.25rem; font-weight: 700; color: var(--primary); line-height: 1; }
+      .mes { font-size: 0.625rem; text-transform: uppercase; color: var(--primary); letter-spacing: 0.05em; }
+    }
+
+    .proxima-aula-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+
+      .topico { font-weight: 600; color: var(--gray-800); }
+      .turma { font-size: 0.8125rem; color: var(--gray-500); }
+    }
+
+    .proxima-aula-horario {
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+      background: var(--gray-100);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    // Desempenho Summary
+    .desempenho-summary {
+      display: flex;
+      gap: 1.5rem;
+      padding: 1.25rem;
+    }
+
+    .desempenho-item {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem;
+      background: var(--gray-50);
+      border-radius: var(--border-radius-sm);
+    }
+
+    .desempenho-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+
+      &.success { background: var(--success-bg); }
+      &.danger { background: var(--danger-bg); }
+      &.primary { background: var(--primary-bg); }
+    }
+
+    .desempenho-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .desempenho-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+
+    .desempenho-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    @media (max-width: 640px) {
+      .desempenho-summary { flex-direction: column; gap: 0.75rem; }
+    }
   `]
 })
 export class DashboardComponent implements OnInit {
@@ -403,12 +655,39 @@ export class DashboardComponent implements OnInit {
   private apiService = inject(ApiService);
 
   today = new Date().toISOString().split('T')[0];
-  
+
   turmas = signal<Turma[]>([]);
   aulasHoje = signal<Aula[]>([]);
   pagamentosPendentes = signal<Pagamento[]>([]);
   totalAlunos = signal(0);
   receitaMensal = signal(0);
+
+  // Dados do Aluno
+  alunoData = signal<Aluno | null>(null);
+  presencasAluno = signal<Presenca[]>([]);
+  pagamentosAluno = signal<Pagamento[]>([]);
+  aulasAluno = signal<Aula[]>([]);
+
+  taxaPresencaAluno = computed(() => {
+    const presencas = this.presencasAluno();
+    const total = presencas.filter(p => p.status !== 'cancelada').length;
+    if (total === 0) return 0;
+    const presentes = presencas.filter(p => p.status === 'presente').length;
+    return Math.round((presentes / total) * 100);
+  });
+
+  pagamentosPendentesAluno = computed(() =>
+    this.pagamentosAluno().filter(p => p.status.label !== 'Pago')
+  );
+
+  proximasAulasAluno = computed(() => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    return this.aulasAluno()
+      .filter(a => new Date(a.data + 'T00:00:00') >= hoje)
+      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
+      .slice(0, 5);
+  });
 
   // Modal de Presença
   showPresencaModal = signal(false);
@@ -423,13 +702,13 @@ export class DashboardComponent implements OnInit {
   }
 
   loadData(): void {
-    // Carregar aulas de hoje
-    this.apiService.getAulasByData(this.today).subscribe({
-      next: (aulas) => this.aulasHoje.set(aulas),
-      error: () => {}
-    });
-
     if (this.authService.isProfessor()) {
+      // Carregar aulas de hoje
+      this.apiService.getAulasByData(this.today).subscribe({
+        next: (aulas) => this.aulasHoje.set(aulas),
+        error: () => {}
+      });
+
       // Carregar turmas
       this.apiService.getTurmas().subscribe({
         next: (turmas) => {
@@ -458,6 +737,52 @@ export class DashboardComponent implements OnInit {
         error: () => {}
       });
     }
+
+    if (this.authService.isAluno()) {
+      this.loadAlunoData();
+    }
+  }
+
+  loadAlunoData(): void {
+    // Carregar dados do aluno
+    this.apiService.getCurrentAluno().subscribe({
+      next: (aluno) => {
+        this.alunoData.set(aluno);
+      },
+      error: () => {}
+    });
+
+    // Carregar presenças usando endpoint /me
+    this.apiService.getMinhasPresencas().subscribe({
+      next: (presencas) => this.presencasAluno.set(presencas),
+      error: () => {}
+    });
+
+    // Carregar pagamentos usando endpoint /me
+    this.apiService.getMeusPagamentos().subscribe({
+      next: (pagamentos) => this.pagamentosAluno.set(pagamentos),
+      error: () => {}
+    });
+
+    // Buscar turmas usando endpoint /me
+    this.apiService.getMinhasTurmas().subscribe({
+      next: (turmas) => {
+        this.turmas.set(turmas);
+      },
+      error: () => {}
+    });
+
+    // Buscar aulas usando endpoint /me
+    this.apiService.getMinhasAulas().subscribe({
+      next: (aulas) => {
+        this.aulasAluno.set(aulas);
+
+        // Filtrar aulas de hoje
+        const aulasHoje = aulas.filter(a => a.data === this.today);
+        this.aulasHoje.set(aulasHoje);
+      },
+      error: () => {}
+    });
   }
 
   getGreetingMessage(): string {
@@ -580,8 +905,26 @@ export class DashboardComponent implements OnInit {
 
   getInitials(nome: string): string {
     const parts = nome.split(' ');
-    return parts.length >= 2 
+    return parts.length >= 2
       ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
       : nome.substring(0, 2).toUpperCase();
+  }
+
+  // Métodos para o aluno
+  getDiaAula(data: string): string {
+    return new Date(data + 'T00:00:00').getDate().toString().padStart(2, '0');
+  }
+
+  getMesAula(data: string): string {
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    return meses[new Date(data + 'T00:00:00').getMonth()];
+  }
+
+  getTotalPresencas(): number {
+    return this.presencasAluno().filter(p => p.status === 'presente').length;
+  }
+
+  getTotalFaltas(): number {
+    return this.presencasAluno().filter(p => p.status === 'falta').length;
   }
 }

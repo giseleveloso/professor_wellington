@@ -287,16 +287,20 @@ export class SidebarComponent {
 
   menuItems: MenuItem[] = [
     { icon: '🏠', label: 'Dashboard', route: '/' },
+    // Professor
     { icon: '👥', label: 'Turmas', route: '/turmas', professorOnly: true },
     { icon: '🎓', label: 'Alunos', route: '/alunos', professorOnly: true },
     { icon: '📖', label: 'Aulas', route: '/aulas', professorOnly: true },
     { icon: '📅', label: 'Calendário', route: '/calendario', professorOnly: true },
-    { icon: '💰', label: 'Pagamentos', route: '/pagamentos' },
-    { icon: '🎬', label: 'Vídeos', route: '/videos' },
     { icon: '🏷️', label: 'Categorias', route: '/categorias-video', professorOnly: true },
     { icon: '📊', label: 'Níveis', route: '/niveis', professorOnly: true },
-    { icon: '📚', label: 'Materiais', route: '/materiais' },
+    // Aluno
+    { icon: '📅', label: 'Minhas Aulas', route: '/minhas-aulas', alunoOnly: true },
     { icon: '📈', label: 'Meu Desempenho', route: '/meu-desempenho', alunoOnly: true },
+    // Ambos
+    { icon: '💰', label: 'Pagamentos', route: '/pagamentos' },
+    { icon: '🎬', label: 'Vídeos', route: '/videos' },
+    { icon: '📚', label: 'Materiais', route: '/materiais' },
   ];
 
   shouldShowItem(item: MenuItem): boolean {

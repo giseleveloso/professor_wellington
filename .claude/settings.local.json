@@ -3,7 +3,10 @@
     "allow": [
       "Bash(timeout:*)",
       "Bash(npx ng serve)",
-      "Bash(npx ng build:*)"
+      "Bash(npx ng build:*)",
+      "Bash(./mvnw compile:*)",
+      "Bash(npm run build:*)",
+      "Bash(ng build:*)"
     ]
   }
 }

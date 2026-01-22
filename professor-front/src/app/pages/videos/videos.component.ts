@@ -346,7 +346,13 @@ export class VideosComponent implements OnInit {
   ngOnInit(): void {
     this.loadCategorias();
     this.loadVideos();
-    this.apiService.getTurmas().subscribe(t => {
+
+    // Carregar turmas baseado no perfil
+    const turmasRequest = this.authService.isProfessor()
+      ? this.apiService.getTurmas()
+      : this.apiService.getMinhasTurmas();
+
+    turmasRequest.subscribe(t => {
       this.turmas.set(t);
       if (t.length) this.form.idTurma = t[0].id;
     });
@@ -365,7 +371,13 @@ export class VideosComponent implements OnInit {
 
   loadVideos(): void {
     this.loading.set(true);
-    this.apiService.getVideos().subscribe({
+
+    // Usar endpoint diferente baseado no perfil
+    const request = this.authService.isProfessor()
+      ? this.apiService.getVideos()
+      : this.apiService.getMeusVideos();
+
+    request.subscribe({
       next: v => {
         this.videos.set(v);
         this.applyFilters();

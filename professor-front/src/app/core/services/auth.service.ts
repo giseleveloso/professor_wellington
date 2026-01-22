@@ -15,8 +15,8 @@ export class AuthService {
   
   user = this.userSignal.asReadonly();
   isAuthenticated = computed(() => !!this.userSignal());
-  isProfessor = computed(() => this.userSignal()?.perfil === 1);
-  isAluno = computed(() => this.userSignal()?.perfil === 2);
+  isProfessor = computed(() => Number(this.userSignal()?.perfil) === 1);
+  isAluno = computed(() => Number(this.userSignal()?.perfil) === 2);
 
   constructor(
     private http: HttpClient,
@@ -25,7 +25,13 @@ export class AuthService {
 
   private loadUserFromStorage(): User | null {
     const userData = localStorage.getItem('user');
-    return userData ? JSON.parse(userData) : null;
+    if (userData) {
+      const user = JSON.parse(userData);
+      // Garantir que perfil seja número
+      user.perfil = Number(user.perfil);
+      return user;
+    }
+    return null;
   }
 
   login(credentials: AuthRequest): Observable<User> {
@@ -34,10 +40,10 @@ export class AuthService {
         const token = response.headers.get('Authorization');
         const user: User = {
           ...response.body,
-          perfil: credentials.perfil,
+          perfil: Number(credentials.perfil),
           token
         };
-        
+
         this.userSignal.set(user);
         localStorage.setItem('user', JSON.stringify(user));
         localStorage.setItem('token', token || '');

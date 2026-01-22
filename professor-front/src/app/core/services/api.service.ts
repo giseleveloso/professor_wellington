@@ -91,6 +91,35 @@ export class ApiService {
     return this.http.patch<void>(`${this.apiUrl}/alunos/${id}/username`, { novoUsername });
   }
 
+  // Métodos para aluno logado
+  getMinhasPresencas(): Observable<Presenca[]> {
+    return this.http.get<Presenca[]>(`${this.apiUrl}/presencas/me`);
+  }
+
+  getMeusDesempenhos(): Observable<Desempenho[]> {
+    return this.http.get<Desempenho[]>(`${this.apiUrl}/desempenhos/me`);
+  }
+
+  getMeusPagamentos(): Observable<Pagamento[]> {
+    return this.http.get<Pagamento[]>(`${this.apiUrl}/pagamentos/me`);
+  }
+
+  getMinhasAulas(): Observable<Aula[]> {
+    return this.http.get<Aula[]>(`${this.apiUrl}/aulas/me`);
+  }
+
+  getMinhasTurmas(): Observable<Turma[]> {
+    return this.http.get<Turma[]>(`${this.apiUrl}/turmas/me`);
+  }
+
+  getMeusVideos(): Observable<Video[]> {
+    return this.http.get<Video[]>(`${this.apiUrl}/videos/me`);
+  }
+
+  getMeusMateriais(): Observable<MaterialExtraAula[]> {
+    return this.http.get<MaterialExtraAula[]>(`${this.apiUrl}/materiais/me`);
+  }
+
   // ==================== TURMAS ====================
   getTurmas(): Observable<Turma[]> {
     return this.http.get<Turma[]>(`${this.apiUrl}/turmas`);

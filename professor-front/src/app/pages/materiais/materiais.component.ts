@@ -192,12 +192,27 @@ export class MateriaisComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadMateriais();
-    this.apiService.getTurmas().subscribe(t => { this.turmas.set(t); if (t.length) this.form.idTurma = t[0].id; });
+
+    // Carregar turmas baseado no perfil
+    const turmasRequest = this.authService.isProfessor()
+      ? this.apiService.getTurmas()
+      : this.apiService.getMinhasTurmas();
+
+    turmasRequest.subscribe(t => {
+      this.turmas.set(t);
+      if (t.length) this.form.idTurma = t[0].id;
+    });
   }
 
   loadMateriais(): void {
     this.loading.set(true);
-    this.apiService.getMateriais().subscribe({
+
+    // Usar endpoint diferente baseado no perfil
+    const request = this.authService.isProfessor()
+      ? this.apiService.getMateriais()
+      : this.apiService.getMeusMateriais();
+
+    request.subscribe({
       next: m => { this.materiais.set(m); this.materiaisFiltrados.set(m); this.loading.set(false); },
       error: () => this.loading.set(false)
     });

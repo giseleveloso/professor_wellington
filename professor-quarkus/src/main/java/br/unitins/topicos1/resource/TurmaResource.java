@@ -1,6 +1,7 @@
 package br.unitins.topicos1.resource;
 
 import br.unitins.topicos1.dto.TurmaDTO;
+import br.unitins.topicos1.service.AlunoService;
 import br.unitins.topicos1.service.TurmaService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -17,6 +18,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 @Path("/turmas")
 @Produces(MediaType.APPLICATION_JSON)
@@ -25,6 +27,12 @@ public class TurmaResource {
 
     @Inject
     TurmaService turmaService;
+
+    @Inject
+    AlunoService alunoService;
+
+    @Inject
+    JsonWebToken jwt;
 
     @POST
     @RolesAllowed({"Professor"})
@@ -88,5 +96,21 @@ public class TurmaResource {
     @RolesAllowed({"Professor"})
     public Response findByNome(@QueryParam("nome") String nome) {
         return Response.ok(turmaService.findByNome(nome)).build();
+    }
+
+    @GET
+    @Path("/me")
+    @RolesAllowed({"Aluno"})
+    public Response getMinhasTurmas() {
+        String username = jwt.getSubject();
+        var aluno = alunoService.findByUsername(username);
+        if (aluno.turmas() != null && !aluno.turmas().isEmpty()) {
+            var turmaIds = aluno.turmas().stream().map(t -> t.id()).toList();
+            var turmas = turmaIds.stream()
+                    .map(turmaService::findById)
+                    .toList();
+            return Response.ok(turmas).build();
+        }
+        return Response.ok(java.util.Collections.emptyList()).build();
     }
 }

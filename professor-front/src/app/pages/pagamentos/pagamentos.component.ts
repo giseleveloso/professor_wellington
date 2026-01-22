@@ -107,7 +107,7 @@ import { Pagamento, Aluno } from '../../core/models/user.model';
                   <td>{{ formatDate(pag.dataVencimento) }}</td>
                   <td>
                     <span [class]="'badge badge-' + getStatusClass(pag.status)">
-                      {{ pag.status.label }}
+                      {{ pag.status?.label || 'Pendente' }}
                     </span>
                   </td>
                   @if (authService.isProfessor()) {
@@ -471,7 +471,13 @@ export class PagamentosComponent implements OnInit {
 
   loadPagamentos(): void {
     this.loading.set(true);
-    this.apiService.getPagamentos().subscribe({
+
+    // Usar endpoint diferente baseado no perfil
+    const request = this.authService.isProfessor()
+      ? this.apiService.getPagamentos()
+      : this.apiService.getMeusPagamentos();
+
+    request.subscribe({
       next: p => { this.pagamentos.set(p); this.loading.set(false); },
       error: () => this.loading.set(false)
     });

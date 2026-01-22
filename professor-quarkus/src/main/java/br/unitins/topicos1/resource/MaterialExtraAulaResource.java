@@ -2,11 +2,15 @@ package br.unitins.topicos1.resource;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import br.unitins.topicos1.dto.MaterialExtraAulaDTO;
+import br.unitins.topicos1.dto.MaterialExtraAulaResponseDTO;
 import br.unitins.topicos1.form.MaterialFileForm;
+import br.unitins.topicos1.service.AlunoService;
 import br.unitins.topicos1.service.MaterialExtraAulaService;
 import br.unitins.topicos1.service.MaterialFileService;
 import jakarta.annotation.security.RolesAllowed;
@@ -37,6 +41,12 @@ public class MaterialExtraAulaResource {
 
     @Inject
     MaterialFileService materialFileService;
+
+    @Inject
+    AlunoService alunoService;
+
+    @Inject
+    JsonWebToken jwt;
 
     @POST
     @RolesAllowed({"Professor"})
@@ -130,5 +140,20 @@ public class MaterialExtraAulaResource {
         ResponseBuilder response = Response.ok(arquivo);
         response.header("Content-Disposition", "attachment; filename=" + nomeArquivo);
         return response.build();
+    }
+
+    @GET
+    @Path("/me")
+    @RolesAllowed({"Aluno"})
+    public Response getMeusMateriais() {
+        String username = jwt.getSubject();
+        var aluno = alunoService.findByUsername(username);
+        var todosMateriais = new ArrayList<MaterialExtraAulaResponseDTO>();
+        if (aluno.turmas() != null && !aluno.turmas().isEmpty()) {
+            for (var turma : aluno.turmas()) {
+                todosMateriais.addAll(materialService.findByTurmaId(turma.id()));
+            }
+        }
+        return Response.ok(todosMateriais).build();
     }
 }
