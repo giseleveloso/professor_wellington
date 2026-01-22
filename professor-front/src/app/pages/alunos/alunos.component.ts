@@ -368,13 +368,6 @@ type TabView = 'todos' | 'aniversariantes';
                   <span class="tab-badge-alert">{{ pagamentosPendentesCount() }}</span>
                 }
               </button>
-              <button
-                class="profile-tab"
-                [class.active]="profileTab === 'observacoes'"
-                (click)="profileTab = 'observacoes'"
-              >
-                📝 Observações
-              </button>
             </div>
 
             <!-- Tab: Informações -->
@@ -526,22 +519,6 @@ type TabView = 'todos' | 'aniversariantes';
                     </table>
                   </div>
                 }
-              </div>
-            }
-
-            <!-- Tab: Observações -->
-            @if (profileTab === 'observacoes') {
-              <div class="profile-section">
-                <div class="observacoes-area">
-                  <textarea
-                    class="form-control observacoes-textarea"
-                    placeholder="Adicione observações sobre o aluno aqui..."
-                    rows="6"
-                  ></textarea>
-                  <p class="text-muted text-sm mt-2">
-                    💡 As observações são visíveis apenas para você
-                  </p>
-                </div>
               </div>
             }
           </div>
@@ -1100,12 +1077,6 @@ type TabView = 'todos' | 'aniversariantes';
       padding: 2rem;
       color: var(--gray-500);
     }
-
-    // Observações
-    .observacoes-textarea {
-      resize: vertical;
-      min-height: 120px;
-    }
   `]
 })
 export class AlunosComponent implements OnInit {
@@ -1126,7 +1097,7 @@ export class AlunosComponent implements OnInit {
   selectedAluno = signal<Aluno | null>(null);
   alunoPagamentos = signal<Pagamento[]>([]);
   loadingPagamentos = signal(false);
-  profileTab: 'info' | 'pagamentos' | 'observacoes' = 'info';
+  profileTab: 'info' | 'pagamentos' = 'info';
 
   pagamentosPendentesCount = computed(() =>
     this.alunoPagamentos().filter(p => p.status.label === 'Pendente').length

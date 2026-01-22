@@ -78,6 +78,7 @@ public class AlunoServiceImpl implements AlunoService {
         aluno.setUsuario(usuario);
         aluno.setTelefone(telefone);
         aluno.setTelefoneResponsavel(telefoneResponsavel);
+        aluno.setObservacoes(dto.observacoes());
 
         // Múltiplas turmas
         if (dto.idsTurmas() != null && !dto.idsTurmas().isEmpty()) {
@@ -117,6 +118,7 @@ public class AlunoServiceImpl implements AlunoService {
         aluno.setNome(dto.nome());
         aluno.setEmail(dto.email());
         aluno.setDataNascimento(dto.dataNascimento());
+        aluno.setObservacoes(dto.observacoes());
 
         // Atualiza senha se fornecida
         if (dto.senha() != null && !dto.senha().isBlank()) {

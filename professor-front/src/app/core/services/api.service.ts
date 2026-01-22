@@ -26,6 +26,10 @@ export class ApiService {
     return this.http.get<Professor>(`${this.apiUrl}/professores/${id}`);
   }
 
+  getCurrentProfessor(): Observable<Professor> {
+    return this.http.get<Professor>(`${this.apiUrl}/professores/me`);
+  }
+
   createProfessor(data: any): Observable<Professor> {
     return this.http.post<Professor>(`${this.apiUrl}/professores`, data);
   }
@@ -38,6 +42,14 @@ export class ApiService {
     return this.http.delete<void>(`${this.apiUrl}/professores/${id}`);
   }
 
+  updateProfessorPassword(id: number, novaSenha: string): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/professores/${id}/senha`, { novaSenha });
+  }
+
+  updateProfessorUsername(id: number, novoUsername: string): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/professores/${id}/username`, { novoUsername });
+  }
+
   // ==================== ALUNOS ====================
   getAlunos(): Observable<Aluno[]> {
     return this.http.get<Aluno[]>(`${this.apiUrl}/alunos`);
@@ -45,6 +57,10 @@ export class ApiService {
 
   getAluno(id: number): Observable<Aluno> {
     return this.http.get<Aluno>(`${this.apiUrl}/alunos/${id}`);
+  }
+
+  getCurrentAluno(): Observable<Aluno> {
+    return this.http.get<Aluno>(`${this.apiUrl}/alunos/me`);
   }
 
   getAlunosByTurma(turmaId: number): Observable<Aluno[]> {
@@ -65,6 +81,14 @@ export class ApiService {
 
   deleteAluno(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/alunos/${id}`);
+  }
+
+  updateAlunoPassword(id: number, novaSenha: string): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/alunos/${id}/senha`, { novaSenha });
+  }
+
+  updateAlunoUsername(id: number, novoUsername: string): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/alunos/${id}/username`, { novoUsername });
   }
 
   // ==================== TURMAS ====================

@@ -18,6 +18,7 @@ public class Aluno extends DefaultEntity {
     private String nome;
     private String email;
     private LocalDate dataNascimento;
+    private String observacoes;
     
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "id_telefone")
@@ -140,5 +141,13 @@ public class Aluno extends DefaultEntity {
 
     public void setPagamentos(List<Pagamento> pagamentos) {
         this.pagamentos = pagamentos;
+    }
+
+    public String getObservacoes() {
+        return observacoes;
+    }
+
+    public void setObservacoes(String observacoes) {
+        this.observacoes = observacoes;
     }
 }

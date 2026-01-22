@@ -30,6 +30,7 @@ export interface Aluno {
   idTurma: number;
   nomeTurma: string;
   turmas?: TurmaSimples[];
+  observacoes?: string;
 }
 
 export interface TurmaSimples {

@@ -30,7 +30,9 @@ public record AlunoDTO(
     
     // Compatibilidade: turma única
     Long idTurma,
-    
+
     // Novo: múltiplas turmas
-    List<Long> idsTurmas
+    List<Long> idsTurmas,
+
+    String observacoes
 ) {}

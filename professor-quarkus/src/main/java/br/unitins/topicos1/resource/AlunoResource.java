@@ -20,6 +20,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 @Path("/alunos")
 @Produces(MediaType.APPLICATION_JSON)
@@ -28,6 +29,17 @@ public class AlunoResource {
 
     @Inject
     AlunoService alunoService;
+
+    @Inject
+    JsonWebToken jwt;
+
+    @GET
+    @Path("/me")
+    @RolesAllowed({"Aluno"})
+    public Response getCurrentAluno() {
+        String username = jwt.getSubject();
+        return Response.ok(alunoService.findByUsername(username)).build();
+    }
 
     @POST
     @RolesAllowed({"Professor"})

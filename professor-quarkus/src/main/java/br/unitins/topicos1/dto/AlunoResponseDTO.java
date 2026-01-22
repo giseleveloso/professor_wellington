@@ -16,7 +16,8 @@ public record AlunoResponseDTO(
     TelefoneResponseDTO telefoneResponsavel,
     Long idTurma,
     String nomeTurma,
-    List<TurmaSimpleDTO> turmas
+    List<TurmaSimpleDTO> turmas,
+    String observacoes
 ) {
     public static AlunoResponseDTO valueOf(Aluno aluno) {
         List<TurmaSimpleDTO> turmasList = null;
@@ -36,7 +37,8 @@ public record AlunoResponseDTO(
             aluno.getTelefoneResponsavel() != null ? TelefoneResponseDTO.valueOf(aluno.getTelefoneResponsavel()) : null,
             aluno.getTurma() != null ? aluno.getTurma().getId() : null,
             aluno.getTurma() != null ? aluno.getTurma().getNome() : null,
-            turmasList
+            turmasList,
+            aluno.getObservacoes()
         );
     }
 }

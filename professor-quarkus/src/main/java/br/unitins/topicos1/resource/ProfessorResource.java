@@ -19,6 +19,9 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.eclipse.microprofile.jwt.JsonWebToken;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.SecurityContext;
 
 @Path("/professores")
 @Produces(MediaType.APPLICATION_JSON)
@@ -27,6 +30,17 @@ public class ProfessorResource {
 
     @Inject
     ProfessorService professorService;
+
+    @Inject
+    JsonWebToken jwt;
+
+    @GET
+    @Path("/me")
+    @RolesAllowed({"Professor"})
+    public Response getCurrentProfessor() {
+        String username = jwt.getSubject();
+        return Response.ok(professorService.findByUsername(username)).build();
+    }
 
     @POST
     public Response create(@Valid ProfessorDTO dto) {

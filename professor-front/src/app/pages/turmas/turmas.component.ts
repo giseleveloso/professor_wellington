@@ -47,7 +47,7 @@ interface AulaPreview {
           />
         </div>
         <div class="form-group">
-          <select class="form-control" [ngModel]="filtroNivel()" (ngModelChange)="filtroNivel.set($event)">
+          <select class="form-control" [ngModel]="filtroNivel()" (ngModelChange)="filtroNivel.set(+$event)">
             <option [value]="0">Todos os níveis</option>
             @for (nivel of niveisTurma(); track nivel.id) {
               <option [value]="nivel.id">{{ nivel.codigo }} - {{ nivel.descricao }}</option>
@@ -768,9 +768,10 @@ export class TurmasComponent implements OnInit {
       );
     }
 
-    // Filtro por nível
-    if (nivel !== null && nivel !== 0) {
-      filtered = filtered.filter(t => t.nivelTurma?.id === Number(nivel));
+    // Filtro por nível - converte para número e filtra se diferente de 0
+    const nivelNum = Number(nivel);
+    if (!isNaN(nivelNum) && nivelNum > 0) {
+      filtered = filtered.filter(t => t.nivelTurma?.id === nivelNum);
     }
 
     return filtered;
