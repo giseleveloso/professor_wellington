@@ -372,12 +372,8 @@ export class VideosComponent implements OnInit {
   loadVideos(): void {
     this.loading.set(true);
 
-    // Usar endpoint diferente baseado no perfil
-    const request = this.authService.isProfessor()
-      ? this.apiService.getVideos()
-      : this.apiService.getMeusVideos();
-
-    request.subscribe({
+    // Todos os alunos podem ver todos os vídeos publicados
+    this.apiService.getVideos().subscribe({
       next: v => {
         this.videos.set(v);
         this.applyFilters();

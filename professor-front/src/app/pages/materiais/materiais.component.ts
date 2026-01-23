@@ -207,12 +207,8 @@ export class MateriaisComponent implements OnInit {
   loadMateriais(): void {
     this.loading.set(true);
 
-    // Usar endpoint diferente baseado no perfil
-    const request = this.authService.isProfessor()
-      ? this.apiService.getMateriais()
-      : this.apiService.getMeusMateriais();
-
-    request.subscribe({
+    // Todos os alunos podem ver todos os materiais publicados
+    this.apiService.getMateriais().subscribe({
       next: m => { this.materiais.set(m); this.materiaisFiltrados.set(m); this.loading.set(false); },
       error: () => this.loading.set(false)
     });
