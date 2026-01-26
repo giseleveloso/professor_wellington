@@ -510,15 +510,24 @@ type TabView = 'todos' | 'aniversariantes';
                               </span>
                             </td>
                             <td>
-                              @if (pag.status.label !== 'Pago') {
-                                <button class="btn btn-success btn-xs" (click)="marcarComoPago(pag.id)">
-                                  ✓ Pagar
-                                </button>
-                              } @else {
-                                <button class="btn btn-outline btn-xs" (click)="marcarComoNaoPago(pag.id)">
-                                  ↩ Desfazer
-                                </button>
-                              }
+                              <div class="flex gap-1 items-center flex-wrap">
+                                @if (pag.status.label !== 'Pago') {
+                                  <button class="btn btn-success btn-xs" (click)="marcarComoPago(pag.id)">
+                                    ✓ Pagar
+                                  </button>
+                                  <button class="btn btn-whatsapp btn-xs" (click)="notificarWhatsApp(pag.id)" title="WhatsApp">
+                                    📱
+                                  </button>
+                                  <button class="btn btn-email btn-xs" (click)="notificarEmail(pag.id)"
+                                    [disabled]="enviandoEmail()" title="Email">
+                                    📧
+                                  </button>
+                                } @else {
+                                  <button class="btn btn-outline btn-xs" (click)="marcarComoNaoPago(pag.id)">
+                                    ↩ Desfazer
+                                  </button>
+                                }
+                              </div>
                             </td>
                           </tr>
                         }
@@ -1187,6 +1196,21 @@ type TabView = 'todos' | 'aniversariantes';
       font-size: 0.75rem;
     }
 
+    .btn-whatsapp {
+      background: #25d366;
+      color: white;
+      border: none;
+      &:hover { background: #1da851; }
+    }
+
+    .btn-email {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      &:hover { background: #4338ca; }
+      &:disabled { opacity: 0.6; cursor: not-allowed; }
+    }
+
     .empty-state-small {
       text-align: center;
       padding: 2rem;
@@ -1292,6 +1316,7 @@ export class AlunosComponent implements OnInit {
   selectedAluno = signal<Aluno | null>(null);
   alunoPagamentos = signal<Pagamento[]>([]);
   loadingPagamentos = signal(false);
+  enviandoEmail = signal(false);
   profileTab: 'info' | 'pagamentos' | 'desempenho' = 'info';
 
   // Desempenho
@@ -1689,6 +1714,29 @@ export class AlunosComponent implements OnInit {
       next: () => {
         const aluno = this.selectedAluno();
         if (aluno) this.loadAlunoPagamentos(aluno.id);
+      }
+    });
+  }
+
+  notificarWhatsApp(pagamentoId: number): void {
+    this.apiService.getLinkWhatsApp(pagamentoId).subscribe({
+      next: (res) => {
+        window.open(res.link, '_blank');
+      },
+      error: () => alert('Erro ao gerar link do WhatsApp. Verifique se o aluno possui telefone cadastrado.')
+    });
+  }
+
+  notificarEmail(pagamentoId: number): void {
+    this.enviandoEmail.set(true);
+    this.apiService.notificarPagamentoEmail(pagamentoId).subscribe({
+      next: () => {
+        this.enviandoEmail.set(false);
+        alert('Email de cobrança enviado com sucesso!');
+      },
+      error: () => {
+        this.enviandoEmail.set(false);
+        alert('Erro ao enviar email. Verifique se o aluno possui email cadastrado.');
       }
     });
   }

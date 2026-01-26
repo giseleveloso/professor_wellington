@@ -253,6 +253,14 @@ export class ApiService {
     return this.http.delete<void>(`${this.apiUrl}/pagamentos/${id}`);
   }
 
+  notificarPagamentoEmail(id: number): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/pagamentos/${id}/notificar-email`, {});
+  }
+
+  getLinkWhatsApp(id: number): Observable<{ link: string }> {
+    return this.http.get<{ link: string }>(`${this.apiUrl}/pagamentos/${id}/link-whatsapp`);
+  }
+
   // ==================== CATEGORIAS DE VÍDEO ====================
   getCategorias(): Observable<CategoriaVideo[]> {
     return this.http.get<CategoriaVideo[]>(`${this.apiUrl}/categorias-video`);

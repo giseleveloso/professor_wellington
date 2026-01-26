@@ -2,6 +2,7 @@ package br.unitins.topicos1.resource;
 
 import br.unitins.topicos1.dto.PagamentoDTO;
 import br.unitins.topicos1.service.AlunoService;
+import br.unitins.topicos1.service.NotificacaoService;
 import br.unitins.topicos1.service.PagamentoService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -31,6 +32,9 @@ public class PagamentoResource {
 
     @Inject
     AlunoService alunoService;
+
+    @Inject
+    NotificacaoService notificacaoService;
 
     @Inject
     JsonWebToken jwt;
@@ -135,6 +139,34 @@ public class PagamentoResource {
     public Response atualizarStatusVencidos() {
         pagamentoService.atualizarStatusVencidos();
         return Response.noContent().build();
+    }
+
+    @POST
+    @Path("/{id}/notificar-email")
+    @RolesAllowed({"Professor"})
+    public Response notificarPorEmail(@PathParam("id") Long id) {
+        try {
+            notificacaoService.enviarCobrancaEmail(id);
+            return Response.ok().entity("{\"message\":\"Email enviado com sucesso\"}").build();
+        } catch (IllegalStateException e) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("{\"message\":\"" + e.getMessage() + "\"}")
+                    .build();
+        }
+    }
+
+    @GET
+    @Path("/{id}/link-whatsapp")
+    @RolesAllowed({"Professor"})
+    public Response getLinkWhatsApp(@PathParam("id") Long id) {
+        try {
+            String link = notificacaoService.gerarLinkWhatsApp(id);
+            return Response.ok().entity("{\"link\":\"" + link + "\"}").build();
+        } catch (IllegalStateException e) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("{\"message\":\"" + e.getMessage() + "\"}")
+                    .build();
+        }
     }
 
     @GET

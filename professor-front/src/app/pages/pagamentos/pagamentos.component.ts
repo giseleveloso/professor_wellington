@@ -125,6 +125,15 @@ import { Pagamento, Aluno } from '../../core/models/user.model';
                             </button>
                           </div>
                         }
+                        @if (pag.status.id !== 2) {
+                          <button class="btn btn-whatsapp btn-xs" (click)="notificarWhatsApp(pag.id)" title="Notificar via WhatsApp">
+                            📱
+                          </button>
+                          <button class="btn btn-email btn-xs" (click)="notificarEmail(pag.id)"
+                            [disabled]="enviandoEmail()" title="Notificar via Email">
+                            📧
+                          </button>
+                        }
                         <button class="btn btn-danger btn-xs" (click)="deletePagamento(pag.id)" title="Excluir pagamento">
                           🗑️
                         </button>
@@ -383,6 +392,21 @@ import { Pagamento, Aluno } from '../../core/models/user.model';
       font-size: 0.75rem;
     }
 
+    .btn-whatsapp {
+      background: #25d366;
+      color: white;
+      border: none;
+      &:hover { background: #1da851; }
+    }
+
+    .btn-email {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      &:hover { background: #4338ca; }
+      &:disabled { opacity: 0.6; cursor: not-allowed; }
+    }
+
     @media (max-width: 768px) { 
       .stats-row { grid-template-columns: 1fr; } 
       .btn-group-select { flex-direction: column; }
@@ -397,6 +421,7 @@ export class PagamentosComponent implements OnInit {
   alunos = signal<Aluno[]>([]);
   loading = signal(true);
   saving = signal(false);
+  enviandoEmail = signal(false);
   showModal = signal(false);
 
   filtroStatus = 'todos';
@@ -525,6 +550,29 @@ export class PagamentosComponent implements OnInit {
         error: () => alert('Erro ao excluir pagamento')
       });
     }
+  }
+
+  notificarWhatsApp(pagamentoId: number): void {
+    this.apiService.getLinkWhatsApp(pagamentoId).subscribe({
+      next: (res) => {
+        window.open(res.link, '_blank');
+      },
+      error: () => alert('Erro ao gerar link do WhatsApp. Verifique se o aluno possui telefone cadastrado.')
+    });
+  }
+
+  notificarEmail(pagamentoId: number): void {
+    this.enviandoEmail.set(true);
+    this.apiService.notificarPagamentoEmail(pagamentoId).subscribe({
+      next: () => {
+        this.enviandoEmail.set(false);
+        alert('Email de cobrança enviado com sucesso!');
+      },
+      error: () => {
+        this.enviandoEmail.set(false);
+        alert('Erro ao enviar email. Verifique se o aluno possui email cadastrado.');
+      }
+    });
   }
 
   openModal(): void {
