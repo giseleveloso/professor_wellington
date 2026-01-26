@@ -394,7 +394,7 @@ interface WeekDay {
                               max="10"
                               step="0.5"
                               placeholder="0-10"
-                              [value]="desempenhoMap()[aluno.id]?.nota ?? ''"
+                              [value]="desempenhoMap()[aluno.id].nota ?? ''"
                               (input)="setNota(aluno.id, $event)"
                             />
                             <span class="nota-max">/10</span>
@@ -407,14 +407,14 @@ interface WeekDay {
                           <textarea
                             class="form-control comentario-input"
                             placeholder="Feedback sobre o desempenho do aluno..."
-                            [value]="desempenhoMap()[aluno.id]?.comentario || ''"
+                            [value]="desempenhoMap()[aluno.id].comentario || ''"
                             (input)="setFeedback(aluno.id, $event)"
                             rows="2"
                           ></textarea>
                           <label class="checkbox-label mt-2">
                             <input
                               type="checkbox"
-                              [checked]="desempenhoMap()[aluno.id]?.privado || false"
+                              [checked]="desempenhoMap()[aluno.id].privado || false"
                               (change)="setPrivado(aluno.id, $event)"
                             />
                             <span>Feedback privado (não visível ao aluno)</span>
