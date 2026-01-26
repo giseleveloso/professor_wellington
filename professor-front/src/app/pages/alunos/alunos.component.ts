@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
-import { Aluno, Turma, Pagamento } from '../../core/models/user.model';
+import { Aluno, Turma, Pagamento, Presenca, Desempenho } from '../../core/models/user.model';
 
 type TabView = 'todos' | 'aniversariantes';
 
@@ -368,6 +368,13 @@ type TabView = 'todos' | 'aniversariantes';
                   <span class="tab-badge-alert">{{ pagamentosPendentesCount() }}</span>
                 }
               </button>
+              <button
+                class="profile-tab"
+                [class.active]="profileTab === 'desempenho'"
+                (click)="profileTab = 'desempenho'"
+              >
+                📊 Desempenho
+              </button>
             </div>
 
             <!-- Tab: Informações -->
@@ -518,6 +525,114 @@ type TabView = 'todos' | 'aniversariantes';
                       </tbody>
                     </table>
                   </div>
+                }
+              </div>
+            }
+
+            <!-- Tab: Desempenho -->
+            @if (profileTab === 'desempenho') {
+              <div class="profile-section">
+                @if (loadingDesempenho()) {
+                  <div class="loading-state">
+                    <span class="spinner"></span>
+                    <p>Carregando desempenho...</p>
+                  </div>
+                } @else {
+                  <!-- Resumo -->
+                  <div class="desempenho-summary">
+                    <div class="summary-card summary-presenca">
+                      <span class="summary-value">{{ taxaPresenca() !== null ? taxaPresenca() + '%' : '-' }}</span>
+                      <span class="summary-label">Presença</span>
+                    </div>
+                    <div class="summary-card summary-pago">
+                      <span class="summary-value">{{ contagemPresencas().presencas }}</span>
+                      <span class="summary-label">Presenças</span>
+                    </div>
+                    <div class="summary-card summary-atrasado">
+                      <span class="summary-value">{{ contagemPresencas().faltas }}</span>
+                      <span class="summary-label">Faltas</span>
+                    </div>
+                    <div class="summary-card summary-nota">
+                      <span class="summary-value">{{ mediaNotas() || '-' }}</span>
+                      <span class="summary-label">Média Notas</span>
+                    </div>
+                  </div>
+
+                  <!-- Notas por Aula -->
+                  @if (alunoDesempenhos().length > 0) {
+                    <h4 class="section-title mt-4">⭐ Notas e Feedback</h4>
+                    <div class="table-container">
+                      <table class="table-compact">
+                        <thead>
+                          <tr>
+                            <th>Data</th>
+                            <th>Aula</th>
+                            <th>Nota</th>
+                            <th>Feedback</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (d of alunoDesempenhos(); track d.id) {
+                            <tr>
+                              <td>{{ formatDataPagamento(d.dataAula) }}</td>
+                              <td class="font-semibold">{{ d.topicoAula }}</td>
+                              <td>
+                                <span class="nota-badge" [class.nota-alta]="d.nota >= 7" [class.nota-media]="d.nota >= 5 && d.nota < 7" [class.nota-baixa]="d.nota < 5">
+                                  {{ d.nota }}
+                                </span>
+                              </td>
+                              <td class="text-muted">{{ d.comentario || '-' }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  } @else {
+                    <div class="empty-state-small mt-4">
+                      <p>Nenhuma nota registrada ainda</p>
+                    </div>
+                  }
+
+                  <!-- Histórico de Presenças -->
+                  @if (alunoPresencas().length > 0) {
+                    <h4 class="section-title mt-4">📋 Histórico de Presenças</h4>
+                    <div class="table-container">
+                      <table class="table-compact">
+                        <thead>
+                          <tr>
+                            <th>Data</th>
+                            <th>Aula</th>
+                            <th>Presença</th>
+                            <th>Dever</th>
+                            <th>Preparação</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (p of alunoPresencas(); track p.id) {
+                            <tr>
+                              <td>{{ formatDataPagamento(p.dataAula) }}</td>
+                              <td class="font-semibold">{{ p.topicoAula }}</td>
+                              <td>
+                                <span class="status-badge" [class.status-presente]="p.status === 'presente'" [class.status-falta]="p.status === 'falta'" [class.status-cancelada]="p.status === 'cancelada'">
+                                  {{ getStatusLabel(p.status) }}
+                                </span>
+                              </td>
+                              <td>
+                                <span class="status-badge-sm" [class.status-feito]="p.deverCasa === 'feito'" [class.status-nao-feito]="p.deverCasa === 'nao_feito'" [class.status-na]="p.deverCasa === 'nao_aplica'">
+                                  {{ getDeverLabel(p.deverCasa) }}
+                                </span>
+                              </td>
+                              <td>
+                                <span class="status-badge-sm" [class.status-feito]="p.preparacaoAula === 'feito'" [class.status-nao-feito]="p.preparacaoAula === 'nao_feito'" [class.status-na]="p.preparacaoAula === 'nao_aplica'">
+                                  {{ getPreparacaoLabel(p.preparacaoAula) }}
+                                </span>
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  }
                 }
               </div>
             }
@@ -1077,6 +1192,86 @@ type TabView = 'todos' | 'aniversariantes';
       padding: 2rem;
       color: var(--gray-500);
     }
+
+    .mt-4 { margin-top: 1rem; }
+
+    // Desempenho
+    .desempenho-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+    }
+
+    .summary-presenca {
+      background: #ede9fe;
+      color: #5b21b6;
+    }
+
+    .summary-nota {
+      background: #fef9c3;
+      color: #854d0e;
+    }
+
+    .nota-badge {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.875rem;
+    }
+
+    .nota-alta {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .nota-media {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .nota-baixa {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .status-presente {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-falta {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .status-cancelada {
+      background: #e5e7eb;
+      color: #4b5563;
+    }
+
+    .status-badge-sm {
+      display: inline-block;
+      padding: 0.125rem 0.375rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .status-feito {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-nao-feito {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-na {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
   `]
 })
 export class AlunosComponent implements OnInit {
@@ -1097,7 +1292,13 @@ export class AlunosComponent implements OnInit {
   selectedAluno = signal<Aluno | null>(null);
   alunoPagamentos = signal<Pagamento[]>([]);
   loadingPagamentos = signal(false);
-  profileTab: 'info' | 'pagamentos' = 'info';
+  profileTab: 'info' | 'pagamentos' | 'desempenho' = 'info';
+
+  // Desempenho
+  alunoPresencas = signal<Presenca[]>([]);
+  alunoDesempenhos = signal<Desempenho[]>([]);
+  contagemPresencas = signal<{ presencas: number; faltas: number }>({ presencas: 0, faltas: 0 });
+  loadingDesempenho = signal(false);
 
   pagamentosPendentesCount = computed(() =>
     this.alunoPagamentos().filter(p => p.status.label === 'Pendente').length
@@ -1145,6 +1346,20 @@ export class AlunosComponent implements OnInit {
         const dateB = this.getProximoAniversario(b.dataNascimento!);
         return dateA.getTime() - dateB.getTime();
       });
+  });
+
+  mediaNotas = computed(() => {
+    const desempenhos = this.alunoDesempenhos();
+    if (desempenhos.length === 0) return null;
+    const soma = desempenhos.reduce((acc, d) => acc + (d.nota || 0), 0);
+    return (soma / desempenhos.length).toFixed(1);
+  });
+
+  taxaPresenca = computed(() => {
+    const c = this.contagemPresencas();
+    const total = c.presencas + c.faltas;
+    if (total === 0) return null;
+    return Math.round((c.presencas / total) * 100);
   });
 
   ngOnInit(): void {
@@ -1345,8 +1560,12 @@ export class AlunosComponent implements OnInit {
     this.selectedAluno.set(aluno);
     this.profileTab = 'info';
     this.alunoPagamentos.set([]);
+    this.alunoPresencas.set([]);
+    this.alunoDesempenhos.set([]);
+    this.contagemPresencas.set({ presencas: 0, faltas: 0 });
     this.showProfileModal.set(true);
     this.loadAlunoPagamentos(aluno.id);
+    this.loadAlunoDesempenho(aluno.id);
   }
 
   closeProfileModal(): void {
@@ -1363,6 +1582,61 @@ export class AlunosComponent implements OnInit {
       },
       error: () => this.loadingPagamentos.set(false)
     });
+  }
+
+  loadAlunoDesempenho(alunoId: number): void {
+    this.loadingDesempenho.set(true);
+
+    // Carregar contagem de presenças
+    this.apiService.getContagemPresencas(alunoId).subscribe({
+      next: (contagem) => this.contagemPresencas.set(contagem),
+      error: () => this.contagemPresencas.set({ presencas: 0, faltas: 0 })
+    });
+
+    // Carregar presenças detalhadas
+    this.apiService.getPresencasByAluno(alunoId).subscribe({
+      next: (presencas) => this.alunoPresencas.set(presencas),
+      error: () => this.alunoPresencas.set([])
+    });
+
+    // Carregar desempenhos (notas)
+    this.apiService.getDesempenhosByAluno(alunoId).subscribe({
+      next: (desempenhos) => {
+        this.alunoDesempenhos.set(desempenhos);
+        this.loadingDesempenho.set(false);
+      },
+      error: () => {
+        this.alunoDesempenhos.set([]);
+        this.loadingDesempenho.set(false);
+      }
+    });
+  }
+
+  getStatusLabel(status: string): string {
+    const labels: { [key: string]: string } = {
+      'presente': 'Presente',
+      'falta': 'Falta',
+      'cancelada': 'Cancelada'
+    };
+    return labels[status] || status;
+  }
+
+  getDeverLabel(status: string): string {
+    const labels: { [key: string]: string } = {
+      'feito': 'Feito',
+      'nao_feito': 'Não feito',
+      'nao_aplica': 'N/A'
+    };
+    return labels[status] || status;
+  }
+
+  getPreparacaoLabel(status: string): string {
+    const labels: { [key: string]: string } = {
+      'feito': 'Feito',
+      'nao_feito': 'Não feito',
+      'nao_aplica': 'N/A'
+    };
+    return labels[status] || status;
   }
 
   getAlunoTurmasDetails(): Turma[] {
