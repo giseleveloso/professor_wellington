@@ -14,7 +14,9 @@ public record MaterialExtraAulaResponseDTO(
     String nomeArquivo,
     LocalDate dataPublicacao,
     Long idTurma,
-    String nomeTurma
+    String nomeTurma,
+    CategoriaVideoResponseDTO categoria,
+    SubcategoriaVideoSimpleDTO subcategoria
 ) {
     public static MaterialExtraAulaResponseDTO valueOf(MaterialExtraAula material) {
         return new MaterialExtraAulaResponseDTO(
@@ -26,7 +28,9 @@ public record MaterialExtraAulaResponseDTO(
             material.getNomeArquivo(),
             material.getDataPublicacao(),
             material.getTurma() != null ? material.getTurma().getId() : null,
-            material.getTurma() != null ? material.getTurma().getNome() : null
+            material.getTurma() != null ? material.getTurma().getNome() : null,
+            material.getCategoria() != null ? CategoriaVideoResponseDTO.valueOf(material.getCategoria()) : null,
+            material.getSubcategoria() != null ? SubcategoriaVideoSimpleDTO.valueOf(material.getSubcategoria()) : null
         );
     }
 }

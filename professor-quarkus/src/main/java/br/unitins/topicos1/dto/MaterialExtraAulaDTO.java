@@ -19,5 +19,9 @@ public record MaterialExtraAulaDTO(
     LocalDate dataPublicacao,
     
     @NotNull(message = "Turma é obrigatória")
-    Long idTurma
+    Long idTurma,
+
+    Long idCategoria,
+
+    Long idSubcategoria
 ) {}

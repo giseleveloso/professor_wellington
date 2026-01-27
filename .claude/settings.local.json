@@ -6,7 +6,8 @@
       "Bash(npx ng build:*)",
       "Bash(./mvnw compile:*)",
       "Bash(npm run build:*)",
-      "Bash(ng build:*)"
+      "Bash(ng build:*)",
+      "Bash(mvn compile:*)"
     ]
   }
 }

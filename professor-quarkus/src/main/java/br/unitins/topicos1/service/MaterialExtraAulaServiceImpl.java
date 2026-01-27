@@ -6,10 +6,14 @@ import java.util.stream.Collectors;
 
 import br.unitins.topicos1.dto.MaterialExtraAulaDTO;
 import br.unitins.topicos1.dto.MaterialExtraAulaResponseDTO;
+import br.unitins.topicos1.model.CategoriaVideo;
 import br.unitins.topicos1.model.MaterialExtraAula;
+import br.unitins.topicos1.model.SubcategoriaVideo;
 import br.unitins.topicos1.model.TipoConteudo;
 import br.unitins.topicos1.model.Turma;
+import br.unitins.topicos1.repository.CategoriaVideoRepository;
 import br.unitins.topicos1.repository.MaterialExtraAulaRepository;
+import br.unitins.topicos1.repository.SubcategoriaVideoRepository;
 import br.unitins.topicos1.repository.TurmaRepository;
 import br.unitins.topicos1.validation.ValidationException;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -24,6 +28,12 @@ public class MaterialExtraAulaServiceImpl implements MaterialExtraAulaService {
 
     @Inject
     TurmaRepository turmaRepository;
+
+    @Inject
+    CategoriaVideoRepository categoriaRepository;
+
+    @Inject
+    SubcategoriaVideoRepository subcategoriaRepository;
 
     @Override
     @Transactional
@@ -40,6 +50,8 @@ public class MaterialExtraAulaServiceImpl implements MaterialExtraAulaService {
         material.setUrlArquivo(dto.urlArquivo());
         material.setDataPublicacao(dto.dataPublicacao() != null ? dto.dataPublicacao() : LocalDate.now());
         material.setTurma(turma);
+
+        setCategoriaSubcategoria(material, dto);
 
         materialRepository.persist(material);
         return MaterialExtraAulaResponseDTO.valueOf(material);
@@ -66,7 +78,30 @@ public class MaterialExtraAulaServiceImpl implements MaterialExtraAulaService {
             material.setTurma(turma);
         }
 
+        setCategoriaSubcategoria(material, dto);
+
         return MaterialExtraAulaResponseDTO.valueOf(material);
+    }
+
+    private void setCategoriaSubcategoria(MaterialExtraAula material, MaterialExtraAulaDTO dto) {
+        if (dto.idSubcategoria() != null) {
+            SubcategoriaVideo subcategoria = subcategoriaRepository.findById(dto.idSubcategoria());
+            if (subcategoria == null) {
+                throw new ValidationException("idSubcategoria", "Subcategoria não encontrada");
+            }
+            material.setSubcategoria(subcategoria);
+            material.setCategoria(subcategoria.getCategoriaRaiz());
+        } else if (dto.idCategoria() != null) {
+            CategoriaVideo categoria = categoriaRepository.findById(dto.idCategoria());
+            if (categoria == null) {
+                throw new ValidationException("idCategoria", "Categoria não encontrada");
+            }
+            material.setCategoria(categoria);
+            material.setSubcategoria(null);
+        } else {
+            material.setCategoria(null);
+            material.setSubcategoria(null);
+        }
     }
 
     @Override
@@ -123,6 +158,46 @@ public class MaterialExtraAulaServiceImpl implements MaterialExtraAulaService {
     @Override
     public List<MaterialExtraAulaResponseDTO> findByTitulo(String titulo) {
         return materialRepository.findByTitulo(titulo)
+                .stream()
+                .map(MaterialExtraAulaResponseDTO::valueOf)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MaterialExtraAulaResponseDTO> findByCategoria(Long idCategoria) {
+        CategoriaVideo categoria = categoriaRepository.findById(idCategoria);
+        if (categoria == null) {
+            throw new ValidationException("idCategoria", "Categoria não encontrada");
+        }
+        return materialRepository.findByCategoria(categoria)
+                .stream()
+                .map(MaterialExtraAulaResponseDTO::valueOf)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MaterialExtraAulaResponseDTO> findBySubcategoria(Long idSubcategoria) {
+        return materialRepository.findBySubcategoria(idSubcategoria)
+                .stream()
+                .map(MaterialExtraAulaResponseDTO::valueOf)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MaterialExtraAulaResponseDTO> findByTurmaIdAndCategoria(Long turmaId, Long idCategoria) {
+        CategoriaVideo categoria = categoriaRepository.findById(idCategoria);
+        if (categoria == null) {
+            throw new ValidationException("idCategoria", "Categoria não encontrada");
+        }
+        return materialRepository.findByTurmaIdAndCategoria(turmaId, categoria)
+                .stream()
+                .map(MaterialExtraAulaResponseDTO::valueOf)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MaterialExtraAulaResponseDTO> findByTurmaIdAndSubcategoria(Long turmaId, Long idSubcategoria) {
+        return materialRepository.findByTurmaIdAndSubcategoria(turmaId, idSubcategoria)
                 .stream()
                 .map(MaterialExtraAulaResponseDTO::valueOf)
                 .collect(Collectors.toList());

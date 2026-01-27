@@ -26,6 +26,14 @@ public class MaterialExtraAula extends DefaultEntity {
     @JoinColumn(name = "id_turma")
     private Turma turma;
 
+    @ManyToOne
+    @JoinColumn(name = "id_categoria")
+    private CategoriaVideo categoria;
+
+    @ManyToOne
+    @JoinColumn(name = "id_subcategoria")
+    private SubcategoriaVideo subcategoria;
+
     public String getTitulo() {
         return titulo;
     }
@@ -80,5 +88,21 @@ public class MaterialExtraAula extends DefaultEntity {
 
     public void setTurma(Turma turma) {
         this.turma = turma;
+    }
+
+    public CategoriaVideo getCategoria() {
+        return categoria;
+    }
+
+    public void setCategoria(CategoriaVideo categoria) {
+        this.categoria = categoria;
+    }
+
+    public SubcategoriaVideo getSubcategoria() {
+        return subcategoria;
+    }
+
+    public void setSubcategoria(SubcategoriaVideo subcategoria) {
+        this.subcategoria = subcategoria;
     }
 }

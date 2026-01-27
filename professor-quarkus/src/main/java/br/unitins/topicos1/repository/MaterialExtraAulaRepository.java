@@ -2,6 +2,7 @@ package br.unitins.topicos1.repository;
 
 import java.util.List;
 
+import br.unitins.topicos1.model.CategoriaVideo;
 import br.unitins.topicos1.model.MaterialExtraAula;
 import br.unitins.topicos1.model.TipoConteudo;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
@@ -24,5 +25,21 @@ public class MaterialExtraAulaRepository implements PanacheRepository<MaterialEx
 
     public List<MaterialExtraAula> findByTitulo(String titulo) {
         return find("LOWER(titulo) LIKE LOWER(?1)", "%" + titulo + "%").list();
+    }
+
+    public List<MaterialExtraAula> findByCategoria(CategoriaVideo categoria) {
+        return find("categoria", categoria).list();
+    }
+
+    public List<MaterialExtraAula> findBySubcategoria(Long idSubcategoria) {
+        return find("subcategoria.id", idSubcategoria).list();
+    }
+
+    public List<MaterialExtraAula> findByTurmaIdAndCategoria(Long turmaId, CategoriaVideo categoria) {
+        return find("turma.id = ?1 AND categoria = ?2", turmaId, categoria).list();
+    }
+
+    public List<MaterialExtraAula> findByTurmaIdAndSubcategoria(Long turmaId, Long idSubcategoria) {
+        return find("turma.id = ?1 AND subcategoria.id = ?2", turmaId, idSubcategoria).list();
     }
 }

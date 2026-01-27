@@ -114,6 +114,38 @@ public class MaterialExtraAulaResource {
         return Response.ok(materialService.findByTitulo(titulo)).build();
     }
 
+    @GET
+    @Path("/categoria")
+    @RolesAllowed({"Professor", "Aluno"})
+    public Response findByCategoria(@QueryParam("idCategoria") Long idCategoria) {
+        return Response.ok(materialService.findByCategoria(idCategoria)).build();
+    }
+
+    @GET
+    @Path("/subcategoria/{idSubcategoria}")
+    @RolesAllowed({"Professor", "Aluno"})
+    public Response findBySubcategoria(@PathParam("idSubcategoria") Long idSubcategoria) {
+        return Response.ok(materialService.findBySubcategoria(idSubcategoria)).build();
+    }
+
+    @GET
+    @Path("/turma/{turmaId}/categoria")
+    @RolesAllowed({"Professor", "Aluno"})
+    public Response findByTurmaIdAndCategoria(
+            @PathParam("turmaId") Long turmaId,
+            @QueryParam("idCategoria") Long idCategoria) {
+        return Response.ok(materialService.findByTurmaIdAndCategoria(turmaId, idCategoria)).build();
+    }
+
+    @GET
+    @Path("/turma/{turmaId}/subcategoria/{idSubcategoria}")
+    @RolesAllowed({"Professor", "Aluno"})
+    public Response findByTurmaIdAndSubcategoria(
+            @PathParam("turmaId") Long turmaId,
+            @PathParam("idSubcategoria") Long idSubcategoria) {
+        return Response.ok(materialService.findByTurmaIdAndSubcategoria(turmaId, idSubcategoria)).build();
+    }
+
     @PATCH
     @Path("/{id}/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -139,6 +171,29 @@ public class MaterialExtraAulaResource {
         }
         ResponseBuilder response = Response.ok(arquivo);
         response.header("Content-Disposition", "attachment; filename=" + nomeArquivo);
+        return response.build();
+    }
+
+    @GET
+    @Path("/view/{nomeArquivo}")
+    @RolesAllowed({"Professor", "Aluno"})
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response viewArquivo(@PathParam("nomeArquivo") String nomeArquivo) {
+        File arquivo = materialFileService.download(nomeArquivo);
+        if (arquivo == null || !arquivo.exists()) {
+            return Response.status(Status.NOT_FOUND).build();
+        }
+        String contentType = "application/octet-stream";
+        if (nomeArquivo.toLowerCase().endsWith(".pdf")) {
+            contentType = "application/pdf";
+        } else if (nomeArquivo.toLowerCase().endsWith(".png")) {
+            contentType = "image/png";
+        } else if (nomeArquivo.toLowerCase().endsWith(".jpg") || nomeArquivo.toLowerCase().endsWith(".jpeg")) {
+            contentType = "image/jpeg";
+        }
+        ResponseBuilder response = Response.ok(arquivo);
+        response.header("Content-Type", contentType);
+        response.header("Content-Disposition", "inline; filename=" + nomeArquivo);
         return response.build();
     }
 

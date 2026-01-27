@@ -185,6 +185,8 @@ export interface MaterialExtraAula {
   dataPublicacao: string;
   idTurma: number;
   nomeTurma: string;
+  categoria: CategoriaVideo | null;
+  subcategoria: SubcategoriaVideoSimple | null;
 }
 
 export interface EnumValue {

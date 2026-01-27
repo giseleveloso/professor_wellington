@@ -16,4 +16,8 @@ public interface MaterialExtraAulaService {
     List<MaterialExtraAulaResponseDTO> findByTipoConteudo(Integer idTipoConteudo);
     List<MaterialExtraAulaResponseDTO> findByTurmaIdAndTipoConteudo(Long turmaId, Integer idTipoConteudo);
     List<MaterialExtraAulaResponseDTO> findByTitulo(String titulo);
+    List<MaterialExtraAulaResponseDTO> findByCategoria(Long idCategoria);
+    List<MaterialExtraAulaResponseDTO> findBySubcategoria(Long idSubcategoria);
+    List<MaterialExtraAulaResponseDTO> findByTurmaIdAndCategoria(Long turmaId, Long idCategoria);
+    List<MaterialExtraAulaResponseDTO> findByTurmaIdAndSubcategoria(Long turmaId, Long idSubcategoria);
 }

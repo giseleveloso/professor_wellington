@@ -365,6 +365,18 @@ export class ApiService {
     return this.http.delete<void>(`${this.apiUrl}/materiais/${id}`);
   }
 
+  uploadMaterialFile(id: number, formData: FormData): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/materiais/${id}/upload`, formData);
+  }
+
+  getMateriaisByCategoria(categoriaId: number): Observable<MaterialExtraAula[]> {
+    return this.http.get<MaterialExtraAula[]>(`${this.apiUrl}/materiais/categoria?idCategoria=${categoriaId}`);
+  }
+
+  getMateriaisBySubcategoria(subcategoriaId: number): Observable<MaterialExtraAula[]> {
+    return this.http.get<MaterialExtraAula[]>(`${this.apiUrl}/materiais/subcategoria/${subcategoriaId}`);
+  }
+
   // ==================== NÍVEIS DE TURMA ====================
   getNiveisTurma(professorId: number): Observable<NivelTurma[]> {
     return this.http.get<NivelTurma[]>(`${this.apiUrl}/niveis-turma/professor/${professorId}`);
