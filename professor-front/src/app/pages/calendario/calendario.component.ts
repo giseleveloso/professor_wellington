@@ -11,6 +11,13 @@ interface PresencaAluno {
   comentario: string;
 }
 
+interface DesempenhoAluno {
+  id?: number;
+  nota: number | null;
+  comentario: string;
+  privado: boolean;
+}
+
 type ViewMode = 'month' | 'week';
 
 interface CalendarDay {
@@ -376,12 +383,50 @@ interface WeekDay {
                           </div>
                         </div>
 
-                        <!-- Comentário -->
+                        <!-- Nota/Desempenho -->
+                        <div class="presenca-row nota-row">
+                          <label class="presenca-label">⭐ Nota</label>
+                          <div class="nota-input-group">
+                            <input
+                              type="number"
+                              class="form-control nota-input"
+                              min="0"
+                              max="10"
+                              step="0.5"
+                              placeholder="0-10"
+                              [value]="desempenhoMap()[aluno.id].nota ?? ''"
+                              (input)="setNota(aluno.id, $event)"
+                            />
+                            <span class="nota-max">/10</span>
+                          </div>
+                        </div>
+
+                        <!-- Feedback do Desempenho -->
                         <div class="presenca-row comentario-row">
-                          <label class="presenca-label">💬 Comentário</label>
-                          <textarea 
+                          <label class="presenca-label">📝 Feedback</label>
+                          <textarea
                             class="form-control comentario-input"
-                            placeholder="Observações sobre o aluno nesta aula..."
+                            placeholder="Feedback sobre o desempenho do aluno..."
+                            [value]="desempenhoMap()[aluno.id].comentario || ''"
+                            (input)="setFeedback(aluno.id, $event)"
+                            rows="2"
+                          ></textarea>
+                          <label class="checkbox-label mt-2">
+                            <input
+                              type="checkbox"
+                              [checked]="desempenhoMap()[aluno.id].privado || false"
+                              (change)="setPrivado(aluno.id, $event)"
+                            />
+                            <span>Feedback privado (não visível ao aluno)</span>
+                          </label>
+                        </div>
+
+                        <!-- Comentário da Presença -->
+                        <div class="presenca-row comentario-row">
+                          <label class="presenca-label">💬 Observação</label>
+                          <textarea
+                            class="form-control comentario-input"
+                            placeholder="Observações sobre presença/aula..."
                             [value]="presencasMap()[aluno.id].comentario || ''"
                             (input)="setComentario(aluno.id, $event)"
                             rows="2"
@@ -724,6 +769,44 @@ interface WeekDay {
       resize: none;
     }
 
+    .nota-row {
+      align-items: center;
+    }
+
+    .nota-input-group {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .nota-input {
+      width: 70px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .nota-max {
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+      cursor: pointer;
+
+      input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--primary);
+      }
+    }
+
+    .mt-2 { margin-top: 0.5rem; }
+
     .loading-state, .empty-state-sm { text-align: center; padding: 2rem; color: var(--gray-500); }
   `]
 })
@@ -735,7 +818,8 @@ export class CalendarioComponent implements OnInit {
   aulas = signal<Aula[]>([]);
   alunosTurma = signal<Aluno[]>([]);
   presencasMap = signal<{ [alunoId: number]: PresencaAluno }>({});
-  
+  desempenhoMap = signal<{ [alunoId: number]: DesempenhoAluno }>({});
+
   showModal = signal(false);
   showDetailsModal = signal(false);
   editingAula = signal<Aula | null>(null);
@@ -945,40 +1029,56 @@ export class CalendarioComponent implements OnInit {
     this.apiService.getAlunosByTurma(aula.idTurma).subscribe({
       next: alunos => {
         this.alunosTurma.set(alunos);
-        
+
+        // Inicializar maps vazios para todos os alunos
+        const presMap: { [key: number]: PresencaAluno } = {};
+        const desMap: { [key: number]: DesempenhoAluno } = {};
+        alunos.forEach(a => {
+          presMap[a.id] = {
+            status: 'presente',
+            deverCasa: 'nao_aplica',
+            preparacaoAula: 'nao_aplica',
+            comentario: ''
+          };
+          desMap[a.id] = {
+            nota: null,
+            comentario: '',
+            privado: false
+          };
+        });
+
+        // Carregar presenças
         this.apiService.getPresencasByAula(aula.id).subscribe({
           next: presencas => {
-            const map: { [key: number]: PresencaAluno } = {};
             presencas.forEach(p => {
-              map[p.idAluno] = { 
+              presMap[p.idAluno] = {
                 status: p.status || (p.presente ? 'presente' : 'falta'),
                 deverCasa: p.deverCasa || 'nao_aplica',
                 preparacaoAula: p.preparacaoAula || 'nao_aplica',
                 comentario: p.comentario || ''
               };
             });
-            alunos.forEach(a => {
-              if (!map[a.id]) {
-                map[a.id] = { 
-                  status: 'presente',
-                  deverCasa: 'nao_aplica',
-                  preparacaoAula: 'nao_aplica',
-                  comentario: ''
-                };
-              }
+            this.presencasMap.set(presMap);
+          },
+          error: () => this.presencasMap.set(presMap)
+        });
+
+        // Carregar desempenhos
+        this.apiService.getDesempenhosByAula(aula.id).subscribe({
+          next: desempenhos => {
+            desempenhos.forEach((d: any) => {
+              desMap[d.idAluno] = {
+                id: d.id,
+                nota: d.nota,
+                comentario: d.comentario || '',
+                privado: d.privado || false
+              };
             });
-            this.presencasMap.set(map);
+            this.desempenhoMap.set(desMap);
             this.loadingAlunos.set(false);
           },
           error: () => {
-            const map: { [key: number]: PresencaAluno } = {};
-            alunos.forEach(a => map[a.id] = { 
-              status: 'presente',
-              deverCasa: 'nao_aplica',
-              preparacaoAula: 'nao_aplica',
-              comentario: ''
-            });
-            this.presencasMap.set(map);
+            this.desempenhoMap.set(desMap);
             this.loadingAlunos.set(false);
           }
         });
@@ -1012,26 +1112,120 @@ export class CalendarioComponent implements OnInit {
     this.presencasMap.set(current);
   }
 
+  setNota(alunoId: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const current = { ...this.desempenhoMap() };
+    const valor = input.value ? parseFloat(input.value) : null;
+    current[alunoId] = { ...current[alunoId], nota: valor };
+    this.desempenhoMap.set(current);
+  }
+
+  setFeedback(alunoId: number, event: Event): void {
+    const input = event.target as HTMLTextAreaElement;
+    const current = { ...this.desempenhoMap() };
+    current[alunoId] = { ...current[alunoId], comentario: input.value };
+    this.desempenhoMap.set(current);
+  }
+
+  setPrivado(alunoId: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const current = { ...this.desempenhoMap() };
+    current[alunoId] = { ...current[alunoId], privado: input.checked };
+    this.desempenhoMap.set(current);
+  }
+
   savePresencas(): void {
     if (!this.selectedAula()) return;
 
     this.savingPresencas.set(true);
+    const aulaId = this.selectedAula()!.id;
+
+    // Preparar presenças
     const presencas = Object.entries(this.presencasMap()).map(([alunoId, data]) => ({
       presente: data.status === 'presente',
       status: data.status,
       deverCasa: data.deverCasa,
       preparacaoAula: data.preparacaoAula,
       comentario: data.comentario,
-      idAula: this.selectedAula()!.id,
+      idAula: aulaId,
       idAluno: parseInt(alunoId)
     }));
 
-    this.apiService.registrarPresencasEmLote(this.selectedAula()!.id, presencas).subscribe({
+    // Salvar presenças
+    this.apiService.registrarPresencasEmLote(aulaId, presencas).subscribe({
       next: () => {
-        this.savingPresencas.set(false);
-        alert('Registros salvos com sucesso!');
+        // Salvar desempenhos (notas e feedback)
+        this.saveDesempenhos();
       },
       error: () => this.savingPresencas.set(false)
+    });
+  }
+
+  saveDesempenhos(): void {
+    const aulaId = this.selectedAula()!.id;
+    const desempenhoEntries = Object.entries(this.desempenhoMap());
+    let completed = 0;
+    let hasError = false;
+
+    // Filtrar apenas alunos com nota preenchida
+    const alunosComNota = desempenhoEntries.filter(([_, data]) => data.nota !== null);
+
+    if (alunosComNota.length === 0) {
+      this.savingPresencas.set(false);
+      alert('Registros salvos com sucesso!');
+      return;
+    }
+
+    alunosComNota.forEach(([alunoId, data]) => {
+      const desempenhoData = {
+        nota: data.nota,
+        comentario: data.comentario,
+        privado: data.privado,
+        idAula: aulaId,
+        idAluno: parseInt(alunoId)
+      };
+
+      if (data.id) {
+        // Atualizar existente
+        this.apiService.updateDesempenho(data.id, desempenhoData).subscribe({
+          next: () => {
+            completed++;
+            if (completed === alunosComNota.length) {
+              this.savingPresencas.set(false);
+              if (!hasError) alert('Registros salvos com sucesso!');
+            }
+          },
+          error: () => {
+            hasError = true;
+            completed++;
+            if (completed === alunosComNota.length) {
+              this.savingPresencas.set(false);
+            }
+          }
+        });
+      } else {
+        // Criar novo
+        this.apiService.createDesempenho(desempenhoData).subscribe({
+          next: (created: any) => {
+            // Atualizar o ID no map
+            const current = { ...this.desempenhoMap() };
+            current[parseInt(alunoId)] = { ...data, id: created.id };
+            this.desempenhoMap.set(current);
+            completed++;
+            if (completed === alunosComNota.length) {
+              this.savingPresencas.set(false);
+              if (!hasError) alert('Registros salvos com sucesso!');
+            }
+          },
+          error: () => {
+            hasError = true;
+            completed++;
+            if (completed === alunosComNota.length) {
+              this.savingPresencas.set(false);
+            }
+          }
+        });
+      }
     });
   }
 

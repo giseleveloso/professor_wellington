@@ -107,7 +107,7 @@ import { Pagamento, Aluno } from '../../core/models/user.model';
                   <td>{{ formatDate(pag.dataVencimento) }}</td>
                   <td>
                     <span [class]="'badge badge-' + getStatusClass(pag.status)">
-                      {{ pag.status?.label || 'Pendente' }}
+                      {{ pag.status.label || 'Pendente' }}
                     </span>
                   </td>
                   @if (authService.isProfessor()) {

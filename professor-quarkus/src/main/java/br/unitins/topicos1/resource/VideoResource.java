@@ -68,7 +68,7 @@ public class VideoResource {
     }
 
     @GET
-    @RolesAllowed({"Professor"})
+    @RolesAllowed({"Professor", "Aluno"})
     public Response findAll() {
         return Response.ok(videoService.findAll()).build();
     }

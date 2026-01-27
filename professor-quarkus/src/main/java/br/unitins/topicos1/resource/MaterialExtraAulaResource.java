@@ -79,7 +79,7 @@ public class MaterialExtraAulaResource {
     }
 
     @GET
-    @RolesAllowed({"Professor"})
+    @RolesAllowed({"Professor", "Aluno"})
     public Response findAll() {
         return Response.ok(materialService.findAll()).build();
     }
