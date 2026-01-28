@@ -15,6 +15,7 @@ import br.unitins.topicos1.repository.CategoriaVideoRepository;
 import br.unitins.topicos1.repository.MaterialExtraAulaRepository;
 import br.unitins.topicos1.repository.SubcategoriaVideoRepository;
 import br.unitins.topicos1.repository.TurmaRepository;
+import br.unitins.topicos1.util.TenantContext;
 import br.unitins.topicos1.validation.ValidationException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -34,6 +35,9 @@ public class MaterialExtraAulaServiceImpl implements MaterialExtraAulaService {
 
     @Inject
     SubcategoriaVideoRepository subcategoriaRepository;
+
+    @Inject
+    TenantContext tenantContext;
 
     @Override
     @Transactional
@@ -125,8 +129,13 @@ public class MaterialExtraAulaServiceImpl implements MaterialExtraAulaService {
 
     @Override
     public List<MaterialExtraAulaResponseDTO> findAll() {
-        return materialRepository.listAll()
-                .stream()
+        List<MaterialExtraAula> materiais;
+        if (tenantContext.isSharedMode()) {
+            materiais = materialRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            materiais = materialRepository.findByProfessorId(tenantContext.getCurrentProfessor().getId());
+        }
+        return materiais.stream()
                 .map(MaterialExtraAulaResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }

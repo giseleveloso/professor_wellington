@@ -11,6 +11,7 @@ import br.unitins.topicos1.model.Pagamento;
 import br.unitins.topicos1.model.StatusPagamento;
 import br.unitins.topicos1.repository.AlunoRepository;
 import br.unitins.topicos1.repository.PagamentoRepository;
+import br.unitins.topicos1.util.TenantContext;
 import br.unitins.topicos1.validation.ValidationException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -24,6 +25,9 @@ public class PagamentoServiceImpl implements PagamentoService {
 
     @Inject
     AlunoRepository alunoRepository;
+
+    @Inject
+    TenantContext tenantContext;
 
     @Override
     @Transactional
@@ -96,8 +100,13 @@ public class PagamentoServiceImpl implements PagamentoService {
         // Atualiza status dos pagamentos vencidos antes de retornar
         atualizarStatusVencidos();
 
-        return pagamentoRepository.findAllOrdered()
-                .stream()
+        List<Pagamento> pagamentos;
+        if (tenantContext.isSharedMode()) {
+            pagamentos = pagamentoRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            pagamentos = pagamentoRepository.findByProfessorIdOrdered(tenantContext.getCurrentProfessor().getId());
+        }
+        return pagamentos.stream()
                 .map(PagamentoResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
@@ -144,8 +153,13 @@ public class PagamentoServiceImpl implements PagamentoService {
 
     @Override
     public List<PagamentoResponseDTO> findByProfessorId(Long professorId) {
-        return pagamentoRepository.findByProfessorId(professorId)
-                .stream()
+        List<Pagamento> pagamentos;
+        if (tenantContext.isSharedMode()) {
+            pagamentos = pagamentoRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            pagamentos = pagamentoRepository.findByProfessorId(professorId);
+        }
+        return pagamentos.stream()
                 .map(PagamentoResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }

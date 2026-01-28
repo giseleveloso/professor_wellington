@@ -13,6 +13,7 @@ import br.unitins.topicos1.repository.CategoriaVideoRepository;
 import br.unitins.topicos1.repository.SubcategoriaVideoRepository;
 import br.unitins.topicos1.repository.TurmaRepository;
 import br.unitins.topicos1.repository.VideoRepository;
+import br.unitins.topicos1.util.TenantContext;
 import br.unitins.topicos1.validation.ValidationException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -32,6 +33,9 @@ public class VideoServiceImpl implements VideoService {
 
     @Inject
     CategoriaVideoRepository categoriaRepository;
+
+    @Inject
+    TenantContext tenantContext;
 
     @Override
     @Transactional
@@ -149,8 +153,13 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     public List<VideoResponseDTO> findAll() {
-        return videoRepository.listAll()
-                .stream()
+        List<Video> videos;
+        if (tenantContext.isSharedMode()) {
+            videos = videoRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            videos = videoRepository.findByProfessorId(tenantContext.getCurrentProfessor().getId());
+        }
+        return videos.stream()
                 .map(VideoResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }

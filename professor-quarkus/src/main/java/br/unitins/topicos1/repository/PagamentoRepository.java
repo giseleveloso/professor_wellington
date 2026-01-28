@@ -42,4 +42,12 @@ public class PagamentoRepository implements PanacheRepository<Pagamento> {
     public List<Pagamento> findAllOrdered() {
         return find("ORDER BY dataVencimento ASC").list();
     }
+
+    public List<Pagamento> findByEscolaId(Long escolaId) {
+        return find("aluno.turma.escola.id = ?1 ORDER BY dataVencimento ASC", escolaId).list();
+    }
+
+    public List<Pagamento> findByProfessorIdOrdered(Long professorId) {
+        return find("aluno.turma.professor.id = ?1 ORDER BY dataVencimento ASC", professorId).list();
+    }
 }

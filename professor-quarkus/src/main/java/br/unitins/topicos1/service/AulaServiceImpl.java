@@ -10,6 +10,7 @@ import br.unitins.topicos1.model.Aula;
 import br.unitins.topicos1.model.Turma;
 import br.unitins.topicos1.repository.AulaRepository;
 import br.unitins.topicos1.repository.TurmaRepository;
+import br.unitins.topicos1.util.TenantContext;
 import br.unitins.topicos1.validation.ValidationException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -23,6 +24,9 @@ public class AulaServiceImpl implements AulaService {
 
     @Inject
     TurmaRepository turmaRepository;
+
+    @Inject
+    TenantContext tenantContext;
 
     @Override
     @Transactional
@@ -92,8 +96,13 @@ public class AulaServiceImpl implements AulaService {
 
     @Override
     public List<AulaResponseDTO> findAll() {
-        return aulaRepository.listAll()
-                .stream()
+        List<Aula> aulas;
+        if (tenantContext.isSharedMode()) {
+            aulas = aulaRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            aulas = aulaRepository.findByProfessorId(tenantContext.getCurrentProfessor().getId());
+        }
+        return aulas.stream()
                 .map(AulaResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
@@ -124,16 +133,26 @@ public class AulaServiceImpl implements AulaService {
 
     @Override
     public List<AulaResponseDTO> findByProfessorId(Long professorId) {
-        return aulaRepository.findByProfessorId(professorId)
-                .stream()
+        List<Aula> aulas;
+        if (tenantContext.isSharedMode()) {
+            aulas = aulaRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            aulas = aulaRepository.findByProfessorId(professorId);
+        }
+        return aulas.stream()
                 .map(AulaResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<AulaResponseDTO> findByProfessorIdAndData(Long professorId, LocalDate data) {
-        return aulaRepository.findByProfessorIdAndData(professorId, data)
-                .stream()
+        List<Aula> aulas;
+        if (tenantContext.isSharedMode()) {
+            aulas = aulaRepository.findByEscolaIdAndData(tenantContext.getCurrentEscola().getId(), data);
+        } else {
+            aulas = aulaRepository.findByProfessorIdAndData(professorId, data);
+        }
+        return aulas.stream()
                 .map(AulaResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }

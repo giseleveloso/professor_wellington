@@ -15,6 +15,7 @@ import br.unitins.topicos1.repository.AlunoRepository;
 import br.unitins.topicos1.repository.TelefoneRepository;
 import br.unitins.topicos1.repository.TurmaRepository;
 import br.unitins.topicos1.repository.UsuarioRepository;
+import br.unitins.topicos1.util.TenantContext;
 import br.unitins.topicos1.validation.ValidationException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -37,6 +38,9 @@ public class AlunoServiceImpl implements AlunoService {
 
     @Inject
     HashService hashService;
+
+    @Inject
+    TenantContext tenantContext;
 
     @Override
     @Transactional
@@ -198,8 +202,13 @@ public class AlunoServiceImpl implements AlunoService {
 
     @Override
     public List<AlunoResponseDTO> findAll() {
-        return alunoRepository.listAll()
-                .stream()
+        List<Aluno> alunos;
+        if (tenantContext.isSharedMode()) {
+            alunos = alunoRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            alunos = alunoRepository.findByProfessorId(tenantContext.getCurrentProfessor().getId());
+        }
+        return alunos.stream()
                 .map(AlunoResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
@@ -214,8 +223,13 @@ public class AlunoServiceImpl implements AlunoService {
 
     @Override
     public List<AlunoResponseDTO> findByProfessorId(Long professorId) {
-        return alunoRepository.findByProfessorId(professorId)
-                .stream()
+        List<Aluno> alunos;
+        if (tenantContext.isSharedMode()) {
+            alunos = alunoRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            alunos = alunoRepository.findByProfessorId(professorId);
+        }
+        return alunos.stream()
                 .map(AlunoResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }

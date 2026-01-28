@@ -8,6 +8,7 @@ import br.unitins.topicos1.model.CategoriaVideo;
 import br.unitins.topicos1.model.SubcategoriaVideo;
 import br.unitins.topicos1.repository.CategoriaVideoRepository;
 import br.unitins.topicos1.repository.SubcategoriaVideoRepository;
+import br.unitins.topicos1.util.TenantContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -21,6 +22,9 @@ public class SubcategoriaVideoServiceImpl implements SubcategoriaVideoService {
 
     @Inject
     CategoriaVideoRepository categoriaRepository;
+
+    @Inject
+    TenantContext tenantContext;
 
     @Override
     @Transactional
@@ -45,6 +49,12 @@ public class SubcategoriaVideoServiceImpl implements SubcategoriaVideoService {
             subcategoria.setNivel(pai.getNivel() + 1);
         } else {
             subcategoria.setNivel(0);
+        }
+
+        // Associar ao tenant
+        subcategoria.setProfessor(tenantContext.getCurrentProfessor());
+        if (tenantContext.isSharedMode()) {
+            subcategoria.setEscola(tenantContext.getCurrentEscola());
         }
 
         subcategoriaRepository.persist(subcategoria);
@@ -122,7 +132,13 @@ public class SubcategoriaVideoServiceImpl implements SubcategoriaVideoService {
 
     @Override
     public List<SubcategoriaVideoResponseDTO> findAll() {
-        return subcategoriaRepository.findAll().stream()
+        List<SubcategoriaVideo> subcategorias;
+        if (tenantContext.isSharedMode()) {
+            subcategorias = subcategoriaRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            subcategorias = subcategoriaRepository.findByProfessorId(tenantContext.getCurrentProfessor().getId());
+        }
+        return subcategorias.stream()
                 .map(SubcategoriaVideoResponseDTO::valueOf)
                 .toList();
     }

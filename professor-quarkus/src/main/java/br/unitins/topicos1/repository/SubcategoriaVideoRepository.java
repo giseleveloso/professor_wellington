@@ -35,4 +35,12 @@ public class SubcategoriaVideoRepository implements PanacheRepository<Subcategor
     public List<SubcategoriaVideo> findRaizes(CategoriaVideo categoriaRaiz) {
         return find("categoriaRaiz = ?1 AND subcategoriaPai IS NULL", categoriaRaiz).list();
     }
+
+    public List<SubcategoriaVideo> findByProfessorId(Long professorId) {
+        return find("professor.id = ?1 ORDER BY nome", professorId).list();
+    }
+
+    public List<SubcategoriaVideo> findByEscolaId(Long escolaId) {
+        return find("escola.id = ?1 ORDER BY nome", escolaId).list();
+    }
 }

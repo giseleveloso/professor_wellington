@@ -11,12 +11,23 @@ export interface AuthRequest {
   perfil: number;
 }
 
+export interface Escola {
+  id: number;
+  nome: string;
+  descricao: string;
+  ativo: boolean;
+}
+
+export type ModoTenant = 'INDIVIDUAL' | 'ESCOLA';
+
 export interface Professor {
   id: number;
   nome: string;
   email: string;
   username: string;
   telefone?: Telefone;
+  escola?: Escola;
+  modoTenant: ModoTenant;
 }
 
 export interface Aluno {

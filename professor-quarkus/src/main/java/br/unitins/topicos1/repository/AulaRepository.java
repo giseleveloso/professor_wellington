@@ -33,4 +33,12 @@ public class AulaRepository implements PanacheRepository<Aula> {
     public List<Aula> findByProfessorIdAndData(Long professorId, LocalDate data) {
         return find("turma.professor.id = ?1 AND data = ?2", professorId, data).list();
     }
+
+    public List<Aula> findByEscolaId(Long escolaId) {
+        return find("turma.escola.id", escolaId).list();
+    }
+
+    public List<Aula> findByEscolaIdAndData(Long escolaId, LocalDate data) {
+        return find("turma.escola.id = ?1 AND data = ?2", escolaId, data).list();
+    }
 }

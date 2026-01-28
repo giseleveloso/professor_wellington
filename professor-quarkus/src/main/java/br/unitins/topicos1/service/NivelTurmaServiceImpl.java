@@ -8,6 +8,7 @@ import br.unitins.topicos1.dto.NivelTurmaResponseDTO;
 import br.unitins.topicos1.model.NivelTurma;
 import br.unitins.topicos1.repository.NivelTurmaRepository;
 import br.unitins.topicos1.repository.ProfessorRepository;
+import br.unitins.topicos1.util.TenantContext;
 import br.unitins.topicos1.validation.ValidationException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -21,6 +22,9 @@ public class NivelTurmaServiceImpl implements NivelTurmaService {
 
     @Inject
     ProfessorRepository professorRepository;
+
+    @Inject
+    TenantContext tenantContext;
 
     private static final String[][] NIVEIS_PADRAO = {
         {"A0", "Pré-iniciante"},
@@ -50,6 +54,9 @@ public class NivelTurmaServiceImpl implements NivelTurmaService {
         nivel.setDescricao(dto.descricao());
         nivel.setOrdem(dto.ordem() != null ? dto.ordem() : (int) (nivelTurmaRepository.countByProfessorId(professorId) + 1));
         nivel.setProfessor(professor);
+        if (tenantContext.isSharedMode()) {
+            nivel.setEscola(tenantContext.getCurrentEscola());
+        }
 
         nivelTurmaRepository.persist(nivel);
         return NivelTurmaResponseDTO.valueOf(nivel);
@@ -92,8 +99,13 @@ public class NivelTurmaServiceImpl implements NivelTurmaService {
 
     @Override
     public List<NivelTurmaResponseDTO> findByProfessorId(Long professorId) {
-        return nivelTurmaRepository.findByProfessorId(professorId)
-            .stream()
+        List<NivelTurma> niveis;
+        if (tenantContext.isSharedMode()) {
+            niveis = nivelTurmaRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            niveis = nivelTurmaRepository.findByProfessorId(professorId);
+        }
+        return niveis.stream()
             .map(NivelTurmaResponseDTO::valueOf)
             .collect(Collectors.toList());
     }

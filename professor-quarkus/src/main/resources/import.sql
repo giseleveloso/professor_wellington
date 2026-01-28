@@ -11,9 +11,9 @@ INSERT INTO usuario (id, username, senha, datacadastro) VALUES
 INSERT INTO telefone (id, codigoarea, numero, datacadastro) VALUES 
 (1, '63', '999999999', NOW());
 
--- Inserir Professor
-INSERT INTO professor (id, nome, email, id_telefone, id_usuario, datacadastro) VALUES 
-(1, 'Professor Wellington', 'wellington@email.com', 1, 1, NOW());
+-- Inserir Professor (modo INDIVIDUAL por padrão, sem escola)
+INSERT INTO professor (id, nome, email, id_telefone, id_usuario, modotenant, datacadastro) VALUES
+(1, 'Professor Wellington', 'wellington@email.com', 1, 1, 'INDIVIDUAL', NOW());
 
 -- Inserir Níveis de Turma (personalizáveis por professor)
 INSERT INTO nivelturma (id, codigo, descricao, ordem, id_professor, datacadastro) VALUES 
@@ -55,22 +55,22 @@ INSERT INTO aula (id, data, horainicio, horafim, topico, descricao, duracaominut
 (2, '2026-01-15', '08:00:00', '10:00:00', 'Numbers and Colors', 'Números de 1 a 100 e cores básicas', 120, 1, NOW()),
 (3, '2026-01-14', '14:00:00', '16:00:00', 'Past Tense Review', 'Revisão do passado simples', 120, 2, NOW());
 
--- Inserir Categorias de Vídeo
-INSERT INTO categoriavideo (id, nome, descricao, cor, datacadastro) VALUES
-(1, 'Gramática', 'Aulas sobre estrutura e regras gramaticais', '#3B82F6', NOW()),
-(2, 'Vocabulário', 'Palavras e expressões do dia a dia', '#22C55E', NOW()),
-(3, 'Histórias', 'Narrativas e contos para prática', '#EC4899', NOW()),
-(4, 'Conversação', 'Diálogos e prática de conversação', '#F59E0B', NOW()),
-(5, 'Pronúncia', 'Exercícios de pronúncia e fonética', '#8B5CF6', NOW()),
-(6, 'Cultura', 'Aspectos culturais e curiosidades', '#EF4444', NOW());
+-- Inserir Categorias de Vídeo (associadas ao professor)
+INSERT INTO categoriavideo (id, nome, descricao, cor, id_professor, datacadastro) VALUES
+(1, 'Gramática', 'Aulas sobre estrutura e regras gramaticais', '#3B82F6', 1, NOW()),
+(2, 'Vocabulário', 'Palavras e expressões do dia a dia', '#22C55E', 1, NOW()),
+(3, 'Histórias', 'Narrativas e contos para prática', '#EC4899', 1, NOW()),
+(4, 'Conversação', 'Diálogos e prática de conversação', '#F59E0B', 1, NOW()),
+(5, 'Pronúncia', 'Exercícios de pronúncia e fonética', '#8B5CF6', 1, NOW()),
+(6, 'Cultura', 'Aspectos culturais e curiosidades', '#EF4444', 1, NOW());
 
--- Inserir Subcategorias de Vídeo (exemplo: Gramática > Kids, Teens)
-INSERT INTO subcategoriavideo (id, nome, descricao, id_categoria_raiz, id_subcategoria_pai, nivel, datacadastro) VALUES
-(1, 'Kids', 'Conteúdo para crianças', 1, NULL, 0, NOW()),
-(2, 'Teens', 'Conteúdo para adolescentes', 1, NULL, 0, NOW()),
-(3, 'Adults', 'Conteúdo para adultos', 1, NULL, 0, NOW()),
-(4, 'Kids', 'Conteúdo para crianças', 2, NULL, 0, NOW()),
-(5, 'Teens', 'Conteúdo para adolescentes', 2, NULL, 0, NOW());
+-- Inserir Subcategorias de Vídeo (associadas ao professor)
+INSERT INTO subcategoriavideo (id, nome, descricao, id_categoria_raiz, id_subcategoria_pai, nivel, id_professor, datacadastro) VALUES
+(1, 'Kids', 'Conteúdo para crianças', 1, NULL, 0, 1, NOW()),
+(2, 'Teens', 'Conteúdo para adolescentes', 1, NULL, 0, 1, NOW()),
+(3, 'Adults', 'Conteúdo para adultos', 1, NULL, 0, 1, NOW()),
+(4, 'Kids', 'Conteúdo para crianças', 2, NULL, 0, 1, NOW()),
+(5, 'Teens', 'Conteúdo para adolescentes', 2, NULL, 0, 1, NOW());
 
 -- Inserir Vídeos de Exemplo
 INSERT INTO video (id, titulo, linkyoutube, descricao, id_categoria, id_subcategoria, id_turma, datacadastro) VALUES
@@ -95,6 +95,7 @@ INSERT INTO pagamento (id, mesreferencia, anoreferencia, valor, datavencimento, 
 SELECT setval('usuario_id_seq', 10);
 SELECT setval('telefone_id_seq', 10);
 SELECT setval('professor_id_seq', 10);
+SELECT setval('escola_id_seq', 1);
 SELECT setval('nivelturma_id_seq', 10);
 SELECT setval('turma_id_seq', 10);
 SELECT setval('aluno_id_seq', 10);

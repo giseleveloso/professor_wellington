@@ -16,6 +16,7 @@ import br.unitins.topicos1.repository.HorarioDiaRepository;
 import br.unitins.topicos1.repository.NivelTurmaRepository;
 import br.unitins.topicos1.repository.ProfessorRepository;
 import br.unitins.topicos1.repository.TurmaRepository;
+import br.unitins.topicos1.util.TenantContext;
 import br.unitins.topicos1.validation.ValidationException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -35,6 +36,9 @@ public class TurmaServiceImpl implements TurmaService {
 
     @Inject
     HorarioDiaRepository horarioDiaRepository;
+
+    @Inject
+    TenantContext tenantContext;
 
     @Override
     @Transactional
@@ -62,6 +66,9 @@ public class TurmaServiceImpl implements TurmaService {
         turma.setHorario(dto.horario());
         turma.setDiasSemana(dto.diasSemana());
         turma.setProfessor(professor);
+        if (tenantContext.isSharedMode()) {
+            turma.setEscola(tenantContext.getCurrentEscola());
+        }
 
         turmaRepository.persist(turma);
 
@@ -160,16 +167,26 @@ public class TurmaServiceImpl implements TurmaService {
 
     @Override
     public List<TurmaResponseDTO> findAll() {
-        return turmaRepository.listAll()
-                .stream()
+        List<Turma> turmas;
+        if (tenantContext.isSharedMode()) {
+            turmas = turmaRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            turmas = turmaRepository.findByProfessorId(tenantContext.getCurrentProfessor().getId());
+        }
+        return turmas.stream()
                 .map(TurmaResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<TurmaResponseDTO> findByProfessorId(Long professorId) {
-        return turmaRepository.findByProfessorId(professorId)
-                .stream()
+        List<Turma> turmas;
+        if (tenantContext.isSharedMode()) {
+            turmas = turmaRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            turmas = turmaRepository.findByProfessorId(professorId);
+        }
+        return turmas.stream()
                 .map(TurmaResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }

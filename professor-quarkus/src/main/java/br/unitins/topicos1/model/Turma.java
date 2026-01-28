@@ -26,7 +26,11 @@ public class Turma extends DefaultEntity {
     @ManyToOne
     @JoinColumn(name = "id_professor")
     private Professor professor;
-    
+
+    @ManyToOne
+    @JoinColumn(name = "id_escola")
+    private Escola escola;
+
     @OneToMany(mappedBy = "turma", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HorarioDia> horariosPorDia;
     
@@ -104,6 +108,14 @@ public class Turma extends DefaultEntity {
 
     public void setProfessor(Professor professor) {
         this.professor = professor;
+    }
+
+    public Escola getEscola() {
+        return escola;
+    }
+
+    public void setEscola(Escola escola) {
+        this.escola = escola;
     }
 
     public List<HorarioDia> getHorariosPorDia() {
