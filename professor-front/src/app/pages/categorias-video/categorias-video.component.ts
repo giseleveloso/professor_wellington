@@ -274,15 +274,15 @@ export class CategoriasVideoComponent implements OnInit {
   editingCategoria = signal<CategoriaVideo | null>(null);
 
   coresDisponiveis = [
-    '#3B82F6', '#22C55E', '#EC4899', '#F59E0B',
-    '#8B5CF6', '#EF4444', '#10B981', '#F97316',
-    '#6366F1', '#14B8A6', '#F43F5E', '#84CC16',
-    '#06B6D4', '#A855F7', '#EAB308', '#64748B'
+    '#1e3a5f', '#2d5a8e', '#3B82F6', '#22C55E',
+    '#EC4899', '#F59E0B', '#c9a96e', '#8B5CF6',
+    '#EF4444', '#10B981', '#F97316', '#6366F1',
+    '#14B8A6', '#F43F5E', '#84CC16', '#64748B'
   ];
 
   form = {
     nome: '',
-    cor: '#3B82F6',
+    cor: '#1e3a5f',
     descricao: ''
   };
 
@@ -309,7 +309,7 @@ export class CategoriasVideoComponent implements OnInit {
     this.editingCategoria.set(null);
     this.form = {
       nome: '',
-      cor: '#3B82F6',
+      cor: '#1e3a5f',
       descricao: ''
     };
     this.showModal.set(true);

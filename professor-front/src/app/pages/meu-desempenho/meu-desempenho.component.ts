@@ -404,12 +404,12 @@ import { Presenca, Desempenho, Turma, Aluno } from '../../core/models/user.model
 
     .status-presente {
       background: var(--success-bg);
-      color: #065f46;
+      color: var(--success-text);
     }
 
     .status-falta {
       background: var(--danger-bg);
-      color: #991b1b;
+      color: var(--danger-text);
     }
 
     .status-cancelada {
@@ -419,12 +419,12 @@ import { Presenca, Desempenho, Turma, Aluno } from '../../core/models/user.model
 
     .dever-feito, .prep-feito {
       background: var(--success-bg);
-      color: #065f46;
+      color: var(--success-text);
     }
 
     .dever-nao_feito, .prep-nao_feito {
       background: var(--danger-bg);
-      color: #991b1b;
+      color: var(--danger-text);
     }
 
     .dever-nao_aplica, .prep-nao_aplica {
@@ -491,17 +491,17 @@ import { Presenca, Desempenho, Turma, Aluno } from '../../core/models/user.model
 
       &.nota-alta {
         background: var(--success-bg);
-        color: #065f46;
+        color: var(--success-text);
       }
 
       &.nota-media {
         background: var(--warning-bg);
-        color: #92400e;
+        color: var(--warning-text);
       }
 
       &.nota-baixa {
         background: var(--danger-bg);
-        color: #991b1b;
+        color: var(--danger-text);
       }
     }
 

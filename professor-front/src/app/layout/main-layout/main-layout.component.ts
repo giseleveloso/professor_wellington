@@ -41,7 +41,7 @@ import { SidebarService } from '../../core/services/sidebar.service';
     .main-content {
       flex: 1;
       padding: 1.5rem;
-      background: var(--gray-50);
+      background: var(--beige-50);
     }
 
     @media (max-width: 1024px) {

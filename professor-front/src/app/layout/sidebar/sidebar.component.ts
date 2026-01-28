@@ -61,8 +61,8 @@ interface MenuItem {
     .sidebar {
       width: var(--sidebar-width);
       height: 100vh;
-      background: var(--white);
-      border-right: 1px solid var(--gray-200);
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--sidebar-border);
       display: flex;
       flex-direction: column;
       position: fixed;
@@ -78,7 +78,7 @@ interface MenuItem {
 
     .sidebar-header {
       padding: 1.25rem 1rem;
-      border-bottom: 1px solid var(--gray-100);
+      border-bottom: 1px solid var(--sidebar-border);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -102,7 +102,7 @@ interface MenuItem {
     .logo-text {
       font-size: 1.125rem;
       font-weight: 700;
-      color: var(--gray-800);
+      color: var(--sidebar-text-active);
       white-space: nowrap;
       opacity: 1;
       transition: opacity 0.2s ease;
@@ -118,21 +118,20 @@ interface MenuItem {
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      border: 1px solid var(--gray-200);
-      background: var(--white);
+      border: 1px solid var(--sidebar-border);
+      background: transparent;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 0.875rem;
-      color: var(--gray-500);
+      color: var(--sidebar-text);
       transition: all 0.2s;
       flex-shrink: 0;
 
       &:hover {
-        background: var(--gray-50);
-        color: var(--gray-700);
-        border-color: var(--gray-300);
+        background: var(--sidebar-hover);
+        color: var(--sidebar-text-active);
       }
     }
 
@@ -167,21 +166,23 @@ interface MenuItem {
       gap: 0.75rem;
       padding: 0.75rem 1rem;
       border-radius: var(--border-radius-sm);
-      color: var(--gray-600);
+      color: var(--sidebar-text);
       text-decoration: none;
       transition: all 0.2s;
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
+      border-left: 3px solid transparent;
 
       &:hover {
-        background: var(--gray-50);
-        color: var(--gray-800);
+        background: var(--sidebar-hover);
+        color: var(--sidebar-text-active);
       }
 
       &.active {
-        background: var(--primary-bg);
-        color: var(--primary);
+        background: var(--sidebar-active-bg);
+        color: var(--sidebar-text-active);
+        border-left-color: var(--sidebar-accent);
 
         .nav-icon {
           transform: scale(1.1);
@@ -192,6 +193,12 @@ interface MenuItem {
     .sidebar.collapsed .nav-link {
       padding: 0.75rem;
       justify-content: center;
+      border-left: none;
+    }
+
+    .sidebar.collapsed .nav-link.active {
+      border-left: none;
+      border-bottom: 2px solid var(--sidebar-accent);
     }
 
     .nav-icon {
@@ -217,7 +224,7 @@ interface MenuItem {
 
     .sidebar-footer {
       padding: 1rem 0.75rem;
-      border-top: 1px solid var(--gray-100);
+      border-top: 1px solid var(--sidebar-border);
     }
 
     .sidebar.collapsed .sidebar-footer {
@@ -233,7 +240,7 @@ interface MenuItem {
       border-radius: var(--border-radius-sm);
       background: transparent;
       border: none;
-      color: var(--gray-600);
+      color: var(--sidebar-text);
       cursor: pointer;
       font-weight: 500;
       font-size: 0.875rem;
@@ -242,8 +249,8 @@ interface MenuItem {
       overflow: hidden;
 
       &:hover {
-        background: var(--danger-bg);
-        color: var(--danger);
+        background: rgba(239, 68, 68, 0.15);
+        color: #fca5a5;
       }
     }
 

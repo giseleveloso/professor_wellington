@@ -962,7 +962,7 @@ export class CalendarioComponent implements OnInit {
   }
 
   getTurmaCor(turmaId: number): string {
-    return this.turmasMap()[turmaId]?.cor || '#4F46E5';
+    return this.turmasMap()[turmaId]?.cor || '#1e3a5f';
   }
 
   loadAulas(): void {

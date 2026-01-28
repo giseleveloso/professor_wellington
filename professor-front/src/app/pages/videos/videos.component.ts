@@ -242,9 +242,9 @@ import { Video, Turma, CategoriaVideo, SubcategoriaVideo } from '../../core/mode
       font-size: 0.875rem;
       &:hover { border-color: var(--gray-400); background: var(--gray-50); }
       &.active {
-        background: var(--primary-color);
+        background: var(--primary);
         color: white;
-        border-color: var(--primary-color);
+        border-color: var(--primary);
         font-weight: 600;
       }
     }

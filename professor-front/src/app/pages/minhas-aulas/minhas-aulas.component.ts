@@ -681,7 +681,7 @@ export class MinhasAulasComponent implements OnInit {
 
   getCorTurma(turmaId: number): string {
     const turma = this.turmas().find(t => t.id === turmaId);
-    return turma?.cor || '#6366f1';
+    return turma?.cor || '#1e3a5f';
   }
 
   getNomeMes(): string {

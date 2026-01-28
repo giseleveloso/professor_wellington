@@ -76,7 +76,7 @@ interface AulaPreview {
     } @else {
       <div class="turmas-grid">
         @for (turma of turmasFiltradas(); track turma.id) {
-          <div class="card turma-card" [style.border-left]="'4px solid ' + (turma.cor || '#4F46E5')">
+          <div class="card turma-card" [style.border-left]="'4px solid ' + (turma.cor || '#1e3a5f')">
             <div class="turma-header">
               <span class="turma-flag">{{ getIdiomaFlag(turma.idioma.id) }}</span>
               <div class="turma-actions">
@@ -801,7 +801,7 @@ export class TurmasComponent implements OnInit {
   form = {
     nome: '',
     descricao: '',
-    cor: '#4F46E5',
+    cor: '#1e3a5f',
     idIdioma: 1,
     idNivelTurma: 0,
     horaInicio: '08:00',
@@ -810,17 +810,17 @@ export class TurmasComponent implements OnInit {
   };
 
   cores = [
-    { valor: '#4F46E5', nome: 'Índigo' },
+    { valor: '#1e3a5f', nome: 'Azul Marinho' },
+    { valor: '#2d5a8e', nome: 'Azul Naval' },
+    { valor: '#3B82F6', nome: 'Azul' },
     { valor: '#7C3AED', nome: 'Violeta' },
     { valor: '#EC4899', nome: 'Rosa' },
     { valor: '#EF4444', nome: 'Vermelho' },
     { valor: '#F97316', nome: 'Laranja' },
-    { valor: '#EAB308', nome: 'Amarelo' },
+    { valor: '#c9a96e', nome: 'Dourado' },
     { valor: '#22C55E', nome: 'Verde' },
     { valor: '#14B8A6', nome: 'Teal' },
-    { valor: '#06B6D4', nome: 'Ciano' },
-    { valor: '#3B82F6', nome: 'Azul' },
-    { valor: '#6366F1', nome: 'Azul Índigo' },
+    { valor: '#6366F1', nome: 'Índigo' },
     { valor: '#8B5CF6', nome: 'Roxo' },
   ];
 
@@ -958,7 +958,7 @@ export class TurmasComponent implements OnInit {
     this.form = {
       nome: '',
       descricao: '',
-      cor: '#4F46E5',
+      cor: '#1e3a5f',
       idIdioma: 1,
       idNivelTurma: this.niveisTurma().length > 0 ? this.niveisTurma()[0].id : 0,
       horaInicio: '08:00',
@@ -985,7 +985,7 @@ export class TurmasComponent implements OnInit {
     this.form = {
       nome: turma.nome,
       descricao: turma.descricao || '',
-      cor: turma.cor || '#4F46E5',
+      cor: turma.cor || '#1e3a5f',
       idIdioma: turma.idioma.id,
       idNivelTurma: turma.nivelTurma?.id || 0,
       horaInicio,

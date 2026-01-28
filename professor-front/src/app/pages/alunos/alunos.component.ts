@@ -936,7 +936,7 @@ type TabView = 'todos' | 'aniversariantes';
     }
 
     .profile-header {
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark, #4338ca));
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: white;
       padding: 1.5rem;
     }
@@ -1136,18 +1136,18 @@ type TabView = 'todos' | 'aniversariantes';
     }
 
     .summary-pendente {
-      background: #fef3c7;
-      color: #92400e;
+      background: var(--warning-bg);
+      color: var(--warning-text);
     }
 
     .summary-atrasado {
-      background: #fee2e2;
-      color: #b91c1c;
+      background: var(--danger-bg);
+      color: var(--danger-text);
     }
 
     .summary-pago {
-      background: #d1fae5;
-      color: #065f46;
+      background: var(--success-bg);
+      color: var(--success-text);
     }
 
     // Table compact
@@ -1168,18 +1168,18 @@ type TabView = 'todos' | 'aniversariantes';
     }
 
     .status-pendente {
-      background: #fef3c7;
-      color: #92400e;
+      background: var(--warning-bg);
+      color: var(--warning-text);
     }
 
     .status-atrasado {
-      background: #fee2e2;
-      color: #b91c1c;
+      background: var(--danger-bg);
+      color: var(--danger-text);
     }
 
     .status-pago {
-      background: #d1fae5;
-      color: #065f46;
+      background: var(--success-bg);
+      color: var(--success-text);
     }
 
     .btn-xs {
@@ -1203,13 +1203,13 @@ type TabView = 'todos' | 'aniversariantes';
     }
 
     .summary-presenca {
-      background: #ede9fe;
-      color: #5b21b6;
+      background: var(--primary-bg);
+      color: var(--primary);
     }
 
     .summary-nota {
-      background: #fef9c3;
-      color: #854d0e;
+      background: var(--accent-bg);
+      color: var(--accent);
     }
 
     .nota-badge {
@@ -1221,33 +1221,33 @@ type TabView = 'todos' | 'aniversariantes';
     }
 
     .nota-alta {
-      background: #d1fae5;
-      color: #065f46;
+      background: var(--success-bg);
+      color: var(--success-text);
     }
 
     .nota-media {
-      background: #fef3c7;
-      color: #92400e;
+      background: var(--warning-bg);
+      color: var(--warning-text);
     }
 
     .nota-baixa {
-      background: #fee2e2;
-      color: #b91c1c;
+      background: var(--danger-bg);
+      color: var(--danger-text);
     }
 
     .status-presente {
-      background: #d1fae5;
-      color: #065f46;
+      background: var(--success-bg);
+      color: var(--success-text);
     }
 
     .status-falta {
-      background: #fee2e2;
-      color: #b91c1c;
+      background: var(--danger-bg);
+      color: var(--danger-text);
     }
 
     .status-cancelada {
-      background: #e5e7eb;
-      color: #4b5563;
+      background: var(--gray-200);
+      color: var(--gray-600);
     }
 
     .status-badge-sm {
@@ -1259,18 +1259,18 @@ type TabView = 'todos' | 'aniversariantes';
     }
 
     .status-feito {
-      background: #d1fae5;
-      color: #065f46;
+      background: var(--success-bg);
+      color: var(--success-text);
     }
 
     .status-nao-feito {
-      background: #fef3c7;
-      color: #92400e;
+      background: var(--warning-bg);
+      color: var(--warning-text);
     }
 
     .status-na {
-      background: #f3f4f6;
-      color: #6b7280;
+      background: var(--gray-100);
+      color: var(--gray-500);
     }
   `]
 })

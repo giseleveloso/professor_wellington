@@ -7,7 +7,9 @@
       "Bash(./mvnw compile:*)",
       "Bash(npm run build:*)",
       "Bash(ng build:*)",
-      "Bash(mvn compile:*)"
+      "Bash(mvn compile:*)",
+      "Bash(dir /b \"c:\\\\Users\\\\gisele.ov\\\\Documents\\\\dev\\\\professor-wellington\")",
+      "Bash(npx tsc:*)"
     ]
   }
 }

@@ -228,7 +228,7 @@ import { AuthService } from '../../core/services/auth.service';
 
     .login-illustration {
       flex: 1;
-      background: linear-gradient(135deg, var(--primary) 0%, #0e7490 100%);
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
       display: flex;
       align-items: center;
       justify-content: center;
