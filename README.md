@@ -1,5 +1,5 @@
 
-# Professor Wellington
+# ClassHub
 # (Trabalho pessoal)
 
 Um sistema desenvolvido com **Quarkus** no backend e **Angular V18** no frontend.

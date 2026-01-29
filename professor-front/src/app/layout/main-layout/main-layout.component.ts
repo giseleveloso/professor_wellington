@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
 import { SidebarService } from '../../core/services/sidebar.service';
@@ -13,7 +14,7 @@ import { SidebarService } from '../../core/services/sidebar.service';
     <div class="app-layout" [class.sidebar-collapsed]="sidebarService.collapsed()">
       <app-sidebar />
       <div class="main-area">
-        <app-header [pageTitle]="pageTitle" />
+        <app-header [pageTitle]="pageTitle()" />
         <main class="main-content">
           <router-outlet />
         </main>
@@ -51,7 +52,41 @@ import { SidebarService } from '../../core/services/sidebar.service';
     }
   `]
 })
-export class MainLayoutComponent {
+export class MainLayoutComponent implements OnInit {
+  private router = inject(Router);
   sidebarService = inject(SidebarService);
-  pageTitle = 'Dashboard';
+
+  pageTitle = signal('Dashboard');
+
+  private readonly routeTitles: Record<string, string> = {
+    '': 'Dashboard',
+    'turmas': 'Turmas',
+    'alunos': 'Alunos',
+    'aulas': 'Aulas',
+    'calendario': 'Calendário',
+    'pagamentos': 'Pagamentos',
+    'videos': 'Vídeos',
+    'categorias-video': 'Categorias',
+    'subcategorias-video': 'Subcategorias',
+    'niveis': 'Níveis',
+    'materiais': 'Materiais',
+    'meu-desempenho': 'Meu Desempenho',
+    'minhas-aulas': 'Minhas Aulas'
+  };
+
+  ngOnInit(): void {
+    this.updateTitle(this.router.url);
+
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe((event) => {
+        this.updateTitle(event.urlAfterRedirects);
+      });
+  }
+
+  private updateTitle(url: string): void {
+    const path = url.split('/').pop() || '';
+    const title = this.routeTitles[path] || 'Dashboard';
+    this.pageTitle.set(title);
+  }
 }
