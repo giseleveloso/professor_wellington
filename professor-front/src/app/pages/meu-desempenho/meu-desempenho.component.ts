@@ -102,7 +102,6 @@ import { Presenca, Desempenho, Turma, Aluno } from '../../core/models/user.model
                       <th>Status</th>
                       <th>Dever de Casa</th>
                       <th>Preparação</th>
-                      <th>Observação</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -128,13 +127,6 @@ import { Presenca, Desempenho, Turma, Aluno } from '../../core/models/user.model
                           <span class="status-badge" [class]="'prep-' + presenca.preparacaoAula">
                             {{ getPrepLabel(presenca.preparacaoAula) }}
                           </span>
-                        </td>
-                        <td>
-                          @if (presenca.observacao) {
-                            <span class="observacao-text">{{ presenca.observacao }}</span>
-                          } @else {
-                            <span class="text-muted">-</span>
-                          }
                         </td>
                       </tr>
                     }

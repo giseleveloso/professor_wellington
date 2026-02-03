@@ -420,18 +420,6 @@ interface WeekDay {
                             <span>Feedback privado (não visível ao aluno)</span>
                           </label>
                         </div>
-
-                        <!-- Comentário da Presença -->
-                        <div class="presenca-row comentario-row">
-                          <label class="presenca-label">💬 Observação</label>
-                          <textarea
-                            class="form-control comentario-input"
-                            placeholder="Observações sobre presença/aula..."
-                            [value]="presencasMap()[aluno.id].comentario || ''"
-                            (input)="setComentario(aluno.id, $event)"
-                            rows="2"
-                          ></textarea>
-                        </div>
                       </div>
                     </div>
                   }
