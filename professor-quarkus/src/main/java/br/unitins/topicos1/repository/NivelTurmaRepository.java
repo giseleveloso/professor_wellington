@@ -20,4 +20,16 @@ public class NivelTurmaRepository implements PanacheRepository<NivelTurma> {
     public Long countByProfessorId(Long professorId) {
         return count("professor.id = ?1", professorId);
     }
+
+    public List<NivelTurma> findByEscolaId(Long escolaId) {
+        return find("escola.id = ?1 ORDER BY ordem", escolaId).list();
+    }
+
+    public NivelTurma findByCodigoAndEscolaId(String codigo, Long escolaId) {
+        return find("codigo = ?1 and escola.id = ?2", codigo, escolaId).firstResult();
+    }
+
+    public Long countByEscolaId(Long escolaId) {
+        return count("escola.id = ?1", escolaId);
+    }
 }

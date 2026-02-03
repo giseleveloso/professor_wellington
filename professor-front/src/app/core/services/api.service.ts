@@ -6,7 +6,7 @@ import {
   Professor, Aluno, Turma, Aula,
   Presenca, Desempenho, Pagamento,
   Video, MaterialExtraAula, NivelTurma,
-  CategoriaVideo, SubcategoriaVideo
+  CategoriaVideo, SubcategoriaVideo, Escola
 } from '../models/user.model';
 
 @Injectable({
@@ -408,5 +408,46 @@ export class ApiService {
 
   reordenarNiveisTurma(professorId: number, ids: number[]): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/niveis-turma/professor/${professorId}/reordenar`, ids);
+  }
+
+  // ==================== ESCOLAS ====================
+  getEscolas(): Observable<Escola[]> {
+    return this.http.get<Escola[]>(`${this.apiUrl}/escolas`);
+  }
+
+  getEscolasAtivas(): Observable<Escola[]> {
+    return this.http.get<Escola[]>(`${this.apiUrl}/escolas/ativas`);
+  }
+
+  getEscola(id: number): Observable<Escola> {
+    return this.http.get<Escola>(`${this.apiUrl}/escolas/${id}`);
+  }
+
+  createEscola(data: any): Observable<Escola> {
+    return this.http.post<Escola>(`${this.apiUrl}/escolas`, data);
+  }
+
+  updateEscola(id: number, data: any): Observable<Escola> {
+    return this.http.put<Escola>(`${this.apiUrl}/escolas/${id}`, data);
+  }
+
+  deleteEscola(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/escolas/${id}`);
+  }
+
+  ativarEscola(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/escolas/${id}/ativar`, {});
+  }
+
+  desativarEscola(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/escolas/${id}/desativar`, {});
+  }
+
+  adicionarProfessorEscola(escolaId: number, professorId: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/escolas/${escolaId}/professores/${professorId}`, {});
+  }
+
+  removerProfessorEscola(professorId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/escolas/professores/${professorId}`);
   }
 }

@@ -33,4 +33,12 @@ public class VideoRepository implements PanacheRepository<Video> {
     public List<Video> findByTurmaIdAndSubcategoria(Long turmaId, Long idSubcategoria) {
         return find("turma.id = ?1 AND subcategoria.id = ?2", turmaId, idSubcategoria).list();
     }
+
+    public List<Video> findByProfessorId(Long professorId) {
+        return find("turma.professor.id", professorId).list();
+    }
+
+    public List<Video> findByEscolaId(Long escolaId) {
+        return find("turma.escola.id", escolaId).list();
+    }
 }

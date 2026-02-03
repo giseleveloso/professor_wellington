@@ -8,6 +8,7 @@ import br.unitins.topicos1.dto.NivelTurmaResponseDTO;
 import br.unitins.topicos1.model.NivelTurma;
 import br.unitins.topicos1.repository.NivelTurmaRepository;
 import br.unitins.topicos1.repository.ProfessorRepository;
+import br.unitins.topicos1.util.TenantContext;
 import br.unitins.topicos1.validation.ValidationException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -22,6 +23,9 @@ public class NivelTurmaServiceImpl implements NivelTurmaService {
     @Inject
     ProfessorRepository professorRepository;
 
+    @Inject
+    TenantContext tenantContext;
+
     private static final String[][] NIVEIS_PADRAO = {
         {"A0", "Pré-iniciante"},
         {"A1", "Iniciante"},
@@ -35,12 +39,13 @@ public class NivelTurmaServiceImpl implements NivelTurmaService {
     @Override
     @Transactional
     public NivelTurmaResponseDTO create(NivelTurmaDTO dto, Long professorId) {
-        var professor = professorRepository.findById(professorId);
+        // Usar o professor logado do TenantContext
+        var professor = tenantContext.getCurrentProfessor();
         if (professor == null) {
             throw new ValidationException("professor", "Professor não encontrado");
         }
 
-        var existente = nivelTurmaRepository.findByCodigoAndProfessorId(dto.codigo(), professorId);
+        var existente = nivelTurmaRepository.findByCodigoAndProfessorId(dto.codigo(), professor.getId());
         if (existente != null) {
             throw new ValidationException("codigo", "Já existe um nível com este código");
         }
@@ -48,8 +53,11 @@ public class NivelTurmaServiceImpl implements NivelTurmaService {
         NivelTurma nivel = new NivelTurma();
         nivel.setCodigo(dto.codigo());
         nivel.setDescricao(dto.descricao());
-        nivel.setOrdem(dto.ordem() != null ? dto.ordem() : (int) (nivelTurmaRepository.countByProfessorId(professorId) + 1));
+        nivel.setOrdem(dto.ordem() != null ? dto.ordem() : (int) (nivelTurmaRepository.countByProfessorId(professor.getId()) + 1));
         nivel.setProfessor(professor);
+        if (tenantContext.isSharedMode()) {
+            nivel.setEscola(tenantContext.getCurrentEscola());
+        }
 
         nivelTurmaRepository.persist(nivel);
         return NivelTurmaResponseDTO.valueOf(nivel);
@@ -61,6 +69,12 @@ public class NivelTurmaServiceImpl implements NivelTurmaService {
         NivelTurma nivel = nivelTurmaRepository.findById(id);
         if (nivel == null) {
             throw new ValidationException("id", "Nível não encontrado");
+        }
+
+        // Verificar se o nível pertence ao professor logado
+        var professorLogado = tenantContext.getProfessorDoContexto();
+        if (!nivel.getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("id", "Você não tem permissão para editar este nível");
         }
 
         nivel.setCodigo(dto.codigo());
@@ -76,9 +90,17 @@ public class NivelTurmaServiceImpl implements NivelTurmaService {
     @Transactional
     public void delete(Long id) {
         NivelTurma nivel = nivelTurmaRepository.findById(id);
-        if (nivel != null) {
-            nivelTurmaRepository.delete(nivel);
+        if (nivel == null) {
+            throw new ValidationException("id", "Nível não encontrado");
         }
+
+        // Verificar se o nível pertence ao professor logado
+        var professorLogado = tenantContext.getProfessorDoContexto();
+        if (!nivel.getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("id", "Você não tem permissão para excluir este nível");
+        }
+
+        nivelTurmaRepository.delete(nivel);
     }
 
     @Override
@@ -92,8 +114,13 @@ public class NivelTurmaServiceImpl implements NivelTurmaService {
 
     @Override
     public List<NivelTurmaResponseDTO> findByProfessorId(Long professorId) {
-        return nivelTurmaRepository.findByProfessorId(professorId)
-            .stream()
+        List<NivelTurma> niveis;
+        if (tenantContext.isSharedMode()) {
+            niveis = nivelTurmaRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            niveis = nivelTurmaRepository.findByProfessorId(professorId);
+        }
+        return niveis.stream()
             .map(NivelTurmaResponseDTO::valueOf)
             .collect(Collectors.toList());
     }
@@ -126,9 +153,10 @@ public class NivelTurmaServiceImpl implements NivelTurmaService {
     @Override
     @Transactional
     public void reordenar(Long professorId, List<Long> ids) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         for (int i = 0; i < ids.size(); i++) {
             NivelTurma nivel = nivelTurmaRepository.findById(ids.get(i));
-            if (nivel != null && nivel.getProfessor().getId().equals(professorId)) {
+            if (nivel != null && nivel.getProfessor().getId().equals(professorLogado.getId())) {
                 nivel.setOrdem(i + 1);
             }
         }

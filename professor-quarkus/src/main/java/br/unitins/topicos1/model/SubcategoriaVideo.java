@@ -34,6 +34,14 @@ public class SubcategoriaVideo extends DefaultEntity {
     @Column(nullable = false)
     private Integer nivel;
 
+    @ManyToOne
+    @JoinColumn(name = "id_professor")
+    private Professor professor;
+
+    @ManyToOne
+    @JoinColumn(name = "id_escola")
+    private Escola escola;
+
     public String getNome() {
         return nome;
     }
@@ -80,5 +88,21 @@ public class SubcategoriaVideo extends DefaultEntity {
 
     public void setNivel(Integer nivel) {
         this.nivel = nivel;
+    }
+
+    public Professor getProfessor() {
+        return professor;
+    }
+
+    public void setProfessor(Professor professor) {
+        this.professor = professor;
+    }
+
+    public Escola getEscola() {
+        return escola;
+    }
+
+    public void setEscola(Escola escola) {
+        this.escola = escola;
     }
 }

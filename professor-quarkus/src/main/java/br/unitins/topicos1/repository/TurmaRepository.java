@@ -25,4 +25,8 @@ public class TurmaRepository implements PanacheRepository<Turma> {
     public List<Turma> findByNome(String nome) {
         return find("LOWER(nome) LIKE LOWER(?1)", "%" + nome + "%").list();
     }
+
+    public List<Turma> findByEscolaId(Long escolaId) {
+        return find("escola.id", escolaId).list();
+    }
 }

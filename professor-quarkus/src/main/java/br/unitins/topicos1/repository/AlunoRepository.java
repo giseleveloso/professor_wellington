@@ -33,9 +33,13 @@ public class AlunoRepository implements PanacheRepository<Aluno> {
     // Busca alunos que estão associados a uma turma (inclui many-to-many)
     public List<Aluno> findByTurmaIdIncluindoMultiplas(Long turmaId) {
         return getEntityManager().createQuery(
-            "SELECT DISTINCT a FROM Aluno a LEFT JOIN a.turmas t WHERE a.turma.id = :turmaId OR t.id = :turmaId", 
+            "SELECT DISTINCT a FROM Aluno a LEFT JOIN a.turmas t WHERE a.turma.id = :turmaId OR t.id = :turmaId",
             Aluno.class)
             .setParameter("turmaId", turmaId)
             .getResultList();
+    }
+
+    public List<Aluno> findByEscolaId(Long escolaId) {
+        return find("turma.escola.id", escolaId).list();
     }
 }
