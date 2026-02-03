@@ -13,10 +13,9 @@ import { AuthService } from '../../core/services/auth.service';
       <div class="login-container">
         <div class="login-header">
           <div class="logo">
-            <span class="logo-icon">📚</span>
-            <h1>Professor Wellington</h1>
+            <img src="assets/images/logo-completa.png" alt="ClassHub" class="logo-img" />
           </div>
-          <p class="subtitle">Sistema de Gestão para Escola de Idiomas</p>
+          <p class="subtitle">Sistema de Gestão para Aprendizado Contínuo</p>
         </div>
 
         <form class="login-form" (ngSubmit)="onSubmit()">
@@ -118,7 +117,7 @@ import { AuthService } from '../../core/services/auth.service';
     .login-container {
       flex: 1;
       max-width: 480px;
-      padding: 3rem;
+      padding: 2rem;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -127,35 +126,31 @@ import { AuthService } from '../../core/services/auth.service';
 
     .login-header {
       text-align: center;
-      margin-bottom: 2.5rem;
+      margin-bottom: 1rem;
     }
 
     .logo {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.75rem;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.25rem;
     }
 
-    .logo-icon {
-      font-size: 2.5rem;
-    }
-
-    .logo h1 {
-      font-size: 1.5rem;
-      color: var(--gray-800);
+    .logo-img {
+      max-width: 280px;
+      height: auto;
     }
 
     .subtitle {
       color: var(--gray-500);
       font-size: 0.875rem;
+      margin-top: 0;
     }
 
     .login-form {
       display: flex;
       flex-direction: column;
-      gap: 1.25rem;
+      gap: 1rem;
     }
 
     .profile-options {

@@ -20,8 +20,8 @@ interface MenuItem {
     <aside class="sidebar" [class.collapsed]="sidebarService.collapsed()">
       <div class="sidebar-header">
         <div class="logo">
-          <span class="logo-icon">📚</span>
-          <span class="logo-text">Prof. Wellington</span>
+          <img src="assets/images/logo-branco-img.png" alt="ClassHub" class="logo-icon" />
+          <span class="logo-text">ClassHub</span> 
         </div>
         <button class="collapse-btn" (click)="sidebarService.toggle()" [title]="sidebarService.collapsed() ? 'Expandir menu' : 'Recolher menu'">
           <span class="collapse-icon">{{ sidebarService.collapsed() ? '»' : '«' }}</span>
@@ -95,8 +95,10 @@ interface MenuItem {
     }
 
     .logo-icon {
-      font-size: 1.75rem;
+      width: 60px;
+      height: auto;
       flex-shrink: 0;
+      object-fit: contain;
     }
 
     .logo-text {
@@ -112,6 +114,18 @@ interface MenuItem {
       opacity: 0;
       width: 0;
       overflow: hidden;
+    }
+
+    .sidebar.collapsed .logo-icon {
+      display: none;
+    }
+
+    .sidebar.collapsed .sidebar-header {
+      justify-content: center;
+    }
+
+    .sidebar.collapsed .logo {
+      display: none;
     }
 
     .collapse-btn {

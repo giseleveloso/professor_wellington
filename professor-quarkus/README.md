@@ -1,4 +1,4 @@
-# Professor Wellington - Sistema de Gestão para Escola de Idiomas
+# ClassHub - Sistema de Gestão para Escola de Idiomas
 
 Sistema web voltado para professores de idiomas que desejam gerenciar suas turmas, alunos, pagamentos e desempenho de forma prática e centralizada.
 

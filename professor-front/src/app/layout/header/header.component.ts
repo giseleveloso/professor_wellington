@@ -12,6 +12,7 @@ import { Professor, Aluno } from '../../core/models/user.model';
   template: `
     <header class="header">
       <div class="header-left">
+        <img src="assets/images/logo-img.png" alt="ClassHub" class="header-logo" />
         <h1 class="page-title">{{ pageTitle }}</h1>
       </div>
 
@@ -156,6 +157,18 @@ import { Professor, Aluno } from '../../core/models/user.model';
       position: sticky;
       top: 0;
       z-index: 50;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-logo {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
     }
 
     .page-title {
