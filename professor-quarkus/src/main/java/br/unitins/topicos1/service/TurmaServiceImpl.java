@@ -16,6 +16,7 @@ import br.unitins.topicos1.repository.HorarioDiaRepository;
 import br.unitins.topicos1.repository.NivelTurmaRepository;
 import br.unitins.topicos1.repository.ProfessorRepository;
 import br.unitins.topicos1.repository.TurmaRepository;
+import br.unitins.topicos1.util.TenantContext;
 import br.unitins.topicos1.validation.ValidationException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -36,12 +37,16 @@ public class TurmaServiceImpl implements TurmaService {
     @Inject
     HorarioDiaRepository horarioDiaRepository;
 
+    @Inject
+    TenantContext tenantContext;
+
     @Override
     @Transactional
     public TurmaResponseDTO create(TurmaDTO dto) {
-        Professor professor = professorRepository.findById(dto.idProfessor());
+        // Usar o professor logado do TenantContext
+        Professor professor = tenantContext.getCurrentProfessor();
         if (professor == null) {
-            throw new ValidationException("idProfessor", "Professor não encontrado");
+            throw new ValidationException("professor", "Professor não encontrado");
         }
 
         Turma turma = new Turma();
@@ -49,7 +54,7 @@ public class TurmaServiceImpl implements TurmaService {
         turma.setDescricao(dto.descricao());
         turma.setCor(dto.cor());
         turma.setIdioma(Idioma.valueOf(dto.idIdioma()));
-        
+
         // Nível da turma
         if (dto.idNivelTurma() != null) {
             NivelTurma nivelTurma = nivelTurmaRepository.findById(dto.idNivelTurma());
@@ -58,10 +63,13 @@ public class TurmaServiceImpl implements TurmaService {
             }
             turma.setNivelTurma(nivelTurma);
         }
-        
+
         turma.setHorario(dto.horario());
         turma.setDiasSemana(dto.diasSemana());
         turma.setProfessor(professor);
+        if (tenantContext.isSharedMode()) {
+            turma.setEscola(tenantContext.getCurrentEscola());
+        }
 
         turmaRepository.persist(turma);
 
@@ -92,11 +100,17 @@ public class TurmaServiceImpl implements TurmaService {
             throw new ValidationException("id", "Turma não encontrada");
         }
 
+        // Verificar se a turma pertence ao professor logado
+        Professor professorLogado = tenantContext.getCurrentProfessor();
+        if (!turma.getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("id", "Você não tem permissão para editar esta turma");
+        }
+
         turma.setNome(dto.nome());
         turma.setDescricao(dto.descricao());
         turma.setCor(dto.cor());
         turma.setIdioma(Idioma.valueOf(dto.idIdioma()));
-        
+
         // Nível da turma
         if (dto.idNivelTurma() != null && dto.idNivelTurma() > 0) {
             NivelTurma nivelTurma = nivelTurmaRepository.findById(dto.idNivelTurma());
@@ -104,16 +118,12 @@ public class TurmaServiceImpl implements TurmaService {
                 turma.setNivelTurma(nivelTurma);
             }
         }
-        
+
         turma.setHorario(dto.horario());
         turma.setDiasSemana(dto.diasSemana());
 
-        if (dto.idProfessor() != null && dto.idProfessor() > 0) {
-            Professor professor = professorRepository.findById(dto.idProfessor());
-            if (professor != null) {
-                turma.setProfessor(professor);
-            }
-        }
+        // Não permitir trocar o professor da turma
+        // turma.setProfessor permanece o mesmo
 
         // Atualizar horários por dia - NÃO substituir a lista, apenas modificá-la
         // (necessário por causa do orphanRemoval = true)
@@ -145,6 +155,13 @@ public class TurmaServiceImpl implements TurmaService {
         if (turma == null) {
             throw new ValidationException("id", "Turma não encontrada");
         }
+
+        // Verificar se a turma pertence ao professor logado
+        Professor professorLogado = tenantContext.getCurrentProfessor();
+        if (!turma.getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("id", "Você não tem permissão para excluir esta turma");
+        }
+
         horarioDiaRepository.deleteByTurmaId(id);
         turmaRepository.delete(turma);
     }
@@ -160,40 +177,60 @@ public class TurmaServiceImpl implements TurmaService {
 
     @Override
     public List<TurmaResponseDTO> findAll() {
-        return turmaRepository.listAll()
-                .stream()
+        List<Turma> turmas;
+        var professor = tenantContext.getProfessorDoContexto();
+        if (professor == null) {
+            return List.of();
+        }
+        if (tenantContext.isSharedMode()) {
+            turmas = turmaRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            turmas = turmaRepository.findByProfessorId(professor.getId());
+        }
+        return turmas.stream()
                 .map(TurmaResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<TurmaResponseDTO> findByProfessorId(Long professorId) {
-        return turmaRepository.findByProfessorId(professorId)
-                .stream()
+        List<Turma> turmas;
+        if (tenantContext.isSharedMode()) {
+            turmas = turmaRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
+        } else {
+            turmas = turmaRepository.findByProfessorId(professorId);
+        }
+        return turmas.stream()
                 .map(TurmaResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<TurmaResponseDTO> findByIdioma(Integer idIdioma) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         return turmaRepository.findByIdioma(Idioma.valueOf(idIdioma))
                 .stream()
+                .filter(t -> t.getProfessor().getId().equals(professorLogado.getId()))
                 .map(TurmaResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<TurmaResponseDTO> findByNivelTurma(Long idNivelTurma) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         return turmaRepository.findByNivelTurma(idNivelTurma)
                 .stream()
+                .filter(t -> t.getProfessor().getId().equals(professorLogado.getId()))
                 .map(TurmaResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<TurmaResponseDTO> findByNome(String nome) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         return turmaRepository.findByNome(nome)
                 .stream()
+                .filter(t -> t.getProfessor().getId().equals(professorLogado.getId()))
                 .map(TurmaResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }

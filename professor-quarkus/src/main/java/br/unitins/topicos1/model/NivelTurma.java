@@ -15,6 +15,10 @@ public class NivelTurma extends DefaultEntity {
     @JoinColumn(name = "id_professor")
     private Professor professor;
 
+    @ManyToOne
+    @JoinColumn(name = "id_escola")
+    private Escola escola;
+
     public String getCodigo() {
         return codigo;
     }
@@ -45,5 +49,13 @@ public class NivelTurma extends DefaultEntity {
 
     public void setProfessor(Professor professor) {
         this.professor = professor;
+    }
+
+    public Escola getEscola() {
+        return escola;
+    }
+
+    public void setEscola(Escola escola) {
+        this.escola = escola;
     }
 }
