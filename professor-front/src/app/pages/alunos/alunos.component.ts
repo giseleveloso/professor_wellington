@@ -552,6 +552,10 @@ type TabView = 'todos' | 'aniversariantes';
                       <span class="summary-value">{{ contagemPresencas().faltas }}</span>
                       <span class="summary-label">Faltas</span>
                     </div>
+                    <div class="summary-card summary-deveres">
+                      <span class="summary-value">{{ taxaDeveres() !== null ? taxaDeveres() + '%' : '-' }}</span>
+                      <span class="summary-label">Deveres Feitos</span>
+                    </div>
                     <div class="summary-card summary-nota">
                       <span class="summary-value">{{ mediaNotas() || '-' }}</span>
                       <span class="summary-label">Média Notas</span>
@@ -1198,13 +1202,18 @@ type TabView = 'todos' | 'aniversariantes';
     // Desempenho
     .desempenho-summary {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 0.75rem;
     }
 
     .summary-presenca {
       background: var(--primary-bg);
       color: var(--primary);
+    }
+
+    .summary-deveres {
+      background: #e0f2fe;
+      color: #0369a1;
     }
 
     .summary-nota {
@@ -1298,6 +1307,7 @@ export class AlunosComponent implements OnInit {
   alunoPresencas = signal<Presenca[]>([]);
   alunoDesempenhos = signal<Desempenho[]>([]);
   contagemPresencas = signal<{ presencas: number; faltas: number }>({ presencas: 0, faltas: 0 });
+  contagemDeveres = signal<{ feitos: number; naoFeitos: number; total: number }>({ feitos: 0, naoFeitos: 0, total: 0 });
   loadingDesempenho = signal(false);
 
   pagamentosPendentesCount = computed(() =>
@@ -1360,6 +1370,12 @@ export class AlunosComponent implements OnInit {
     const total = c.presencas + c.faltas;
     if (total === 0) return null;
     return Math.round((c.presencas / total) * 100);
+  });
+
+  taxaDeveres = computed(() => {
+    const c = this.contagemDeveres();
+    if (c.total === 0) return null;
+    return Math.round((c.feitos / c.total) * 100);
   });
 
   ngOnInit(): void {
@@ -1563,6 +1579,7 @@ export class AlunosComponent implements OnInit {
     this.alunoPresencas.set([]);
     this.alunoDesempenhos.set([]);
     this.contagemPresencas.set({ presencas: 0, faltas: 0 });
+    this.contagemDeveres.set({ feitos: 0, naoFeitos: 0, total: 0 });
     this.showProfileModal.set(true);
     this.loadAlunoPagamentos(aluno.id);
     this.loadAlunoDesempenho(aluno.id);
@@ -1591,6 +1608,12 @@ export class AlunosComponent implements OnInit {
     this.apiService.getContagemPresencas(alunoId).subscribe({
       next: (contagem) => this.contagemPresencas.set(contagem),
       error: () => this.contagemPresencas.set({ presencas: 0, faltas: 0 })
+    });
+
+    // Carregar contagem de deveres de casa
+    this.apiService.getContagemDeveres(alunoId).subscribe({
+      next: (contagem) => this.contagemDeveres.set(contagem),
+      error: () => this.contagemDeveres.set({ feitos: 0, naoFeitos: 0, total: 0 })
     });
 
     // Carregar presenças detalhadas

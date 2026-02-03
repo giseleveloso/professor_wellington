@@ -177,4 +177,19 @@ public class PresencaServiceImpl implements PresencaService {
     public long countFaltasByAlunoId(Long alunoId) {
         return presencaRepository.countFaltasByAlunoId(alunoId);
     }
+
+    @Override
+    public long countDeveresFeitos(Long alunoId) {
+        return presencaRepository.countDeveresFeitos(alunoId);
+    }
+
+    @Override
+    public long countDeveresNaoFeitos(Long alunoId) {
+        return presencaRepository.countDeveresNaoFeitos(alunoId);
+    }
+
+    @Override
+    public long countDeveresAplicaveis(Long alunoId) {
+        return presencaRepository.countDeveresAplicaveis(alunoId);
+    }
 }

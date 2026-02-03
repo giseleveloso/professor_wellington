@@ -207,6 +207,10 @@ export class ApiService {
     return this.http.get<{ presencas: number; faltas: number }>(`${this.apiUrl}/presencas/aluno/${alunoId}/contagem`);
   }
 
+  getContagemDeveres(alunoId: number): Observable<{ feitos: number; naoFeitos: number; total: number }> {
+    return this.http.get<{ feitos: number; naoFeitos: number; total: number }>(`${this.apiUrl}/presencas/aluno/${alunoId}/deveres`);
+  }
+
   // ==================== DESEMPENHO ====================
   getDesempenhosByAluno(alunoId: number): Observable<Desempenho[]> {
     return this.http.get<Desempenho[]>(`${this.apiUrl}/desempenhos/aluno/${alunoId}`);

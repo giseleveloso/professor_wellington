@@ -17,4 +17,7 @@ public interface PresencaService {
     void registrarPresencaEmLote(Long aulaId, List<PresencaDTO> presencas);
     long countPresencasByAlunoId(Long alunoId);
     long countFaltasByAlunoId(Long alunoId);
+    long countDeveresFeitos(Long alunoId);
+    long countDeveresNaoFeitos(Long alunoId);
+    long countDeveresAplicaveis(Long alunoId);
 }

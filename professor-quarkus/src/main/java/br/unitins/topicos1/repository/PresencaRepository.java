@@ -28,4 +28,16 @@ public class PresencaRepository implements PanacheRepository<Presenca> {
     public long countFaltasByAlunoId(Long alunoId) {
         return count("aluno.id = ?1 AND presente = false", alunoId);
     }
+
+    public long countDeveresFeitos(Long alunoId) {
+        return count("aluno.id = ?1 AND deverCasa = ?2", alunoId, br.unitins.topicos1.model.StatusDeverCasa.FEITO);
+    }
+
+    public long countDeveresNaoFeitos(Long alunoId) {
+        return count("aluno.id = ?1 AND deverCasa = ?2", alunoId, br.unitins.topicos1.model.StatusDeverCasa.NAO_FEITO);
+    }
+
+    public long countDeveresAplicaveis(Long alunoId) {
+        return count("aluno.id = ?1 AND deverCasa != ?2", alunoId, br.unitins.topicos1.model.StatusDeverCasa.NAO_APLICA);
+    }
 }

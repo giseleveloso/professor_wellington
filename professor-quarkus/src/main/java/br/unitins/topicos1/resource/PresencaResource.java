@@ -108,6 +108,18 @@ public class PresencaResource {
     }
 
     @GET
+    @Path("/aluno/{alunoId}/deveres")
+    @RolesAllowed({"Professor", "Aluno"})
+    public Response getContagemDeveres(@PathParam("alunoId") Long alunoId) {
+        long feitos = presencaService.countDeveresFeitos(alunoId);
+        long naoFeitos = presencaService.countDeveresNaoFeitos(alunoId);
+        long total = presencaService.countDeveresAplicaveis(alunoId);
+        return Response.ok()
+                .entity(new ContagemDeveresDTO(feitos, naoFeitos, total))
+                .build();
+    }
+
+    @GET
     @Path("/me")
     @RolesAllowed({"Aluno"})
     public Response getMinhasPresencas() {
@@ -117,4 +129,5 @@ public class PresencaResource {
     }
 
     public record ContagemPresencaDTO(long presencas, long faltas) {}
+    public record ContagemDeveresDTO(long feitos, long naoFeitos, long total) {}
 }
