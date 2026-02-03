@@ -45,6 +45,8 @@ public class AlunoServiceImpl implements AlunoService {
     @Override
     @Transactional
     public AlunoResponseDTO create(AlunoDTO dto) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         if (usuarioRepository.existsByUsername(dto.username())) {
             throw new ValidationException("username", "Username já existe");
         }
@@ -84,12 +86,16 @@ public class AlunoServiceImpl implements AlunoService {
         aluno.setTelefoneResponsavel(telefoneResponsavel);
         aluno.setObservacoes(dto.observacoes());
 
-        // Múltiplas turmas
+        // Múltiplas turmas - verificar se pertencem ao professor logado
         if (dto.idsTurmas() != null && !dto.idsTurmas().isEmpty()) {
             List<Turma> turmas = new ArrayList<>();
             for (Long turmaId : dto.idsTurmas()) {
                 Turma turma = turmaRepository.findById(turmaId);
                 if (turma != null) {
+                    // Verificar se a turma pertence ao professor logado
+                    if (!turma.getProfessor().getId().equals(professorLogado.getId())) {
+                        throw new ValidationException("idsTurmas", "Turma não pertence ao professor logado");
+                    }
                     turmas.add(turma);
                 }
             }
@@ -104,6 +110,10 @@ public class AlunoServiceImpl implements AlunoService {
             if (turma == null) {
                 throw new ValidationException("idTurma", "Turma não encontrada");
             }
+            // Verificar se a turma pertence ao professor logado
+            if (!turma.getProfessor().getId().equals(professorLogado.getId())) {
+                throw new ValidationException("idTurma", "Turma não pertence ao professor logado");
+            }
             aluno.setTurma(turma);
         }
 
@@ -114,9 +124,16 @@ public class AlunoServiceImpl implements AlunoService {
     @Override
     @Transactional
     public AlunoResponseDTO update(Long id, AlunoDTO dto) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         Aluno aluno = alunoRepository.findById(id);
         if (aluno == null) {
             throw new ValidationException("id", "Aluno não encontrado");
+        }
+
+        // Verificar se o aluno pertence ao professor logado (via turma principal)
+        if (aluno.getTurma() != null && !aluno.getTurma().getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("id", "Você não tem permissão para editar este aluno");
         }
 
         aluno.setNome(dto.nome());
@@ -129,12 +146,16 @@ public class AlunoServiceImpl implements AlunoService {
             aluno.getUsuario().setSenha(hashService.getHashSenha(dto.senha()));
         }
 
-        // Múltiplas turmas
+        // Múltiplas turmas - verificar se pertencem ao professor logado
         if (dto.idsTurmas() != null && !dto.idsTurmas().isEmpty()) {
             List<Turma> turmas = new ArrayList<>();
             for (Long turmaId : dto.idsTurmas()) {
                 Turma turma = turmaRepository.findById(turmaId);
                 if (turma != null) {
+                    // Verificar se a turma pertence ao professor logado
+                    if (!turma.getProfessor().getId().equals(professorLogado.getId())) {
+                        throw new ValidationException("idsTurmas", "Turma não pertence ao professor logado");
+                    }
                     turmas.add(turma);
                 }
             }
@@ -146,6 +167,10 @@ public class AlunoServiceImpl implements AlunoService {
             Turma turma = turmaRepository.findById(dto.idTurma());
             if (turma == null) {
                 throw new ValidationException("idTurma", "Turma não encontrada");
+            }
+            // Verificar se a turma pertence ao professor logado
+            if (!turma.getProfessor().getId().equals(professorLogado.getId())) {
+                throw new ValidationException("idTurma", "Turma não pertence ao professor logado");
             }
             aluno.setTurma(turma);
         }
@@ -184,10 +209,18 @@ public class AlunoServiceImpl implements AlunoService {
     @Override
     @Transactional
     public void delete(Long id) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         Aluno aluno = alunoRepository.findById(id);
         if (aluno == null) {
             throw new ValidationException("id", "Aluno não encontrado");
         }
+
+        // Verificar se o aluno pertence ao professor logado (via turma principal)
+        if (aluno.getTurma() != null && !aluno.getTurma().getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("id", "Você não tem permissão para excluir este aluno");
+        }
+
         alunoRepository.delete(aluno);
     }
 
@@ -203,10 +236,14 @@ public class AlunoServiceImpl implements AlunoService {
     @Override
     public List<AlunoResponseDTO> findAll() {
         List<Aluno> alunos;
+        var professor = tenantContext.getProfessorDoContexto();
+        if (professor == null) {
+            return List.of();
+        }
         if (tenantContext.isSharedMode()) {
             alunos = alunoRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
         } else {
-            alunos = alunoRepository.findByProfessorId(tenantContext.getCurrentProfessor().getId());
+            alunos = alunoRepository.findByProfessorId(professor.getId());
         }
         return alunos.stream()
                 .map(AlunoResponseDTO::valueOf)
@@ -215,8 +252,11 @@ public class AlunoServiceImpl implements AlunoService {
 
     @Override
     public List<AlunoResponseDTO> findByTurmaId(Long turmaId) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         return alunoRepository.findByTurmaIdIncluindoMultiplas(turmaId)
                 .stream()
+                .filter(a -> a.getTurma() != null &&
+                        a.getTurma().getProfessor().getId().equals(professorLogado.getId()))
                 .map(AlunoResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
@@ -255,20 +295,36 @@ public class AlunoServiceImpl implements AlunoService {
     @Override
     @Transactional
     public void updatePassword(Long id, String novaSenha) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         Aluno aluno = alunoRepository.findById(id);
         if (aluno == null) {
             throw new ValidationException("id", "Aluno não encontrado");
         }
+
+        // Verificar se o aluno pertence ao professor logado
+        if (aluno.getTurma() != null && !aluno.getTurma().getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("id", "Você não tem permissão para alterar a senha deste aluno");
+        }
+
         aluno.getUsuario().setSenha(hashService.getHashSenha(novaSenha));
     }
 
     @Override
     @Transactional
     public void updateUsername(Long id, String novoUsername) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         Aluno aluno = alunoRepository.findById(id);
         if (aluno == null) {
             throw new ValidationException("id", "Aluno não encontrado");
         }
+
+        // Verificar se o aluno pertence ao professor logado
+        if (aluno.getTurma() != null && !aluno.getTurma().getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("id", "Você não tem permissão para alterar o username deste aluno");
+        }
+
         if (usuarioRepository.existsByUsername(novoUsername)) {
             throw new ValidationException("username", "Username já existe");
         }
@@ -278,14 +334,28 @@ public class AlunoServiceImpl implements AlunoService {
     @Override
     @Transactional
     public void transferirTurma(Long alunoId, Long novaTurmaId) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         Aluno aluno = alunoRepository.findById(alunoId);
         if (aluno == null) {
             throw new ValidationException("id", "Aluno não encontrado");
         }
+
+        // Verificar se o aluno pertence ao professor logado
+        if (aluno.getTurma() != null && !aluno.getTurma().getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("id", "Você não tem permissão para transferir este aluno");
+        }
+
         Turma turma = turmaRepository.findById(novaTurmaId);
         if (turma == null) {
             throw new ValidationException("idTurma", "Turma não encontrada");
         }
+
+        // Verificar se a nova turma pertence ao professor logado
+        if (!turma.getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("idTurma", "Turma não pertence ao professor logado");
+        }
+
         aluno.setTurma(turma);
     }
 }

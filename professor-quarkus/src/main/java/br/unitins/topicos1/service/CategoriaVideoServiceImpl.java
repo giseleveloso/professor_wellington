@@ -51,9 +51,16 @@ public class CategoriaVideoServiceImpl implements CategoriaVideoService {
     @Override
     @Transactional
     public CategoriaVideoResponseDTO update(Long id, CategoriaVideoDTO dto) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         CategoriaVideo categoria = categoriaRepository.findById(id);
         if (categoria == null) {
             throw new NotFoundException("Categoria não encontrada");
+        }
+
+        // Verificar se a categoria pertence ao professor logado
+        if (!categoria.getProfessor().getId().equals(professorLogado.getId())) {
+            throw new IllegalArgumentException("Você não tem permissão para editar esta categoria");
         }
 
         // Verificar se o novo nome já existe em outra categoria para este tenant
@@ -61,7 +68,7 @@ public class CategoriaVideoServiceImpl implements CategoriaVideoService {
         if (tenantContext.isSharedMode()) {
             existente = categoriaRepository.findByNomeAndEscolaId(dto.nome(), tenantContext.getCurrentEscola().getId());
         } else {
-            existente = categoriaRepository.findByNomeAndProfessorId(dto.nome(), tenantContext.getCurrentProfessor().getId());
+            existente = categoriaRepository.findByNomeAndProfessorId(dto.nome(), professorLogado.getId());
         }
         if (existente != null && !existente.getId().equals(id)) {
             throw new IllegalArgumentException("Já existe outra categoria com este nome");
@@ -77,10 +84,18 @@ public class CategoriaVideoServiceImpl implements CategoriaVideoService {
     @Override
     @Transactional
     public void delete(Long id) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         CategoriaVideo categoria = categoriaRepository.findById(id);
         if (categoria == null) {
             throw new NotFoundException("Categoria não encontrada");
         }
+
+        // Verificar se a categoria pertence ao professor logado
+        if (!categoria.getProfessor().getId().equals(professorLogado.getId())) {
+            throw new IllegalArgumentException("Você não tem permissão para excluir esta categoria");
+        }
+
         categoriaRepository.delete(categoria);
     }
 
@@ -96,10 +111,14 @@ public class CategoriaVideoServiceImpl implements CategoriaVideoService {
     @Override
     public List<CategoriaVideoResponseDTO> findAll() {
         List<CategoriaVideo> categorias;
+        var professor = tenantContext.getProfessorDoContexto();
+        if (professor == null) {
+            return List.of();
+        }
         if (tenantContext.isSharedMode()) {
             categorias = categoriaRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
         } else {
-            categorias = categoriaRepository.findByProfessorId(tenantContext.getCurrentProfessor().getId());
+            categorias = categoriaRepository.findByProfessorId(professor.getId());
         }
         return categorias.stream()
                 .map(CategoriaVideoResponseDTO::valueOf)
@@ -108,7 +127,9 @@ public class CategoriaVideoServiceImpl implements CategoriaVideoService {
 
     @Override
     public List<CategoriaVideoResponseDTO> findByNome(String nome) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         return categoriaRepository.findByNomeContaining(nome).stream()
+                .filter(c -> c.getProfessor().getId().equals(professorLogado.getId()))
                 .map(CategoriaVideoResponseDTO::valueOf)
                 .toList();
     }

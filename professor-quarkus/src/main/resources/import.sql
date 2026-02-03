@@ -86,22 +86,93 @@ INSERT INTO materialextraaula (id, titulo, tipoconteudo, descricao, urlarquivo, 
 (3, 'Daily Dialogues Podcast', 3, 'Podcast com diálogos do dia a dia', 'https://example.com/podcast', '2026-01-11', 1, NOW());
 
 -- Inserir Pagamentos
-INSERT INTO pagamento (id, mesreferencia, anoreferencia, valor, datavencimento, datapagamento, status, observacao, id_aluno, datacadastro) VALUES 
+INSERT INTO pagamento (id, mesreferencia, anoreferencia, valor, datavencimento, datapagamento, status, observacao, id_aluno, datacadastro) VALUES
 (1, 'Janeiro', 2026, 350.00, '2026-01-15', '2026-01-10', 2, 'Pagamento antecipado', 1, NOW()),
 (2, 'Janeiro', 2026, 350.00, '2026-01-15', NULL, 1, NULL, 2, NOW()),
 (3, 'Janeiro', 2026, 450.00, '2026-01-15', NULL, 1, NULL, 3, NOW());
 
+-- =====================================================
+-- PROFESSOR 2 - PROFESSORA MARIA (para teste de separação)
+-- =====================================================
+
+-- Usuário da Professora Maria (senha: 123456)
+INSERT INTO usuario (id, username, senha, datacadastro) VALUES
+(5, 'professora.maria', '0cctg7WgpEz7kC/AzVC+KX+bZLPXDtgJDqWWZWnmzHH+7Na2YVxYYSFPxcf7ImAjqfNckx0aT4n5qKM7WEoeEQ==', NOW());
+
+-- Telefone da Professora Maria
+INSERT INTO telefone (id, codigoarea, numero, datacadastro) VALUES
+(5, '11', '912345678', NOW());
+
+-- Professora Maria
+INSERT INTO professor (id, nome, email, id_telefone, id_usuario, modotenant, datacadastro) VALUES
+(2, 'Professora Maria', 'maria.professora@email.com', 5, 5, 'INDIVIDUAL', NOW());
+
+-- Níveis de Turma da Professora Maria
+INSERT INTO nivelturma (id, codigo, descricao, ordem, id_professor, datacadastro) VALUES
+(8, 'N1', 'Nível 1 - Iniciante', 1, 2, NOW()),
+(9, 'N2', 'Nível 2 - Básico', 2, 2, NOW()),
+(10, 'N3', 'Nível 3 - Intermediário', 3, 2, NOW());
+
+-- Turmas da Professora Maria
+INSERT INTO turma (id, nome, descricao, cor, idioma, id_nivel_turma, horario, diassemana, id_professor, datacadastro) VALUES
+(4, 'Francês Iniciante', 'Adultos - Online', '#9333EA', 3, 8, '18:00 - 19:30', 'Segunda, Quarta', 2, NOW()),
+(5, 'Francês Intermediário', 'Adultos - Presencial', '#F97316', 3, 10, '19:00 - 21:00', 'Terça, Quinta', 2, NOW());
+
+-- Usuários dos Alunos da Professora Maria
+INSERT INTO usuario (id, username, senha, datacadastro) VALUES
+(6, 'carlos.lima', '0cctg7WgpEz7kC/AzVC+KX+bZLPXDtgJDqWWZWnmzHH+7Na2YVxYYSFPxcf7ImAjqfNckx0aT4n5qKM7WEoeEQ==', NOW()),
+(7, 'fernanda.souza', '0cctg7WgpEz7kC/AzVC+KX+bZLPXDtgJDqWWZWnmzHH+7Na2YVxYYSFPxcf7ImAjqfNckx0aT4n5qKM7WEoeEQ==', NOW());
+
+-- Telefones dos Alunos da Professora Maria
+INSERT INTO telefone (id, codigoarea, numero, datacadastro) VALUES
+(6, '11', '955555555', NOW()),
+(7, '11', '944444444', NOW());
+
+-- Alunos da Professora Maria
+INSERT INTO aluno (id, nome, email, id_telefone, id_usuario, id_turma, datanascimento, datacadastro) VALUES
+(4, 'Carlos Lima', 'carlos.lima@email.com', 6, 6, 4, '1990-05-20', NOW()),
+(5, 'Fernanda Souza', 'fernanda.souza@email.com', 7, 7, 5, '1985-11-30', NOW());
+
+-- Aulas da Professora Maria
+INSERT INTO aula (id, data, horainicio, horafim, topico, descricao, duracaominutos, id_turma, datacadastro) VALUES
+(4, '2026-01-13', '18:00:00', '19:30:00', 'Bonjour! Saudações em Francês', 'Primeiras palavras e cumprimentos', 90, 4, NOW()),
+(5, '2026-01-14', '19:00:00', '21:00:00', 'Verbos no Presente', 'Conjugação de verbos regulares', 120, 5, NOW());
+
+-- Categorias de Vídeo da Professora Maria
+INSERT INTO categoriavideo (id, nome, descricao, cor, id_professor, datacadastro) VALUES
+(7, 'Gramática Francesa', 'Regras gramaticais do francês', '#9333EA', 2, NOW()),
+(8, 'Cultura Francesa', 'Aspectos culturais da França', '#F97316', 2, NOW());
+
+-- Subcategorias de Vídeo da Professora Maria
+INSERT INTO subcategoriavideo (id, nome, descricao, id_categoria_raiz, id_subcategoria_pai, nivel, id_professor, datacadastro) VALUES
+(6, 'Iniciantes', 'Conteúdo para iniciantes', 7, NULL, 0, 2, NOW()),
+(7, 'Intermediários', 'Conteúdo intermediário', 7, NULL, 0, 2, NOW());
+
+-- Vídeos da Professora Maria
+INSERT INTO video (id, titulo, linkyoutube, descricao, id_categoria, id_subcategoria, id_turma, datacadastro) VALUES
+(5, 'Bonjour - Saudações em Francês', 'https://www.youtube.com/watch?v=french1', 'Aprenda a cumprimentar em francês', 7, 6, 4, NOW()),
+(6, 'Verbos Franceses - Presente', 'https://www.youtube.com/watch?v=french2', 'Conjugação de verbos no presente', 7, 7, 5, NOW());
+
+-- Materiais da Professora Maria
+INSERT INTO materialextraaula (id, titulo, tipoconteudo, descricao, urlarquivo, datapublicacao, id_turma, datacadastro) VALUES
+(4, 'Le Monde - Notícias', 4, 'Jornal francês para prática de leitura', 'https://www.lemonde.fr', '2026-01-10', 4, NOW());
+
+-- Pagamentos da Professora Maria
+INSERT INTO pagamento (id, mesreferencia, anoreferencia, valor, datavencimento, datapagamento, status, observacao, id_aluno, datacadastro) VALUES
+(4, 'Janeiro', 2026, 400.00, '2026-01-20', NULL, 1, NULL, 4, NOW()),
+(5, 'Janeiro', 2026, 500.00, '2026-01-20', '2026-01-18', 2, 'Pago via PIX', 5, NOW());
+
 -- Ajustar sequences
-SELECT setval('usuario_id_seq', 10);
-SELECT setval('telefone_id_seq', 10);
-SELECT setval('professor_id_seq', 10);
+SELECT setval('usuario_id_seq', 20);
+SELECT setval('telefone_id_seq', 20);
+SELECT setval('professor_id_seq', 20);
 SELECT setval('escola_id_seq', 1);
-SELECT setval('nivelturma_id_seq', 10);
-SELECT setval('turma_id_seq', 10);
-SELECT setval('aluno_id_seq', 10);
-SELECT setval('aula_id_seq', 10);
-SELECT setval('categoriavideo_id_seq', 10);
-SELECT setval('subcategoriavideo_id_seq', 10);
-SELECT setval('video_id_seq', 10);
-SELECT setval('materialextraaula_id_seq', 10);
-SELECT setval('pagamento_id_seq', 10);
+SELECT setval('nivelturma_id_seq', 20);
+SELECT setval('turma_id_seq', 20);
+SELECT setval('aluno_id_seq', 20);
+SELECT setval('aula_id_seq', 20);
+SELECT setval('categoriavideo_id_seq', 20);
+SELECT setval('subcategoriavideo_id_seq', 20);
+SELECT setval('video_id_seq', 20);
+SELECT setval('materialextraaula_id_seq', 20);
+SELECT setval('pagamento_id_seq', 20);

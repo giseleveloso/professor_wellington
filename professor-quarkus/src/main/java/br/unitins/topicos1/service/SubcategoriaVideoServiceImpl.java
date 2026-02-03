@@ -29,9 +29,16 @@ public class SubcategoriaVideoServiceImpl implements SubcategoriaVideoService {
     @Override
     @Transactional
     public SubcategoriaVideoResponseDTO create(SubcategoriaVideoDTO dto) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         CategoriaVideo categoria = categoriaRepository.findById(dto.idCategoriaRaiz());
         if (categoria == null) {
             throw new NotFoundException("Categoria não encontrada");
+        }
+
+        // Verificar se a categoria pertence ao professor logado
+        if (!categoria.getProfessor().getId().equals(professorLogado.getId())) {
+            throw new IllegalArgumentException("Categoria não pertence ao professor logado");
         }
 
         SubcategoriaVideo subcategoria = new SubcategoriaVideo();
@@ -45,6 +52,10 @@ public class SubcategoriaVideoServiceImpl implements SubcategoriaVideoService {
             if (pai == null) {
                 throw new NotFoundException("Subcategoria pai não encontrada");
             }
+            // Verificar se a subcategoria pai pertence ao professor logado
+            if (!pai.getProfessor().getId().equals(professorLogado.getId())) {
+                throw new IllegalArgumentException("Subcategoria pai não pertence ao professor logado");
+            }
             subcategoria.setSubcategoriaPai(pai);
             subcategoria.setNivel(pai.getNivel() + 1);
         } else {
@@ -52,7 +63,7 @@ public class SubcategoriaVideoServiceImpl implements SubcategoriaVideoService {
         }
 
         // Associar ao tenant
-        subcategoria.setProfessor(tenantContext.getCurrentProfessor());
+        subcategoria.setProfessor(professorLogado);
         if (tenantContext.isSharedMode()) {
             subcategoria.setEscola(tenantContext.getCurrentEscola());
         }
@@ -64,14 +75,26 @@ public class SubcategoriaVideoServiceImpl implements SubcategoriaVideoService {
     @Override
     @Transactional
     public SubcategoriaVideoResponseDTO update(Long id, SubcategoriaVideoDTO dto) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         SubcategoriaVideo subcategoria = subcategoriaRepository.findById(id);
         if (subcategoria == null) {
             throw new NotFoundException("Subcategoria não encontrada");
         }
 
+        // Verificar se a subcategoria pertence ao professor logado
+        if (!subcategoria.getProfessor().getId().equals(professorLogado.getId())) {
+            throw new IllegalArgumentException("Você não tem permissão para editar esta subcategoria");
+        }
+
         CategoriaVideo categoria = categoriaRepository.findById(dto.idCategoriaRaiz());
         if (categoria == null) {
             throw new NotFoundException("Categoria não encontrada");
+        }
+
+        // Verificar se a categoria pertence ao professor logado
+        if (!categoria.getProfessor().getId().equals(professorLogado.getId())) {
+            throw new IllegalArgumentException("Categoria não pertence ao professor logado");
         }
 
         subcategoria.setNome(dto.nome());
@@ -87,6 +110,11 @@ public class SubcategoriaVideoServiceImpl implements SubcategoriaVideoService {
             SubcategoriaVideo pai = subcategoriaRepository.findById(dto.idSubcategoriaPai());
             if (pai == null) {
                 throw new NotFoundException("Subcategoria pai não encontrada");
+            }
+
+            // Verificar se a subcategoria pai pertence ao professor logado
+            if (!pai.getProfessor().getId().equals(professorLogado.getId())) {
+                throw new IllegalArgumentException("Subcategoria pai não pertence ao professor logado");
             }
 
             // Verificar se não cria um ciclo
@@ -107,9 +135,16 @@ public class SubcategoriaVideoServiceImpl implements SubcategoriaVideoService {
     @Override
     @Transactional
     public void delete(Long id) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         SubcategoriaVideo subcategoria = subcategoriaRepository.findById(id);
         if (subcategoria == null) {
             throw new NotFoundException("Subcategoria não encontrada");
+        }
+
+        // Verificar se a subcategoria pertence ao professor logado
+        if (!subcategoria.getProfessor().getId().equals(professorLogado.getId())) {
+            throw new IllegalArgumentException("Você não tem permissão para excluir esta subcategoria");
         }
 
         // Verificar se tem filhos
@@ -133,10 +168,14 @@ public class SubcategoriaVideoServiceImpl implements SubcategoriaVideoService {
     @Override
     public List<SubcategoriaVideoResponseDTO> findAll() {
         List<SubcategoriaVideo> subcategorias;
+        var professor = tenantContext.getProfessorDoContexto();
+        if (professor == null) {
+            return List.of();
+        }
         if (tenantContext.isSharedMode()) {
             subcategorias = subcategoriaRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
         } else {
-            subcategorias = subcategoriaRepository.findByProfessorId(tenantContext.getCurrentProfessor().getId());
+            subcategorias = subcategoriaRepository.findByProfessorId(professor.getId());
         }
         return subcategorias.stream()
                 .map(SubcategoriaVideoResponseDTO::valueOf)
@@ -145,36 +184,44 @@ public class SubcategoriaVideoServiceImpl implements SubcategoriaVideoService {
 
     @Override
     public List<SubcategoriaVideoResponseDTO> findByCategoriaRaiz(Long idCategoriaRaiz) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         CategoriaVideo categoria = categoriaRepository.findById(idCategoriaRaiz);
         if (categoria == null) {
             throw new NotFoundException("Categoria não encontrada");
         }
         return subcategoriaRepository.findByCategoriaRaiz(categoria).stream()
+                .filter(s -> s.getProfessor().getId().equals(professorLogado.getId()))
                 .map(SubcategoriaVideoResponseDTO::valueOf)
                 .toList();
     }
 
     @Override
     public List<SubcategoriaVideoResponseDTO> findBySubcategoriaPai(Long idSubcategoriaPai) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         return subcategoriaRepository.findBySubcategoriaPai(idSubcategoriaPai).stream()
+                .filter(s -> s.getProfessor().getId().equals(professorLogado.getId()))
                 .map(SubcategoriaVideoResponseDTO::valueOf)
                 .toList();
     }
 
     @Override
     public List<SubcategoriaVideoResponseDTO> findRaizes(Long idCategoriaRaiz) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         CategoriaVideo categoria = categoriaRepository.findById(idCategoriaRaiz);
         if (categoria == null) {
             throw new NotFoundException("Categoria não encontrada");
         }
         return subcategoriaRepository.findRaizes(categoria).stream()
+                .filter(s -> s.getProfessor().getId().equals(professorLogado.getId()))
                 .map(SubcategoriaVideoResponseDTO::valueOf)
                 .toList();
     }
 
     @Override
     public List<SubcategoriaVideoResponseDTO> findByNome(String nome) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         return subcategoriaRepository.findByNomeContaining(nome).stream()
+                .filter(s -> s.getProfessor().getId().equals(professorLogado.getId()))
                 .map(SubcategoriaVideoResponseDTO::valueOf)
                 .toList();
     }

@@ -32,9 +32,16 @@ public class PagamentoServiceImpl implements PagamentoService {
     @Override
     @Transactional
     public PagamentoResponseDTO create(PagamentoDTO dto) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         Aluno aluno = alunoRepository.findById(dto.idAluno());
         if (aluno == null) {
             throw new ValidationException("idAluno", "Aluno não encontrado");
+        }
+
+        // Verificar se o aluno pertence ao professor logado (via turma)
+        if (aluno.getTurma() != null && !aluno.getTurma().getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("idAluno", "Aluno não pertence ao professor logado");
         }
 
         Pagamento pagamento = new Pagamento();
@@ -59,9 +66,17 @@ public class PagamentoServiceImpl implements PagamentoService {
     @Override
     @Transactional
     public PagamentoResponseDTO update(Long id, PagamentoDTO dto) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         Pagamento pagamento = pagamentoRepository.findById(id);
         if (pagamento == null) {
             throw new ValidationException("id", "Pagamento não encontrado");
+        }
+
+        // Verificar se o pagamento pertence ao professor logado (via aluno.turma)
+        if (pagamento.getAluno().getTurma() != null &&
+            !pagamento.getAluno().getTurma().getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("id", "Você não tem permissão para editar este pagamento");
         }
 
         pagamento.setMesReferencia(dto.mesReferencia());
@@ -78,10 +93,19 @@ public class PagamentoServiceImpl implements PagamentoService {
     @Override
     @Transactional
     public void delete(Long id) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         Pagamento pagamento = pagamentoRepository.findById(id);
         if (pagamento == null) {
             throw new ValidationException("id", "Pagamento não encontrado");
         }
+
+        // Verificar se o pagamento pertence ao professor logado (via aluno.turma)
+        if (pagamento.getAluno().getTurma() != null &&
+            !pagamento.getAluno().getTurma().getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("id", "Você não tem permissão para excluir este pagamento");
+        }
+
         pagamentoRepository.delete(pagamento);
     }
 
@@ -101,10 +125,14 @@ public class PagamentoServiceImpl implements PagamentoService {
         atualizarStatusVencidos();
 
         List<Pagamento> pagamentos;
+        var professor = tenantContext.getProfessorDoContexto();
+        if (professor == null) {
+            return List.of();
+        }
         if (tenantContext.isSharedMode()) {
             pagamentos = pagamentoRepository.findByEscolaId(tenantContext.getCurrentEscola().getId());
         } else {
-            pagamentos = pagamentoRepository.findByProfessorIdOrdered(tenantContext.getCurrentProfessor().getId());
+            pagamentos = pagamentoRepository.findByProfessorIdOrdered(professor.getId());
         }
         return pagamentos.stream()
                 .map(PagamentoResponseDTO::valueOf)
@@ -113,40 +141,55 @@ public class PagamentoServiceImpl implements PagamentoService {
 
     @Override
     public List<PagamentoResponseDTO> findByAlunoId(Long alunoId) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         return pagamentoRepository.findByAlunoId(alunoId)
                 .stream()
+                .filter(p -> p.getAluno().getTurma() != null &&
+                        p.getAluno().getTurma().getProfessor().getId().equals(professorLogado.getId()))
                 .map(PagamentoResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<PagamentoResponseDTO> findByStatus(Integer idStatus) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         return pagamentoRepository.findByStatus(StatusPagamento.valueOf(idStatus))
                 .stream()
+                .filter(p -> p.getAluno().getTurma() != null &&
+                        p.getAluno().getTurma().getProfessor().getId().equals(professorLogado.getId()))
                 .map(PagamentoResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<PagamentoResponseDTO> findByMesAno(String mes, Integer ano) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         return pagamentoRepository.findByMesAno(mes, ano)
                 .stream()
+                .filter(p -> p.getAluno().getTurma() != null &&
+                        p.getAluno().getTurma().getProfessor().getId().equals(professorLogado.getId()))
                 .map(PagamentoResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<PagamentoResponseDTO> findPendentesVencidos() {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         return pagamentoRepository.findPendentesVencidos()
                 .stream()
+                .filter(p -> p.getAluno().getTurma() != null &&
+                        p.getAluno().getTurma().getProfessor().getId().equals(professorLogado.getId()))
                 .map(PagamentoResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<PagamentoResponseDTO> findByTurmaId(Long turmaId) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
         return pagamentoRepository.findByTurmaId(turmaId)
                 .stream()
+                .filter(p -> p.getAluno().getTurma() != null &&
+                        p.getAluno().getTurma().getProfessor().getId().equals(professorLogado.getId()))
                 .map(PagamentoResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
@@ -167,10 +210,19 @@ public class PagamentoServiceImpl implements PagamentoService {
     @Override
     @Transactional
     public void marcarComoPago(Long id) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         Pagamento pagamento = pagamentoRepository.findById(id);
         if (pagamento == null) {
             throw new ValidationException("id", "Pagamento não encontrado");
         }
+
+        // Verificar se o pagamento pertence ao professor logado
+        if (pagamento.getAluno().getTurma() != null &&
+            !pagamento.getAluno().getTurma().getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("id", "Você não tem permissão para alterar este pagamento");
+        }
+
         pagamento.setStatus(StatusPagamento.PAGO);
         pagamento.setDataPagamento(LocalDate.now());
     }
@@ -178,10 +230,19 @@ public class PagamentoServiceImpl implements PagamentoService {
     @Override
     @Transactional
     public void marcarComoNaoPago(Long id) {
+        var professorLogado = tenantContext.getProfessorDoContexto();
+
         Pagamento pagamento = pagamentoRepository.findById(id);
         if (pagamento == null) {
             throw new ValidationException("id", "Pagamento não encontrado");
         }
+
+        // Verificar se o pagamento pertence ao professor logado
+        if (pagamento.getAluno().getTurma() != null &&
+            !pagamento.getAluno().getTurma().getProfessor().getId().equals(professorLogado.getId())) {
+            throw new ValidationException("id", "Você não tem permissão para alterar este pagamento");
+        }
+
         pagamento.setStatus(StatusPagamento.PENDENTE);
         pagamento.setDataPagamento(null);
     }
