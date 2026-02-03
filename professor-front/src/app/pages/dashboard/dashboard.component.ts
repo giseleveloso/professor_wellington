@@ -191,7 +191,7 @@ import { Turma, Aluno, Aula, Pagamento, Presenca } from '../../core/models/user.
                     <span class="alunos-count">
                       <span class="count">{{ turma.quantidadeAlunos }}</span> alunos
                     </span>
-                    <a [routerLink]="['/turmas', turma.id]" class="btn btn-outline btn-sm">
+                    <a routerLink="/turmas" class="btn btn-outline btn-sm">
                       Ver detalhes
                     </a>
                   </div>

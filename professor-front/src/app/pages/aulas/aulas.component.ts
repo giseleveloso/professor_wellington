@@ -32,8 +32,15 @@ import { Aula, Turma } from '../../core/models/user.model';
           </select>
         </div>
         <div class="form-group mb-0" style="min-width: 150px;">
-          <label class="form-label mb-1">Data</label>
-          <input type="date" class="form-control" [ngModel]="filtroData()" (ngModelChange)="filtroData.set($event)" />
+          <label class="form-label mb-1">Data Início</label>
+          <input type="date" class="form-control" [ngModel]="filtroDataInicio()" (ngModelChange)="filtroDataInicio.set($event)" />
+        </div>
+        <div class="form-group mb-0" style="min-width: 150px;">
+          <label class="form-label mb-1">Data Fim</label>
+          <input type="date" class="form-control" [ngModel]="filtroDataFim()" (ngModelChange)="filtroDataFim.set($event)" />
+        </div>
+        <div class="form-group mb-0" style="align-self: flex-end;">
+          <button class="btn btn-primary" (click)="buscarPorPeriodo()">🔍 Buscar</button>
         </div>
         <div class="form-group mb-0" style="align-self: flex-end;">
           <button class="btn btn-outline" (click)="limparFiltros()">Limpar filtros</button>
@@ -180,7 +187,8 @@ export class AulasComponent implements OnInit {
   editingAula = signal<Aula | null>(null);
 
   filtroTurma = signal(0);
-  filtroData = signal('');
+  filtroDataInicio = signal('');
+  filtroDataFim = signal('');
 
   form = { idTurma: 0, topico: '', descricao: '', data: '', horaInicio: '08:00', horaFim: '10:00', duracaoMinutos: 120 };
 
@@ -190,10 +198,6 @@ export class AulasComponent implements OnInit {
 
     if (turmaId > 0) {
       result = result.filter(a => a.idTurma === turmaId);
-    }
-
-    if (this.filtroData()) {
-      result = result.filter(a => a.data === this.filtroData());
     }
 
     return result.sort((a, b) => {
@@ -221,7 +225,24 @@ export class AulasComponent implements OnInit {
 
   limparFiltros(): void {
     this.filtroTurma.set(0);
-    this.filtroData.set('');
+    this.filtroDataInicio.set('');
+    this.filtroDataFim.set('');
+    this.loadAulas();
+  }
+
+  buscarPorPeriodo(): void {
+    const inicio = this.filtroDataInicio();
+    const fim = this.filtroDataFim();
+
+    if (inicio && fim) {
+      this.loading.set(true);
+      this.apiService.getAulasByPeriodo(inicio, fim).subscribe({
+        next: aulas => { this.aulas.set(aulas); this.loading.set(false); },
+        error: () => this.loading.set(false)
+      });
+    } else if (!inicio && !fim) {
+      this.loadAulas();
+    }
   }
 
   formatDate(d: string): string {

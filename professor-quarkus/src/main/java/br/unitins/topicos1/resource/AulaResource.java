@@ -101,6 +101,17 @@ public class AulaResource {
     }
 
     @GET
+    @Path("/periodo")
+    @RolesAllowed({"Professor", "Aluno"})
+    public Response findByPeriodo(
+            @QueryParam("inicio") String inicioStr,
+            @QueryParam("fim") String fimStr) {
+        LocalDate inicio = LocalDate.parse(inicioStr);
+        LocalDate fim = LocalDate.parse(fimStr);
+        return Response.ok(aulaService.findByPeriodo(inicio, fim)).build();
+    }
+
+    @GET
     @Path("/professor/{professorId}")
     @RolesAllowed({"Professor"})
     public Response findByProfessorId(@PathParam("professorId") Long professorId) {

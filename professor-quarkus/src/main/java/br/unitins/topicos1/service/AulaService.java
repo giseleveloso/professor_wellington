@@ -18,4 +18,5 @@ public interface AulaService {
     List<AulaResponseDTO> findByTurmaIdAndPeriodo(Long turmaId, LocalDate inicio, LocalDate fim);
     List<AulaResponseDTO> findByProfessorId(Long professorId);
     List<AulaResponseDTO> findByProfessorIdAndData(Long professorId, LocalDate data);
+    List<AulaResponseDTO> findByPeriodo(LocalDate inicio, LocalDate fim);
 }

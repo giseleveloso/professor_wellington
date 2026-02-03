@@ -170,6 +170,10 @@ export class ApiService {
     return this.http.get<Aula[]>(`${this.apiUrl}/aulas/professor/${professorId}/data?data=${data}`);
   }
 
+  getAulasByPeriodo(inicio: string, fim: string): Observable<Aula[]> {
+    return this.http.get<Aula[]>(`${this.apiUrl}/aulas/periodo?inicio=${inicio}&fim=${fim}`);
+  }
+
   createAula(data: any): Observable<Aula> {
     return this.http.post<Aula>(`${this.apiUrl}/aulas`, data);
   }

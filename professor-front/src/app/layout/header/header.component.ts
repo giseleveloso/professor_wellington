@@ -17,9 +17,6 @@ import { Professor, Aluno } from '../../core/models/user.model';
       </div>
 
       <div class="header-right">
-        <button class="notification-btn">
-          <span>🔔</span>
-        </button>
 
         <div class="user-menu" (click)="openProfileModal()">
           <div class="avatar">
@@ -181,24 +178,6 @@ import { Professor, Aluno } from '../../core/models/user.model';
       display: flex;
       align-items: center;
       gap: 1rem;
-    }
-
-    .notification-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: none;
-      background: var(--gray-50);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.125rem;
-      transition: all 0.2s;
-
-      &:hover {
-        background: var(--gray-100);
-      }
     }
 
     .user-menu {

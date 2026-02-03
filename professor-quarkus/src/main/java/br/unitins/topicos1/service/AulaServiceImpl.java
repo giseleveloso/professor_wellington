@@ -137,4 +137,12 @@ public class AulaServiceImpl implements AulaService {
                 .map(AulaResponseDTO::valueOf)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<AulaResponseDTO> findByPeriodo(LocalDate inicio, LocalDate fim) {
+        return aulaRepository.findAll().stream()
+                .filter(a -> !a.getData().isBefore(inicio) && !a.getData().isAfter(fim))
+                .map(AulaResponseDTO::valueOf)
+                .collect(Collectors.toList());
+    }
 }
