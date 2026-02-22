@@ -82,6 +82,9 @@ import { Video, Turma, CategoriaVideo, SubcategoriaVideo } from '../../core/mode
               <div class="video-header">
                 <h4 (click)="openVideo(video)">{{ video.titulo }}</h4>
                 @if (authService.isProfessor()) {
+                  <button class="btn btn-icon btn-sm" (click)="openEditModal(video)" title="Editar">
+                    ✏️
+                  </button>
                   <button class="btn btn-icon btn-sm btn-danger" (click)="deleteVideo(video.id)" title="Excluir">
                     🗑️
                   </button>
@@ -132,7 +135,7 @@ import { Video, Turma, CategoriaVideo, SubcategoriaVideo } from '../../core/mode
       <div class="modal-overlay" (click)="closeModal()">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h3>Novo Vídeo</h3>
+            <h3>{{ editingId() ? 'Editar Vídeo' : 'Novo Vídeo' }}</h3>
             <button class="btn btn-icon" (click)="closeModal()">✕</button>
           </div>
           <form class="modal-body" (ngSubmit)="saveVideo()">
@@ -330,6 +333,7 @@ export class VideosComponent implements OnInit {
   subcategoriasForm = signal<SubcategoriaVideo[]>([]);
   loading = signal(true);
   showModal = signal(false);
+  editingId = signal<number | null>(null);
   videoAtivo = signal<Video | null>(null);
   categoriaAtiva = signal<CategoriaVideo | null>(null);
   subcategoriaAtiva = signal<SubcategoriaVideo | null>(null);
@@ -463,6 +467,7 @@ export class VideosComponent implements OnInit {
   }
 
   openModal(): void {
+    this.editingId.set(null);
     this.form = {
       titulo: '',
       linkYoutube: '',
@@ -475,17 +480,45 @@ export class VideosComponent implements OnInit {
     this.showModal.set(true);
   }
 
+  openEditModal(video: Video): void {
+    this.editingId.set(video.id);
+    this.form = {
+      titulo: video.titulo,
+      linkYoutube: video.linkYoutube,
+      descricao: video.descricao || '',
+      idCategoria: video.categoria?.id || null,
+      idSubcategoria: video.subcategoria?.id || null,
+      idTurma: video.idTurma || 0
+    };
+
+    if (video.categoria?.id) {
+      this.apiService.getSubcategoriasByCategoria(video.categoria.id).subscribe({
+        next: (data) => this.subcategoriasForm.set(data),
+        error: () => this.subcategoriasForm.set([])
+      });
+    } else {
+      this.subcategoriasForm.set([]);
+    }
+
+    this.showModal.set(true);
+  }
+
   closeModal(): void {
     this.showModal.set(false);
+    this.editingId.set(null);
   }
 
   saveVideo(): void {
-    if (!this.form.titulo || !this.form.linkYoutube || !this.form.idTurma || !this.form.idCategoria) {
+    if (!this.form.titulo || !this.form.linkYoutube || !this.form.idCategoria) {
       alert('Preencha todos os campos obrigatórios');
       return;
     }
 
-    this.apiService.createVideo(this.form).subscribe({
+    const request = this.editingId()
+      ? this.apiService.updateVideo(this.editingId()!, this.form)
+      : this.apiService.createVideo(this.form);
+
+    request.subscribe({
       next: () => {
         this.closeModal();
         this.loadVideos();

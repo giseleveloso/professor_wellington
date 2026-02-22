@@ -126,6 +126,9 @@ import { MaterialExtraAula, Turma, CategoriaVideo, SubcategoriaVideo } from '../
                 </button>
               }
               @if (authService.isProfessor()) {
+                <button class="btn btn-icon btn-sm" (click)="openEditModal(material)" title="Editar">
+                  ✏️
+                </button>
                 <button class="btn btn-icon btn-sm btn-danger" (click)="deleteMaterial(material.id)" title="Excluir">
                   🗑️
                 </button>
@@ -189,7 +192,7 @@ import { MaterialExtraAula, Turma, CategoriaVideo, SubcategoriaVideo } from '../
       <div class="modal-overlay" (click)="closeModal()">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h3>Novo Material</h3>
+            <h3>{{ editingId() ? 'Editar Material' : 'Novo Material' }}</h3>
             <button class="btn btn-icon" (click)="closeModal()">✕</button>
           </div>
           <form class="modal-body" (ngSubmit)="saveMaterial()">
@@ -385,6 +388,7 @@ export class MateriaisComponent implements OnInit {
   subcategoriasForm = signal<SubcategoriaVideo[]>([]);
   loading = signal(true);
   showModal = signal(false);
+  editingId = signal<number | null>(null);
   showUploadModal = signal(false);
   uploading = signal(false);
   pdfAtivo = signal<MaterialExtraAula | null>(null);
@@ -592,6 +596,7 @@ export class MateriaisComponent implements OnInit {
 
   // Create modal
   openModal(): void {
+    this.editingId.set(null);
     this.form = {
       titulo: '', descricao: '', idTipoConteudo: 1, urlArquivo: '',
       idTurma: this.turmas()[0]?.id || 0,
@@ -601,17 +606,46 @@ export class MateriaisComponent implements OnInit {
     this.showModal.set(true);
   }
 
+  openEditModal(material: MaterialExtraAula): void {
+    this.editingId.set(material.id);
+    this.form = {
+      titulo: material.titulo,
+      descricao: material.descricao || '',
+      idTipoConteudo: material.tipoConteudo?.id || 1,
+      urlArquivo: material.urlArquivo || '',
+      idTurma: material.idTurma || 0,
+      idCategoria: material.categoria?.id || null,
+      idSubcategoria: material.subcategoria?.id || null
+    };
+
+    if (material.categoria?.id) {
+      this.apiService.getSubcategoriasByCategoria(material.categoria.id).subscribe({
+        next: (data) => this.subcategoriasForm.set(data),
+        error: () => this.subcategoriasForm.set([])
+      });
+    } else {
+      this.subcategoriasForm.set([]);
+    }
+
+    this.showModal.set(true);
+  }
+
   closeModal(): void {
     this.showModal.set(false);
+    this.editingId.set(null);
   }
 
   saveMaterial(): void {
-    if (!this.form.titulo || !this.form.idTurma) {
+    if (!this.form.titulo) {
       alert('Preencha todos os campos obrigatórios');
       return;
     }
 
-    this.apiService.createMaterial(this.form).subscribe({
+    const request = this.editingId()
+      ? this.apiService.updateMaterial(this.editingId()!, this.form)
+      : this.apiService.createMaterial(this.form);
+
+    request.subscribe({
       next: () => {
         this.closeModal();
         this.loadMateriais();
