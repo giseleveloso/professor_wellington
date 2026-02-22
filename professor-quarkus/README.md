@@ -146,7 +146,6 @@ O backend estará disponível em: `http://localhost:8080`
 
 | Usuário | Senha | Perfil |
 |---------|-------|--------|
-| professor.wellington | 123456 | Professor (1) |
 | maria.silva | 123456 | Aluno (2) |
 | joao.santos | 123456 | Aluno (2) |
 | ana.costa | 123456 | Aluno (2) |

@@ -176,3 +176,20 @@ SELECT setval('subcategoriavideo_id_seq', 20);
 SELECT setval('video_id_seq', 20);
 SELECT setval('materialextraaula_id_seq', 20);
 SELECT setval('pagamento_id_seq', 20);
+
+
+-- =====================================================
+-- PROFESSOR 3 - WELLINGTON VELOSO
+-- =====================================================
+
+-- Usuário do Professor Wellington Veloso (senha: 123456)
+INSERT INTO usuario (id, username, senha, datacadastro) VALUES
+(8, 'wellington.veloso', '0cctg7WgpEz7kC/AzVC+KX+bZLPXDtgJDqWWZWnmzHH+7Na2YVxYYSFPxcf7ImAjqfNckx0aT4n5qKM7WEoeEQ==', NOW());
+
+-- Telefone do Professor Wellington Veloso
+INSERT INTO telefone (id, codigoarea, numero, datacadastro) VALUES
+(8, '63', '984902422', NOW());
+
+-- Professor Wellington Veloso
+INSERT INTO professor (id, nome, email, id_telefone, id_usuario, modotenant, datacadastro) VALUES
+(3, 'Wellington Veloso', 'wellingtonvelosocursos@gmail.com', 8, 8, 'INDIVIDUAL', NOW());

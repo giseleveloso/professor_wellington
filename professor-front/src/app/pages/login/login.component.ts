@@ -89,9 +89,6 @@ import { AuthService } from '../../core/services/auth.service';
           </button>
         </form>
 
-        <div class="login-footer">
-          <p class="hint">Dica: Use <strong>professor.wellington</strong> / <strong>123456</strong></p>
-        </div>
       </div>
 
       <div class="login-illustration">
