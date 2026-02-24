@@ -73,6 +73,5 @@ jobs:
           VPS_APP_PATH: ${{ secrets.VPS_APP_PATH }}
         run: |
           # script deploy.sh na VPS: parar e subir de novo a aplicação usando os artefatos copiados.
-          # Exemplo de comando: bash $VPS_APP_PATH/deploy.sh
+          # bash $VPS_APP_PATH/deploy.sh
           ssh -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "bash '$VPS_APP_PATH/deploy.sh'"
-
