@@ -1,7 +1,9 @@
-/*package br.unitins.topicos1.resource;
+package br.unitins.topicos1.resource;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
+import io.quarkus.test.security.jwt.Claim;
+import io.quarkus.test.security.jwt.JwtSecurity;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -37,6 +39,9 @@ public class NivelTurmaResourceTest {
     @Test
     @Order(2)
     @TestSecurity(user = "nivelprof", roles = "Professor")
+    @JwtSecurity(claims = {
+        @Claim(key = "sub", value = "nivelprof")
+    })
     public void testFindByProfessorIdEmpty() {
         given()
             .when()
@@ -61,6 +66,9 @@ public class NivelTurmaResourceTest {
     @Test
     @Order(4)
     @TestSecurity(user = "nivelprof", roles = "Aluno")
+    @JwtSecurity(claims = {
+        @Claim(key = "sub", value = "nivelprof")
+    })
     public void testCreateForbiddenForAluno() {
         given()
             .contentType(ContentType.JSON)
@@ -74,6 +82,9 @@ public class NivelTurmaResourceTest {
     @Test
     @Order(5)
     @TestSecurity(user = "nivelprof", roles = "Professor")
+    @JwtSecurity(claims = {
+        @Claim(key = "sub", value = "nivelprof")
+    })
     public void testCreateNivel() {
         nivelId = given()
             .contentType(ContentType.JSON)
@@ -93,6 +104,9 @@ public class NivelTurmaResourceTest {
     @Test
     @Order(6)
     @TestSecurity(user = "nivelprof", roles = "Professor")
+    @JwtSecurity(claims = {
+        @Claim(key = "sub", value = "nivelprof")
+    })
     public void testFindById() {
         given()
             .when()
@@ -105,6 +119,9 @@ public class NivelTurmaResourceTest {
     @Test
     @Order(7)
     @TestSecurity(user = "nivelprof", roles = "Professor")
+    @JwtSecurity(claims = {
+        @Claim(key = "sub", value = "nivelprof")
+    })
     public void testFindByProfessorIdAfterCreate() {
         given()
             .when()
@@ -117,6 +134,9 @@ public class NivelTurmaResourceTest {
     @Test
     @Order(8)
     @TestSecurity(user = "nivelprof", roles = "Professor")
+    @JwtSecurity(claims = {
+        @Claim(key = "sub", value = "nivelprof")
+    })
     public void testUpdateNivel() {
         given()
             .contentType(ContentType.JSON)
@@ -132,6 +152,9 @@ public class NivelTurmaResourceTest {
     @Test
     @Order(9)
     @TestSecurity(user = "nivelprof", roles = "Professor")
+    @JwtSecurity(claims = {
+        @Claim(key = "sub", value = "nivelprof")
+    })
     public void testCreateValidationBlankCodigo() {
         given()
             .contentType(ContentType.JSON)
@@ -145,6 +168,9 @@ public class NivelTurmaResourceTest {
     @Test
     @Order(10)
     @TestSecurity(user = "nivelprof", roles = "Professor")
+    @JwtSecurity(claims = {
+        @Claim(key = "sub", value = "nivelprof")
+    })
     public void testCreateValidationBlankDescricao() {
         given()
             .contentType(ContentType.JSON)
@@ -158,6 +184,9 @@ public class NivelTurmaResourceTest {
     @Test
     @Order(11)
     @TestSecurity(user = "nivelprof", roles = "Professor")
+    @JwtSecurity(claims = {
+        @Claim(key = "sub", value = "nivelprof")
+    })
     public void testFindByIdNotFound() {
         given()
             .when()
@@ -169,6 +198,9 @@ public class NivelTurmaResourceTest {
     @Test
     @Order(12)
     @TestSecurity(user = "nivelprof", roles = "Professor")
+    @JwtSecurity(claims = {
+        @Claim(key = "sub", value = "nivelprof")
+    })
     public void testUpdateNotFound() {
         given()
             .contentType(ContentType.JSON)
@@ -182,6 +214,9 @@ public class NivelTurmaResourceTest {
     @Test
     @Order(13)
     @TestSecurity(user = "nivelprof", roles = "Professor")
+    @JwtSecurity(claims = {
+        @Claim(key = "sub", value = "nivelprof")
+    })
     public void testDeleteNivel() {
         given()
             .when()
@@ -193,6 +228,9 @@ public class NivelTurmaResourceTest {
     @Test
     @Order(14)
     @TestSecurity(user = "nivelprof", roles = "Professor")
+    @JwtSecurity(claims = {
+        @Claim(key = "sub", value = "nivelprof")
+    })
     public void testDeleteNotFound() {
         given()
             .when()
@@ -201,4 +239,3 @@ public class NivelTurmaResourceTest {
             .statusCode(400);
     }
 }
-*/

@@ -108,7 +108,7 @@ public class ProfessorResourceTest {
     public void testCreateDuplicateUsername() {
         given()
             .contentType(ContentType.JSON)
-            .body("{\"nome\":\"Prof Dois\",\"email\":\"prof2@teste.com\",\"username\":\"testprof\",\"senha\":\"123456\"}")
+            .body("{\"nome\":\"Prof Dois\",\"email\":\"prof2@teste.com\",\"username\":\"profatualizado\",\"senha\":\"123456\"}")
             .when()
             .post("/professores")
             .then()
