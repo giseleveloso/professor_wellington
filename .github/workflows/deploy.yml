@@ -1,0 +1,78 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: professor-front/package-lock.json
+
+      - name: Instalar dependencias frontend
+        working-directory: professor-front
+        run: npm ci
+
+      - name: Run testes frontend
+        working-directory: professor-front
+        run: npm test -- --watch=false
+
+      - name: Build frontend
+        working-directory: professor-front
+        run: npm run build
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run testes backend
+        run: mvn -B -f professor-quarkus/pom.xml test
+
+      - name: Build backend
+        run: mvn -B -f professor-quarkus/pom.xml package -DskipTests
+
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Deploy artefatos para VPS
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_APP_PATH: ${{ secrets.VPS_APP_PATH }}
+        run: |
+          echo "Criando diretorios na VPS..."
+          ssh -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "mkdir -p '$VPS_APP_PATH/front' '$VPS_APP_PATH/backend'"
+
+          echo "Copiando build Frontend..."
+          scp -r professor-front/dist/* "$VPS_USER@$VPS_HOST:$VPS_APP_PATH/front/"
+
+          echo "Copiando JAR Backend..."
+          scp professor-quarkus/target/*.jar "$VPS_USER@$VPS_HOST:$VPS_APP_PATH/backend/"
+
+      - name: Restart aplicação VPS
+        if: success()
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_APP_PATH: ${{ secrets.VPS_APP_PATH }}
+        run: |
+          # script deploy.sh na VPS: parar e subir de novo a aplicação usando os artefatos copiados.
+          # Exemplo de comando: bash $VPS_APP_PATH/deploy.sh
+          ssh -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "bash '$VPS_APP_PATH/deploy.sh'"
+
