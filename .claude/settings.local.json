@@ -9,7 +9,14 @@
       "Bash(ng build:*)",
       "Bash(mvn compile:*)",
       "Bash(dir /b \"c:\\\\Users\\\\gisele.ov\\\\Documents\\\\dev\\\\professor-wellington\")",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(mvn test:*)",
+      "Bash(./mvnw.cmd test:*)",
+      "Bash(./mvnw test:*)",
+      "Bash(mvn.cmd test:*)",
+      "Bash(cmd.exe /c \"mvnw.cmd test -B\")",
+      "Bash(cmd.exe /c \"mvnw test -B\")",
+      "Bash(ls:*)"
     ]
   }
 }
