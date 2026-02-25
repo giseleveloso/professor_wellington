@@ -16,7 +16,8 @@
       "Bash(mvn.cmd test:*)",
       "Bash(cmd.exe /c \"mvnw.cmd test -B\")",
       "Bash(cmd.exe /c \"mvnw test -B\")",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(./professor-quarkus/mvnw compile -f professor-quarkus/pom.xml -q)"
     ]
   }
 }

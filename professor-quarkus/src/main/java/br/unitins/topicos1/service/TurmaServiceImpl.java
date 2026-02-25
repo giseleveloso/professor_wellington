@@ -21,12 +21,18 @@ import br.unitins.topicos1.validation.ValidationException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class TurmaServiceImpl implements TurmaService {
 
+    private static final Logger LOG = Logger.getLogger(TurmaServiceImpl.class);
+
     @Inject
     TurmaRepository turmaRepository;
+
+    @Inject
+    EmailService emailService;
 
     @Inject
     ProfessorRepository professorRepository;
@@ -119,6 +125,12 @@ public class TurmaServiceImpl implements TurmaService {
             }
         }
 
+        // Capturar horário antigo antes de sobrescrever
+        String horarioAntigo = turma.getHorario();
+        boolean horarioMudou = dto.horario() != null
+                ? !dto.horario().equals(horarioAntigo)
+                : horarioAntigo != null;
+
         turma.setHorario(dto.horario());
         turma.setDiasSemana(dto.diasSemana());
 
@@ -132,7 +144,7 @@ public class TurmaServiceImpl implements TurmaService {
         } else {
             turma.getHorariosPorDia().clear();
         }
-        
+
         if (dto.horariosPorDia() != null && !dto.horariosPorDia().isEmpty()) {
             for (HorarioDiaDTO h : dto.horariosPorDia()) {
                 HorarioDia horario = new HorarioDia();
@@ -141,7 +153,17 @@ public class TurmaServiceImpl implements TurmaService {
                 horario.setHoraInicio(h.horaInicio());
                 horario.setHoraFim(h.horaFim());
                 horario.setTurma(turma);
-                turma.getHorariosPorDia().add(horario);  // Adiciona na lista existente
+                turma.getHorariosPorDia().add(horario);
+            }
+        }
+
+        // Notificar alunos se o horário mudou
+        if (horarioMudou) {
+            LOG.infof("Horário da turma %d alterado de '%s' para '%s'. Notificando alunos.", id, horarioAntigo, turma.getHorario());
+            try {
+                emailService.enviarMudancaHorario(turma, horarioAntigo);
+            } catch (Exception e) {
+                LOG.warnf("Erro ao enviar notificação de mudança de horário para turma %d: %s", id, e.getMessage());
             }
         }
 
