@@ -63,7 +63,7 @@ openssl pkcs8 -topk8 -nocrypt -inform pem -in rsaPrivateKey.pem -outform pem -ou
 java -jar target/professor-wellington-1.0.0-SNAPSHOT-runner.jar
 ```
 
-O backend estará disponível em: `http://localhost:8080`
+O backend estará disponível em: `http://localhost:8987`
 
 ## 📚 API Endpoints
 
