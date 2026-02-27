@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { MaterialExtraAula, Turma, CategoriaVideo, SubcategoriaVideo } from '../../core/models/user.model';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-materiais',
@@ -506,7 +507,7 @@ export class MateriaisComponent implements OnInit {
   }
 
   downloadFile(material: MaterialExtraAula): void {
-    this.http.get(`http://localhost:8080/materiais/download/${material.nomeArquivo}`, {
+    this.http.get(`${environment.apiUrl}/materiais/download/${material.nomeArquivo}`, {
       responseType: 'blob'
     }).subscribe({
       next: (blob) => {
@@ -532,7 +533,7 @@ export class MateriaisComponent implements OnInit {
     this.pdfAtivo.set(material);
     this.pdfUrl.set(null);
 
-    this.http.get(`http://localhost:8080/materiais/view/${material.nomeArquivo}`, {
+    this.http.get(`${environment.apiUrl}/materiais/view/${material.nomeArquivo}`, {
       responseType: 'blob'
     }).subscribe({
       next: (blob) => {
