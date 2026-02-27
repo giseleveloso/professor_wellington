@@ -45,21 +45,21 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
-
-      - name: Deploy artefatos para VPS
-        env:
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_APP_PATH: ${{ secrets.VPS_APP_PATH }}
-        run: |
-          echo "Criando diretorios na VPS..."
-          ssh -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "mkdir -p '$VPS_APP_PATH/front' '$VPS_APP_PATH/backend'"
-
-          echo "Copiando build Frontend..."
-          scp -r professor-front/dist/* "$VPS_USER@$VPS_HOST:$VPS_APP_PATH/front/"
-
-          echo "Copiando JAR Backend..."
-          scp professor-quarkus/target/*.jar "$VPS_USER@$VPS_HOST:$VPS_APP_PATH/backend/"
+      
+      - name: Deploy VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with: 
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_KEY }}
+          script: |
+            cd ${{ secrets.VPS_PATH }}
+            git pull origin main
+            cd professor-quarkus
+            ./mvnw quarkus:dev
+            cd ..
+            cd professor-front
+            npm run build
 
       - name: Restart aplicação VPS
         if: success()

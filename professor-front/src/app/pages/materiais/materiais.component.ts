@@ -506,7 +506,7 @@ export class MateriaisComponent implements OnInit {
   }
 
   downloadFile(material: MaterialExtraAula): void {
-    this.http.get(`http://localhost:8080/materiais/download/${material.nomeArquivo}`, {
+    this.http.get(`http://localhost:8987/materiais/download/${material.nomeArquivo}`, {
       responseType: 'blob'
     }).subscribe({
       next: (blob) => {
@@ -532,7 +532,7 @@ export class MateriaisComponent implements OnInit {
     this.pdfAtivo.set(material);
     this.pdfUrl.set(null);
 
-    this.http.get(`http://localhost:8080/materiais/view/${material.nomeArquivo}`, {
+    this.http.get(`http://localhost:8987/materiais/view/${material.nomeArquivo}`, {
       responseType: 'blob'
     }).subscribe({
       next: (blob) => {
