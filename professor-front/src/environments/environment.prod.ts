@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://classhubedu.com.br'
+  apiUrl: 'http://localhost:8987'
 };
